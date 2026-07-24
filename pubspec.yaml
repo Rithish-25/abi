@@ -1,0 +1,35 @@
+name: abirami_laboratory
+description: Abirami Laboratory - blood test booking app
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.2.1
+  provider: ^6.1.2
+  cupertino_icons: ^1.0.6
+  shared_preferences: ^2.5.3
+  font_awesome_flutter: ^10.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/1.jpg
+    - assets/2.jpg
+    - assets/3.jpg
+    - assets/cbc.jpg
+    - assets/sugar.jpg
+    - assets/thyroid.jpg
+    - assets/lipid.jpg
+    - assets/liver_kidney.jpg
+    - assets/urine.jpg
+    - assets/fever.jpg
