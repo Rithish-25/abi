@@ -30,7 +30,7 @@ class _SelectMemberScreenState extends State<SelectMemberScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               children: [
                 ...app.family.map((m) {
-                  final selected = m.id == app.selectedMemberId;
+                  final selected = app.selectedMemberIds.contains(m.id);
                   return Container(
                     margin: const EdgeInsets.only(bottom: 10),
                     child: InkWell(
@@ -52,8 +52,12 @@ class _SelectMemberScreenState extends State<SelectMemberScreen> {
                           ])),
                           Container(
                             width: 22, height: 22,
-                            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: selected ? AppColors.primary : const Color(0xFFCBD5E1), width: 2)),
-                            child: selected ? Center(child: Container(width: 12, height: 12, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle))) : null,
+                            decoration: BoxDecoration(
+                              color: selected ? AppColors.primary : Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: selected ? AppColors.primary : const Color(0xFFCBD5E1), width: 2),
+                            ),
+                            child: selected ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
                           ),
                         ]),
                       ),

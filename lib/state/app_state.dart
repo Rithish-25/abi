@@ -100,7 +100,7 @@ class AppState extends ChangeNotifier {
   // booking flow
   late List<FamilyMember> family = MockData.seedFamily();
   late List<SavedAddress> addresses = MockData.seedAddresses();
-  int selectedMemberId = 1;
+  List<int> selectedMemberIds = [1];
   int selectedAddressId = 1;
   String paymentMethod = 'upi';
   String? lastBookingId;
@@ -298,7 +298,13 @@ class AppState extends ChangeNotifier {
 
   // ----- family / address -----
   void selectMember(int id) {
-    selectedMemberId = id;
+    if (selectedMemberIds.contains(id)) {
+      if (selectedMemberIds.length > 1) {
+        selectedMemberIds.remove(id);
+      }
+    } else {
+      selectedMemberIds.add(id);
+    }
     notifyListeners();
   }
 
@@ -321,7 +327,7 @@ class AppState extends ChangeNotifier {
     if (name.trim().isEmpty) return;
     final id = family.map((m) => m.id).reduce((a, b) => a > b ? a : b) + 1;
     family.add(FamilyMember(id: id, name: name, relation: relation, age: age.isEmpty ? '-' : age, gender: gender));
-    selectedMemberId = id;
+    selectedMemberIds = [id];
     showAddMember = false;
     notifyListeners();
   }
@@ -340,13 +346,19 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  FamilyMember get selectedMember => family.firstWhere((m) => m.id == selectedMemberId, orElse: () => family.first);
+  FamilyMember get selectedMember => family.firstWhere((m) => selectedMemberIds.contains(m.id), orElse: () => family.first);
+
+  String get selectedMembersNames {
+    final selected = family.where((m) => selectedMemberIds.contains(m.id)).map((m) => m.name).toList();
+    if (selected.isEmpty) return 'No member selected';
+    return selected.join(', ');
+  }
   SavedAddress get selectedAddress => addresses.firstWhere((a) => a.id == selectedAddressId, orElse: () => addresses.first);
 
   // ----- booking -----
   void confirmBooking() {
     final items = cartItems;
-    final total = items.fold(0, (a, c) => a + c.price);
+    final total = items.fold(0, (a, c) => a + c.price) * selectedMemberIds.length;
     final id = 'AB' + (2300 + bookings.length + (DateTime.now().millisecond % 90)).toString();
     bookings.insert(
       0,
@@ -354,7 +366,7 @@ class AppState extends ChangeNotifier {
         id: id,
         date: '23/07/2026',
         testNames: items.map((c) => c.name).toList(),
-        member: selectedMember.name,
+        member: selectedMembersNames,
         status: 'Confirmed',
         amount: total,
         address: selectedAddress.line,

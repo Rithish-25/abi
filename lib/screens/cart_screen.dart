@@ -37,18 +37,58 @@ class CartScreen extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 children: [
-                  ...items.map((c) => Container(margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(16)), child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ...items.map((c) => Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: AppColors.border),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
                           children: [
-                            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(c.name, style: AppTextStyles.bodyBold.copyWith(fontSize: 13.5)),
-                              const SizedBox(height: 4),
-                              Text('₹${c.price}', style: AppTextStyles.bodyBold.copyWith(fontSize: 14)),
-                            ]),
+                            Container(
+                              width: 55,
+                              height: 55,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.asset(
+                                  c.image.isNotEmpty ? c.image : 'assets/cbc.jpg',
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(Icons.medical_services, color: Color(0xFF94A3B8), size: 20);
+                                  },
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(c.name, style: AppTextStyles.bodyBold.copyWith(fontSize: 13.5)),
+                                  const SizedBox(height: 4),
+                                  Text('₹${c.price}', style: AppTextStyles.bodyBold.copyWith(fontSize: 14)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
                             InkWell(
                               onTap: () => app.removeFromCart(c.id),
                               borderRadius: BorderRadius.circular(10),
-                              child: Container(width: 32, height: 32, decoration: BoxDecoration(color: AppColors.dangerTint, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.delete_outline, size: 16, color: AppColors.danger)),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: AppColors.dangerTint,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.delete_outline, size: 16, color: AppColors.danger),
+                              ),
                             ),
                           ],
                         ),
