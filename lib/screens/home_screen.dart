@@ -300,6 +300,14 @@ class _PromoCarouselState extends State<PromoCarousel> {
     _startTimer();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(const AssetImage('assets/1.jpg'), context);
+    precacheImage(const AssetImage('assets/2.jpg'), context);
+    precacheImage(const AssetImage('assets/3.jpg'), context);
+  }
+
   void _startTimer() {
     Future.doWhile(() async {
       await Future.delayed(const Duration(seconds: 4));
@@ -355,10 +363,7 @@ class _PromoCarouselState extends State<PromoCarousel> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
-                    slides[index]['image'] as String,
-                    fit: BoxFit.cover,
-                  ),
+                  child: CarouselItem(imagePath: slides[index]['image'] as String),
                 ),
               );
             },
@@ -384,6 +389,28 @@ class _PromoCarouselState extends State<PromoCarousel> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class CarouselItem extends StatefulWidget {
+  final String imagePath;
+  const CarouselItem({super.key, required this.imagePath});
+
+  @override
+  State<CarouselItem> createState() => _CarouselItemState();
+}
+
+class _CarouselItemState extends State<CarouselItem> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return Image.asset(
+      widget.imagePath,
+      fit: BoxFit.cover,
     );
   }
 }

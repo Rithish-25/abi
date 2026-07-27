@@ -145,19 +145,53 @@ class AppRoot extends StatelessWidget {
     }
   }
 
+  Future<void> _showExitDialog(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Exit App', style: TextStyle(fontWeight: FontWeight.w700)),
+        content: const Text('Are you sure you want to exit?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Exit', style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+    if (result == true) {
+      SystemNavigator.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
-    final showNav = _tabRootScreens.contains(app.screen);
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+    final showNav = _tabRootScreens.contains(app.screen) && !(app.screen == 'search' && isKeyboardOpen);
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvoked: (didPop) async {
         if (didPop) return;
-        // Navigate to home screen for both patient and doctor
-        if (app.doctorLoggedIn) {
-          app.go('doctorDashboard');
-        } else {
+        if (app.screen == 'home' || app.screen == 'doctorDashboard') {
+          await _showExitDialog(context);
+        } else if (app.screen == 'bookings' || app.screen == 'reports' || app.screen == 'records' || app.screen == 'profile') {
           app.goTab('home', 'home');
+        } else {
+          app.back();
         }
       },
       child: Scaffold(

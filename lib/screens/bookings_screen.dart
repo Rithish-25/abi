@@ -295,12 +295,12 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           onTap: () => app.openBooking(b.id),
                           borderRadius: BorderRadius.circular(16),
                           child: Padding(
-                            padding: const EdgeInsets.all(16),
+                            padding: EdgeInsets.all(b.testNames.length > 1 ? 20 : 16),
                             child: Row(
                               children: [
                                 Container(
-                                  width: 80,
-                                  height: 80,
+                                  width: b.testNames.length > 1 ? 90 : 80,
+                                  height: b.testNames.length > 1 ? 90 : 80,
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFF1F5F9),
                                     borderRadius: BorderRadius.circular(12),
@@ -318,10 +318,14 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            'Booking id : ${b.id}',
-                                            style: AppTextStyles.bodyBold.copyWith(fontSize: 13),
+                                          Expanded(
+                                            child: Text(
+                                              'Booking ID: ${b.id}',
+                                              style: AppTextStyles.bodyBold.copyWith(fontSize: 12.5),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
+                                          const SizedBox(width: 8),
                                           StatusBadge(b.status),
                                         ],
                                       ),
