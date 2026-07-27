@@ -37,7 +37,7 @@ class HomeScreen extends StatelessWidget {
       child: Stack(
         children: [
           ListView(
-            padding: const EdgeInsets.only(bottom: 96),
+            padding: const EdgeInsets.only(bottom: 16),
             children: [
               Container(
                 padding: const EdgeInsets.fromLTRB(20, 50, 20, 24),

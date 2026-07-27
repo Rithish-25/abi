@@ -6,6 +6,8 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/back_header.dart';
 import '../widgets/primary_button.dart';
+import '../utils/file_helper.dart' as fh;
+import '../utils/pdf_generator.dart';
 
 class ReportViewerScreen extends StatelessWidget {
   const ReportViewerScreen({super.key});
@@ -85,9 +87,27 @@ class ReportViewerScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: AppColors.border))),
             child: Row(children: [
-              Expanded(child: AppButton(label: 'Share', icon: Icons.ios_share, variant: ButtonVariant.outline, color: const Color(0xFF334155), onPressed: () {})),
+              Expanded(child: AppButton(
+                label: 'Share',
+                icon: Icons.ios_share,
+                variant: ButtonVariant.outline,
+                color: const Color(0xFF334155),
+                onPressed: () async {
+                  final pdfBytes = await generateReportPdf(r, rows);
+                  final fileName = 'Report_${r.id}.pdf';
+                  await fh.shareFile(fileName, pdfBytes, 'Medical Report - ${r.name}');
+                },
+              )),
               const SizedBox(width: 12),
-              Expanded(child: AppButton(label: 'Download', icon: Icons.download, onPressed: () {})),
+              Expanded(child: AppButton(
+                label: 'Download',
+                icon: Icons.download,
+                onPressed: () async {
+                  final pdfBytes = await generateReportPdf(r, rows);
+                  final fileName = 'Report_${r.id}.pdf';
+                  await fh.downloadFile(fileName, pdfBytes);
+                },
+              )),
             ]),
           ),
         ],

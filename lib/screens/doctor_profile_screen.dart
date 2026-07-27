@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
 import '../theme/app_colors.dart';
+import '../widgets/back_header.dart';
 
 class DoctorProfileScreen extends StatelessWidget {
   const DoctorProfileScreen({super.key});
@@ -13,204 +14,309 @@ class DoctorProfileScreen extends StatelessWidget {
 
     return Container(
       color: AppColors.background,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 30),
+      child: Column(
         children: [
-          // 1. Back button row
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-                onPressed: () => app.goTab('doctor', 'doctorDashboard'),
-              ),
-            ),
+          BackHeader(
+            title: 'Profile',
+            onBack: () => app.goTab('doctor', 'doctorDashboard'),
           ),
-
-          // 2. Doctor Header Card
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Row(
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 90),
               children: [
+                // 1. Doctor Header Card
                 Container(
-                  width: 54,
-                  height: 54,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFEF2F2), // Light red circle
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: const Icon(
-                    Icons.medical_services,
-                    color: Color(0xFFEF4444), // Red doctor briefcase/cross
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  padding: const EdgeInsets.all(18),
+                  child: Row(
                     children: [
-                      const Text(
-                        'Dr. Ramesh Kumar',
-                        style: TextStyle(
-                          color: AppColors.textPrimary, // Deep navy
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFEF4444).withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.medical_services_rounded,
+                          color: Colors.white,
+                          size: 26,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Consultant Pathologist',
-                        style: TextStyle(
-                          color: AppColors.secondary, // Teal/Cyan
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Dr. Ramesh Kumar',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Consultant Pathologist',
+                              style: TextStyle(
+                                color: AppColors.secondary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '+91 $phone',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '+91 $phone',
-                        style: const TextStyle(
-                          color: Color(0xFF64748B), // Slate grey
-                          fontSize: 12,
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFD1FAE5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.verified_rounded,
+                          color: Color(0xFF10B981),
+                          size: 18,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
-                  Icons.verified,
-                  color: Color(0xFF10B981), // Green verified check
-                  size: 22,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
-          // 3. Professional Credentials
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
-            child: Text(
-              'Professional Credentials',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _buildInfoRow('Qualifications', 'MBBS, MD (Pathology)'),
-                const Divider(color: Color(0xFFF1F5F9), height: 24),
-                _buildInfoRow('Registration No.', 'MCI-98745 (Tamil Nadu)'),
-                const Divider(color: Color(0xFFF1F5F9), height: 24),
-                _buildInfoRow('Specialty', 'Laboratory Medicine'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // 4. Hospital / Clinic Info
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
-            child: Text(
-              'Practice Details',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _buildInfoRow('Hospital/Clinic', 'Abirami Diagnostic Lab'),
-                const Divider(color: Color(0xFFF1F5F9), height: 24),
-                _buildInfoRow('Location', 'Thindal, Erode, Tamil Nadu'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // 5. Earnings Summary
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
-            child: Text(
-              'Account & Payouts',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _buildInfoRow('Total Patients Referred', '${app.doctorPatients.length}'),
-                const Divider(color: Color(0xFFF1F5F9), height: 24),
-                _buildInfoRow('Total Earnings (Month)', '₹${app.doctorCommissionTotal}'),
-                const Divider(color: Color(0xFFF1F5F9), height: 24),
-                _buildInfoRow('Payout Account', 'xxxx xxxx 4321 (SBI)'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 28),
-
-          // 6. Logout Button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: InkWell(
-              onTap: app.logout,
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                width: double.infinity,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEF4444), // Solid red logout
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                alignment: Alignment.center,
-                child: const Text(
-                  'Logout',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
+                // 2. Professional Credentials
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 10),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Professional Credentials',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Center(
-            child: Text(
-              'Abirami Laboratory (Doctor App) v1.0.0',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _buildInfoRow('Qualifications', 'MBBS, MD (Pathology)'),
+                      const Divider(color: Color(0xFFF1F5F9), height: 24),
+                      _buildInfoRow('Registration No.', 'MCI-98745 (Tamil Nadu)'),
+                      const Divider(color: Color(0xFFF1F5F9), height: 24),
+                      _buildInfoRow('Specialty', 'Laboratory Medicine'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // 3. Practice Details
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 10),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Practice Details',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _buildInfoRow('Hospital/Clinic', 'Abirami Diagnostic Lab'),
+                      const Divider(color: Color(0xFFF1F5F9), height: 24),
+                      _buildInfoRow('Location', 'Thindal, Erode, Tamil Nadu'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // 4. Account & Payouts
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 10),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Account & Payouts',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _buildInfoRow('Total Patients Referred', '${app.doctorPatients.length}'),
+                      const Divider(color: Color(0xFFF1F5F9), height: 24),
+                      _buildInfoRow('Total Earnings (Month)', '₹${app.doctorCommissionTotal}'),
+                      const Divider(color: Color(0xFFF1F5F9), height: 24),
+                      _buildInfoRow('Payout Account', 'xxxx xxxx 4321 (SBI)'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // 5. Logout Button
+                InkWell(
+                  onTap: app.logout,
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    width: double.infinity,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFEF4444).withOpacity(0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'Logout',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Center(
+                  child: Text(
+                    'Abirami Laboratory (Doctor App) v1.0.0',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -225,7 +331,7 @@ class DoctorProfileScreen extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            color: Color(0xFF64748B),
+            color: AppColors.textSecondary,
             fontSize: 13,
             fontWeight: FontWeight.w500,
           ),
@@ -233,7 +339,7 @@ class DoctorProfileScreen extends StatelessWidget {
         Text(
           value,
           style: const TextStyle(
-            color: Color(0xFF1E293B),
+            color: AppColors.textPrimary,
             fontSize: 13.5,
             fontWeight: FontWeight.w600,
           ),
