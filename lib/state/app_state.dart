@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../data/mock_data.dart';
 import '../models/models.dart';
 
@@ -24,6 +25,23 @@ class AppState extends ChangeNotifier {
       _isLoggedIn = prefs.getBool('is_logged_in') ?? false;
       _savedPhone = prefs.getString('user_phone') ?? '';
       _isDoctor = prefs.getBool('is_doctor') ?? false;
+
+      // Load cart items
+      final savedCart = prefs.getStringList('cart_items');
+      if (savedCart != null) {
+        cart.clear();
+        cart.addAll(savedCart);
+      }
+
+      // Load notifications
+      final savedNotifsStr = prefs.getString('notifications_list');
+      if (savedNotifsStr != null) {
+        final List<dynamic> decoded = jsonDecode(savedNotifsStr);
+        notifications = decoded.map((item) => AppNotification.fromJson(item as Map<String, dynamic>)).toList();
+      } else {
+        notifications = MockData.seedNotifications();
+      }
+
       if (_isLoggedIn) {
         phone = _savedPhone;
         doctorLoggedIn = _isDoctor;
@@ -41,8 +59,23 @@ class AppState extends ChangeNotifier {
       }
       notifyListeners();
     } catch (e) {
-      // ignore
+      notifications = MockData.seedNotifications();
     }
+  }
+
+  Future<void> _saveCart() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('cart_items', cart);
+    } catch (_) {}
+  }
+
+  Future<void> _saveNotifications() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final List<Map<String, dynamic>> encoded = notifications.map((n) => n.toJson()).toList();
+      await prefs.setString('notifications_list', jsonEncode(encoded));
+    } catch (_) {}
   }
 
   void goNextFromSplash() {
@@ -115,7 +148,7 @@ class AppState extends ChangeNotifier {
   String reportFilter = 'all'; // all | completed | pending
   late List<MedicalRecord> records = MockData.seedRecords();
   String? uploadMode;
-  late List<AppNotification> notifications = MockData.seedNotifications();
+  List<AppNotification> notifications = [];
 
   // doctor
   late List<DoctorPatient> doctorPatients = MockData.seedDoctorPatients();
@@ -137,10 +170,14 @@ class AppState extends ChangeNotifier {
     activeTab = tab;
     screen = s;
     history.clear();
+    search = '';
     notifyListeners();
   }
 
   void back() {
+    if (screen == 'search') {
+      search = '';
+    }
     if (history.isNotEmpty) {
       screen = history.removeLast();
     } else {
@@ -282,12 +319,17 @@ class AppState extends ChangeNotifier {
 
   // ----- cart -----
   void addToCart(String id) {
-    if (!cart.contains(id)) cart.add(id);
+    if (!cart.contains(id)) {
+      cart.add(id);
+      _saveCart();
+    }
     notifyListeners();
   }
 
   void removeFromCart(String id) {
-    cart.remove(id);
+    if (cart.remove(id)) {
+      _saveCart();
+    }
     notifyListeners();
   }
 
@@ -375,6 +417,7 @@ class AppState extends ChangeNotifier {
     );
     lastBookingId = id;
     cart.clear();
+    _saveCart();
     history.clear();
     screen = 'bookingSuccess';
     notifyListeners();
@@ -437,6 +480,7 @@ class AppState extends ChangeNotifier {
     for (final n in notifications) {
       n.read = true;
     }
+    _saveNotifications();
     notifyListeners();
   }
 

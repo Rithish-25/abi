@@ -124,6 +124,26 @@ class AppNotification {
     required this.time,
     this.read = false,
   });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'kind': kind,
+    'title': title,
+    'body': body,
+    'time': time,
+    'read': read,
+  };
+
+  factory AppNotification.fromJson(Map<String, dynamic> json) {
+    return AppNotification(
+      id: json['id'] as int,
+      kind: json['kind'] as String,
+      title: json['title'] as String,
+      body: json['body'] as String,
+      time: json['time'] as String,
+      read: json['read'] as bool? ?? false,
+    );
+  }
 }
 
 class DoctorPatient {

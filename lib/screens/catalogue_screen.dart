@@ -73,7 +73,7 @@ class CatalogueScreen extends StatelessWidget {
           ),
           Expanded(
             child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
               itemCount: items.length,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (_, i) {

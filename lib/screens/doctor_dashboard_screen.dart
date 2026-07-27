@@ -46,7 +46,39 @@ class DoctorDashboardScreen extends StatelessWidget {
                       child: Container(
                         width: 40, height: 40,
                         decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
-                        child: const Icon(Icons.notifications_none, color: Colors.white, size: 20),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            const Icon(Icons.notifications_none, color: Colors.white, size: 20),
+                            if (app.notifications.isNotEmpty)
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.danger,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 14,
+                                    minHeight: 14,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${app.notifications.length}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 7.5,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1.0,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                   ],

@@ -30,7 +30,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
-    final unread = app.notifications.any((n) => !n.read);
+    final notificationCount = app.notifications.length;
 
     return Container(
       color: AppColors.background,
@@ -70,7 +70,33 @@ class HomeScreen extends StatelessWidget {
                                   alignment: Alignment.center,
                                   children: [
                                     const Icon(Icons.shopping_cart_outlined, color: Colors.white),
-                                    if (app.cart.isNotEmpty) Positioned(top: 9, right: 10, child: Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle))),
+                                    if (app.cart.isNotEmpty)
+                                      Positioned(
+                                        top: 5,
+                                        right: 5,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(3),
+                                          decoration: const BoxDecoration(
+                                            color: AppColors.danger,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 15,
+                                            minHeight: 15,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              '${app.cart.length}',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.bold,
+                                                height: 1.0,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),
@@ -85,7 +111,33 @@ class HomeScreen extends StatelessWidget {
                                   alignment: Alignment.center,
                                   children: [
                                     const Icon(Icons.notifications_none, color: Colors.white),
-                                    if (unread) Positioned(top: 9, right: 10, child: Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle))),
+                                    if (notificationCount > 0)
+                                      Positioned(
+                                        top: 5,
+                                        right: 5,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(3),
+                                          decoration: const BoxDecoration(
+                                            color: AppColors.danger,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 15,
+                                            minHeight: 15,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              '$notificationCount',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.bold,
+                                                height: 1.0,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),
