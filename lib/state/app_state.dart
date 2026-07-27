@@ -84,9 +84,9 @@ class AppState extends ChangeNotifier {
   // onboarding
   int obIndex = 0;
   final List<Map<String, String>> onboarding = const [
-    {'title': 'Book blood tests in minutes', 'body': 'Browse trusted diagnostic tests & packages and book a home visit with just a few taps.'},
-    {'title': 'We come to you', 'body': 'Our trained phlebotomists collect samples from your home at a time that suits you.'},
-    {'title': 'Reports on your phone', 'body': 'Get notified the moment your report is ready - view, download or share instantly.'},
+    {'image': 'assets/board1.jpg'},
+    {'image': 'assets/board2.jpg'},
+    {'image': 'assets/board3.jpg'},
   ];
 
   // catalogue / search
@@ -152,6 +152,11 @@ class AppState extends ChangeNotifier {
   // ----- onboarding / auth -----
   void goOnboarding() => go('onboarding');
   void skipOnboarding() => go('login');
+  void setObIndex(int index) {
+    obIndex = index;
+    notifyListeners();
+  }
+
   void nextOnboarding() {
     if (obIndex >= onboarding.length - 1) {
       go('login');
