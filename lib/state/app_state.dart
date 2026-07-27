@@ -183,6 +183,8 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    otp = ['', '', '', ''];
+    otpError = false;
     go('otp');
   }
 

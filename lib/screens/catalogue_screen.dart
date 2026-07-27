@@ -84,75 +84,91 @@ class CatalogueScreen extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(16)),
-                    child: Row(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(0),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(0),
-                            child: Image.asset(
-                              t.image.isNotEmpty ? t.image : 'assets/cbc.jpg',
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.medical_services, color: Color(0xFF94A3B8), size: 30);
-                              },
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 70,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.asset(
+                                  t.image.isNotEmpty ? t.image : 'assets/cbc.jpg',
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(Icons.medical_services, color: Color(0xFF94A3B8), size: 26);
+                                  },
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(child: Text(t.name, style: AppTextStyles.bodyBold.copyWith(fontSize: 14))),
-                                  if (t.isPackage)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(color: AppColors.secondaryTint, borderRadius: BorderRadius.circular(100)),
-                                      child: const Text('PACKAGE', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: AppColors.secondary)),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  Text('Reports: 11 hrs', style: AppTextStyles.bodySmall.copyWith(fontSize: 11, color: AppColors.textMuted)),
-                                  const SizedBox(width: 12),
-                                  Text('Parameters: 26', style: AppTextStyles.bodySmall.copyWith(fontSize: 11, color: AppColors.textMuted)),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-                                    Text('₹${t.price}', style: AppTextStyles.bodyBold.copyWith(fontSize: 15)),
-                                    const SizedBox(width: 6),
-                                    Text('₹${t.mrp}', style: const TextStyle(fontSize: 12, color: AppColors.textMuted, decoration: TextDecoration.lineThrough)),
-                                  ]),
-                                  OutlinedButton(
-                                    onPressed: () => app.addToCart(t.id),
-                                    style: OutlinedButton.styleFrom(
-                                      backgroundColor: inCart ? const Color(0xFF15803D) : Colors.white,
-                                      side: const BorderSide(color: Color(0xFF15803D), width: 1.5),
-                                      minimumSize: const Size(0, 34),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                    ),
-                                    child: Text(inCart ? 'Added' : 'Add to Cart', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: inCart ? Colors.white : const Color(0xFF15803D))),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(child: Text(t.name, style: AppTextStyles.bodyBold.copyWith(fontSize: 14))),
+                                      if (t.isPackage)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(color: AppColors.secondaryTint, borderRadius: BorderRadius.circular(100)),
+                                          child: const Text('PACKAGE', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: AppColors.secondary)),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Text('Reports: 11 hrs', style: AppTextStyles.bodySmall.copyWith(fontSize: 11, color: AppColors.textMuted)),
+                                      const Padding(
+                                        padding: EdgeInsets.symmetric(horizontal: 6),
+                                        child: Text('•', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                                      ),
+                                      Text('Parameters: 26', style: AppTextStyles.bodySmall.copyWith(fontSize: 11, color: AppColors.textMuted)),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                Text('₹${t.price}', style: AppTextStyles.bodyBold.copyWith(fontSize: 15.5)),
+                                const SizedBox(width: 6),
+                                Text('₹${t.mrp}', style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted, decoration: TextDecoration.lineThrough)),
+                              ],
+                            ),
+                            OutlinedButton(
+                              onPressed: () => app.addToCart(t.id),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: inCart ? const Color(0xFF15803D) : Colors.white,
+                                side: const BorderSide(color: Color(0xFF15803D), width: 1.5),
+                                minimumSize: const Size(0, 32),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+                              ),
+                              child: Text(
+                                inCart ? 'Added' : 'Add to Cart',
+                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: inCart ? Colors.white : const Color(0xFF15803D)),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

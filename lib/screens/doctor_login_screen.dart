@@ -3,25 +3,63 @@ import 'package:provider/provider.dart';
 import '../state/app_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
-import '../widgets/back_header.dart';
 import '../widgets/primary_button.dart';
 
-class DoctorLoginScreen extends StatelessWidget {
+class DoctorLoginScreen extends StatefulWidget {
   const DoctorLoginScreen({super.key});
+
+  @override
+  State<DoctorLoginScreen> createState() => _DoctorLoginScreenState();
+}
+
+class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     return Container(
       color: AppColors.surface,
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
+      padding: const EdgeInsets.fromLTRB(24, 50, 24, 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          BackHeader(title: '', onBack: app.back, padding: const EdgeInsets.only(top: 20, bottom: 8)),
           Container(
-            width: 56, height: 56,
-            decoration: BoxDecoration(color: AppColors.secondaryTint, borderRadius: BorderRadius.circular(16)),
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFF0FDFA), Color(0xFFCCFBF1)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.secondary.withOpacity(0.15), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.secondary.withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
             child: const Icon(Icons.medical_services, color: AppColors.secondary, size: 28),
           ),
           const SizedBox(height: 24),
@@ -31,11 +69,31 @@ class DoctorLoginScreen extends StatelessWidget {
           const SizedBox(height: 28),
           Text('Registered mobile number', style: AppTextStyles.bodySmallBold.copyWith(fontSize: 12)),
           const SizedBox(height: 8),
-          Container(
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
             height: 52,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(border: Border.all(color: app.doctorPhoneError ? AppColors.danger : AppColors.border, width: 1.5), borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              border: Border.all(
+                color: app.doctorPhoneError 
+                    ? AppColors.danger 
+                    : (_isFocused ? AppColors.secondary : AppColors.border), 
+                width: 1.5,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: _isFocused && !app.doctorPhoneError
+                  ? [
+                      BoxShadow(
+                        color: AppColors.secondary.withOpacity(0.08),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      )
+                    ]
+                  : null,
+            ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text('+91', style: AppTextStyles.bodyBold.copyWith(fontSize: 15)),
                 const SizedBox(width: 8),
@@ -43,10 +101,17 @@ class DoctorLoginScreen extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
+                    focusNode: _focusNode,
                     keyboardType: TextInputType.phone,
                     maxLength: 10,
                     onChanged: app.setDoctorPhone,
-                    decoration: const InputDecoration(border: InputBorder.none, counterText: ''),
+                    textAlignVertical: TextAlignVertical.center,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      counterText: '',
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    ),
                     style: AppTextStyles.bodyBold.copyWith(fontSize: 15),
                   ),
                 ),
@@ -58,7 +123,22 @@ class DoctorLoginScreen extends StatelessWidget {
             const Text('Enter a valid 10-digit mobile number not starting with 0', style: TextStyle(color: AppColors.danger, fontSize: 12, fontWeight: FontWeight.w500)),
           ],
           const Spacer(),
-          AppButton(label: 'Send OTP & Continue', color: AppColors.secondary, onPressed: app.doctorLogin),
+          AppButton(label: 'Send OTP & Continue', color: AppColors.secondary, onPressed: app.doctorPhone.length == 10 ? app.doctorLogin : null),
+          const SizedBox(height: 24),
+          Center(
+            child: GestureDetector(
+              onTap: () => app.go('login'),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Users login", style: TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600)),
+                  SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_rounded, color: AppColors.primary, size: 14),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

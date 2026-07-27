@@ -15,6 +15,25 @@ class OtpScreen extends StatefulWidget {
 
 class _OtpScreenState extends State<OtpScreen> {
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
+  int _focusedIndex = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    for (int i = 0; i < 4; i++) {
+      _focusNodes[i].addListener(() {
+        if (_focusNodes[i].hasFocus) {
+          setState(() {
+            _focusedIndex = i;
+          });
+        } else if (_focusedIndex == i) {
+          setState(() {
+            _focusedIndex = -1;
+          });
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -41,13 +60,38 @@ class _OtpScreenState extends State<OtpScreen> {
           const SizedBox(height: 28),
           Row(
             children: List.generate(4, (i) {
+              final isFocused = _focusedIndex == i;
+              final hasValue = app.otp[i].isNotEmpty;
               return Padding(
                 padding: EdgeInsets.only(right: i < 3 ? 12 : 0),
-                child: SizedBox(
-                  width: 56, height: 60,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  width: 56,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: app.otpError
+                          ? AppColors.danger
+                          : AppColors.border,
+                      width: 1.5,
+                    ),
+                    boxShadow: (isFocused || hasValue) && !app.otpError
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 8,
+                              spreadRadius: 1.5,
+                              offset: const Offset(0, 2),
+                            )
+                          ]
+                        : null,
+                  ),
                   child: TextField(
                     focusNode: _focusNodes[i],
                     textAlign: TextAlign.center,
+                    textAlignVertical: TextAlignVertical.center,
                     keyboardType: TextInputType.number,
                     maxLength: 1,
                     onChanged: (v) {
@@ -58,21 +102,11 @@ class _OtpScreenState extends State<OtpScreen> {
                         _focusNodes[i - 1].requestFocus();
                       }
                     },
-                    cursorColor: const Color(0xFFEF4444),
-                    decoration: InputDecoration(
+                    cursorColor: AppColors.textPrimary,
+                    decoration: const InputDecoration(
                       counterText: '',
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(color: app.otpError ? AppColors.danger : (app.otp[i].isNotEmpty ? const Color(0xFFEF4444) : AppColors.border), width: 1.5),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(color: app.otpError ? AppColors.danger : const Color(0xFFEF4444), width: 1.5),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(color: app.otpError ? AppColors.danger : AppColors.border, width: 1.5),
-                      ),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
                     ),
                     style: AppTextStyles.h1.copyWith(fontSize: 22),
                   ),

@@ -105,13 +105,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
                             });
                           },
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
+                            backgroundColor: AppColors.primaryTint,
+                            side: BorderSide(color: AppColors.primary.withOpacity(0.15), width: 1.2),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                             minimumSize: const Size(0, 48),
                           ),
                           child: const Text(
                             'Clear',
-                            style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600, fontSize: 15),
+                            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 15),
                           ),
                         ),
                       ),
@@ -125,8 +126,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                             Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF94A3B8),
-                            elevation: 0,
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 3,
+                            shadowColor: AppColors.primary.withOpacity(0.4),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                             minimumSize: const Size(0, 48),
                           ),
