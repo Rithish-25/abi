@@ -105,7 +105,35 @@ class ReportViewerScreen extends StatelessWidget {
                 onPressed: () async {
                   final pdfBytes = await generateReportPdf(r, rows);
                   final fileName = 'Report_${r.id}.pdf';
-                  await fh.downloadFile(fileName, pdfBytes);
+                  final savedPath = await fh.downloadFile(fileName, pdfBytes);
+                  final isDownloadDir = savedPath.contains('Download') || savedPath == 'Downloads folder';
+                  final msg = isDownloadDir 
+                      ? 'Report downloaded successfully to Downloads folder' 
+                      : 'Report downloaded successfully';
+                  
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                msg,
+                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                              ),
+                            ),
+                          ],
+                        ),
+                        backgroundColor: AppColors.success,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                        duration: const Duration(seconds: 3),
+                      ),
+                    );
+                  }
                 },
               )),
             ]),
