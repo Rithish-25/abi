@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
 import '../theme/app_colors.dart';
+import '../widgets/back_header.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -16,204 +17,286 @@ class ProfileScreen extends StatelessWidget {
     final phone = app.phone.isNotEmpty ? app.phone : '98949 13330';
 
     return Container(
-      color: const Color(0xFFF8FAFC),
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 50, 16, 96),
+      color: AppColors.background,
+      child: Column(
         children: [
-          // Back button
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: InkWell(
-                onTap: () => app.goTab('home', 'home'),
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  width: 40,
-                  height: 40,
+          BackHeader(
+            title: 'Profile',
+            onBack: () => app.goTab(isDoc ? 'doctor' : 'home', isDoc ? 'doctorDashboard' : 'home'),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              children: [
+                // 1. Header user details card
+                Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: AppColors.primary),
-                ),
-              ),
-            ),
-          ),
-          // 1. Header user details card
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0F2FE),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.person,
-                        color: Color(0xFF0284C7), // Blue icon
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name,
-                            style: const TextStyle(
-                              color: Color(0xFF1E3A8A), // Deep navy
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
+                  padding: const EdgeInsets.all(18),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '+91 $phone',
-                            style: const TextStyle(
-                              color: Color(0xFF64748B), // Slate grey
-                              fontSize: 12.5,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF2563EB).withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.person_rounded,
+                          color: Colors.white,
+                          size: 28,
+                        ),
                       ),
-                    ),
-                    const Icon(
-                      Icons.edit_outlined,
-                      color: Color(0xFF94A3B8),
-                      size: 20,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // 2. My Details Section
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
-            child: Text(
-              'My Details',
-              style: TextStyle(
-                color: Color(0xFF1E3A8A), // Deep navy
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Column(
-              children: [
-                _buildMenuItem(
-                  icon: Icons.group,
-                  label: 'Family Members',
-                  onTap: () => app.go('familyMembers'),
-                ),
-                const Divider(color: Color(0xFFF1F5F9), height: 1),
-                _buildMenuItem(
-                  icon: Icons.file_upload,
-                  label: 'Upload Medical Records',
-                  onTap: () => app.goTab('records', 'records'),
-                ),
-                const Divider(color: Color(0xFFF1F5F9), height: 1),
-                _buildMenuItem(
-                  icon: Icons.location_on,
-                  label: 'Address book',
-                  onTap: () => app.go('savedAddresses'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // 3. Legal & Privacy Section
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
-            child: Text(
-              'Legal & Privacy',
-              style: TextStyle(
-                color: Color(0xFF1E3A8A), // Deep navy
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Column(
-              children: [
-                _buildMenuItem(
-                  icon: Icons.shield,
-                  label: 'Privacy Policy',
-                  onTap: () {},
-                ),
-                const Divider(color: Color(0xFFF1F5F9), height: 1),
-                _buildMenuItem(
-                  icon: Icons.assignment,
-                  label: 'Terms & Conditions',
-                  onTap: () {},
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // 4. Logout Section
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: InkWell(
-              onTap: app.logout,
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                width: double.infinity,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEF4444), // Vibrant Red background
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                alignment: Alignment.center,
-                child: const Text(
-                  'Logout',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '+91 $phone',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF1F5F9),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.edit_rounded,
+                          color: AppColors.textSecondary,
+                          size: 18,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Center(
-            child: Text(
-              'Abirami Laboratory v1.0.0',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                const SizedBox(height: 24),
+
+                // 2. My Details Section
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 10),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'My Details',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      _buildMenuItem(
+                        icon: Icons.group_rounded,
+                        label: 'Family Members',
+                        onTap: () => app.go('familyMembers'),
+                        iconColor: AppColors.primary,
+                        iconBg: AppColors.primaryTint,
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Divider(color: Color(0xFFF1F5F9), height: 1),
+                      ),
+                      _buildMenuItem(
+                        icon: Icons.cloud_upload_rounded,
+                        label: 'Upload Medical Records',
+                        onTap: () => app.goTab('records', 'records'),
+                        iconColor: AppColors.secondary,
+                        iconBg: AppColors.secondaryTint,
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Divider(color: Color(0xFFF1F5F9), height: 1),
+                      ),
+                      _buildMenuItem(
+                        icon: Icons.location_on_rounded,
+                        label: 'Address book',
+                        onTap: () => app.go('savedAddresses'),
+                        iconColor: Colors.orange,
+                        iconBg: Colors.orange.withOpacity(0.1),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // 3. Legal & Privacy Section
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 10),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Legal & Privacy',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      _buildMenuItem(
+                        icon: Icons.shield_rounded,
+                        label: 'Privacy Policy',
+                        onTap: () {},
+                        iconColor: Colors.teal,
+                        iconBg: Colors.teal.withOpacity(0.1),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Divider(color: Color(0xFFF1F5F9), height: 1),
+                      ),
+                      _buildMenuItem(
+                        icon: Icons.assignment_rounded,
+                        label: 'Terms & Conditions',
+                        onTap: () {},
+                        iconColor: Colors.indigo,
+                        iconBg: Colors.indigo.withOpacity(0.1),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // 4. Logout Section
+                InkWell(
+                  onTap: app.logout,
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    width: double.infinity,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFEF4444).withOpacity(0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'Logout',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Center(
+                  child: Text(
+                    'Abirami Laboratory v1.0.0',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -225,33 +308,43 @@ class ProfileScreen extends StatelessWidget {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    required Color iconColor,
+    required Color iconBg,
   }) {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: const Color(0xFF334155), // Slate-700
-              size: 20,
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: 18,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
                 style: const TextStyle(
-                  color: Color(0xFF334155),
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
             const Icon(
-              Icons.chevron_right,
-              color: Color(0xFF94A3B8),
-              size: 18,
+              Icons.chevron_right_rounded,
+              color: AppColors.textMuted,
+              size: 20,
             ),
           ],
         ),

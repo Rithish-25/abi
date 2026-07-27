@@ -14,7 +14,7 @@ class DoctorProfileScreen extends StatelessWidget {
     return Container(
       color: AppColors.background,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 96),
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 30),
         children: [
           // 1. Back button row
           Align(

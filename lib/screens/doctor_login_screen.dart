@@ -123,7 +123,7 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
             const Text('Enter a valid 10-digit mobile number not starting with 0', style: TextStyle(color: AppColors.danger, fontSize: 12, fontWeight: FontWeight.w500)),
           ],
           const Spacer(),
-          AppButton(label: 'Send OTP & Continue', color: AppColors.secondary, onPressed: app.doctorPhone.length == 10 ? app.doctorLogin : null),
+          AppButton(label: 'Continue', color: AppColors.secondary, onPressed: app.doctorPhone.length == 10 ? app.doctorLogin : null),
           const SizedBox(height: 24),
           Center(
             child: GestureDetector(
