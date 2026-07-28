@@ -146,14 +146,10 @@ class CatalogueScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.baseline,
-                              textBaseline: TextBaseline.alphabetic,
-                              children: [
-                                Text('₹${t.price}', style: AppTextStyles.bodyBold.copyWith(fontSize: 15.5)),
-                                const SizedBox(width: 6),
-                                Text('₹${t.mrp}', style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted, decoration: TextDecoration.lineThrough)),
-                              ],
+                            Container(
+                              width: 70,
+                              alignment: Alignment.center,
+                              child: Text('₹${t.price}', style: AppTextStyles.bodyBold.copyWith(fontSize: 15.5)),
                             ),
                             OutlinedButton(
                               onPressed: () => app.addToCart(t.id),

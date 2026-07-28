@@ -167,16 +167,16 @@ class HomeScreen extends StatelessWidget {
                     const PromoCarousel(),
                     const SizedBox(height: 24),
                     Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                      Text('Blood Test Packages', style: AppTextStyles.h4),
-                      GestureDetector(onTap: () => app.go('catalogue'), child: const Text('See all', style: TextStyle(color: Color(0xFF15803D), fontSize: 12, fontWeight: FontWeight.w600))),
+                      Text('Blood Test Packages', style: AppTextStyles.h4.copyWith(fontSize: 18)),
+                      GestureDetector(onTap: () => app.go('catalogue'), child: const Text('See all', style: TextStyle(color: Color(0xFF15803D), fontSize: 15, fontWeight: FontWeight.bold))),
                     ]),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 6),
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        childAspectRatio: 0.8,
+                        childAspectRatio: 0.7,
                         crossAxisSpacing: 10,
                         mainAxisSpacing: 10,
                       ),
@@ -217,6 +217,7 @@ class HomeScreen extends StatelessWidget {
                                     left: 0,
                                     right: 0,
                                     child: Container(
+                                      height: 108,
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
                                         color: Colors.white.withOpacity(0.95),
@@ -227,27 +228,26 @@ class HomeScreen extends StatelessWidget {
                                         children: [
                                           Text(
                                             t.short,
-                                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                                             overflow: TextOverflow.ellipsis,
                                             maxLines: 1,
                                           ),
-                                          const SizedBox(height: 6),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text('₹${t.price}', style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.primary)),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                decoration: BoxDecoration(
-                                                  border: Border.all(color: const Color(0xFF15803D), width: 1.0),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                ),
-                                                child: const Text(
-                                                  'View Details',
-                                                  style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, color: Color(0xFF15803D)),
-                                                ),
-                                              ),
-                                            ],
+                                          const SizedBox(height: 4),
+                                          Text('₹${t.price}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                                          const Spacer(),
+                                          Container(
+                                            width: double.infinity,
+                                            alignment: Alignment.center,
+                                            padding: const EdgeInsets.symmetric(vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF15803D).withOpacity(0.06),
+                                              border: Border.all(color: const Color(0xFF15803D), width: 1.2),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: const Text(
+                                              'View Details',
+                                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF15803D), letterSpacing: 0.2),
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -294,17 +294,88 @@ class HomeScreen extends StatelessWidget {
                     ),
 
                     Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
-                      child: Row(children: [
-                        Container(width: 40, height: 40, decoration: BoxDecoration(color: AppColors.dangerTint, borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.phone, color: AppColors.danger)),
-                        const SizedBox(width: 12),
-                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
-                          Text('Need help?', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
-                          Text('Call the lab directly', style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
-                        ])),
-                        const Text('9894913330', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 13)),
-                      ]),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF), // Soft blue tint background
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFBFDBFE), width: 1.2), // Light blue border
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2563EB).withOpacity(0.04),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2563EB), // Solid blue icon background
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.phone, color: Colors.white, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Need help?',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: Color(0xFF1E3A8A), // Dark blue text
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Call the lab directly',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: const Color(0xFF1E3A8A).withOpacity(0.7),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Premium Call Button Pill
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2563EB), // Solid blue call button
+                              borderRadius: BorderRadius.circular(100),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF2563EB).withOpacity(0.25),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.call, color: Colors.white, size: 12),
+                                SizedBox(width: 4),
+                                Text(
+                                  '9894913330',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

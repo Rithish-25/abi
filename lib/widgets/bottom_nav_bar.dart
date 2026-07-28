@@ -73,69 +73,72 @@ class BottomNavBar extends StatelessWidget {
             _NavTab('profile', 'Profile'),
           ];
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      height: 72,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(36),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: tabs.map((t) {
-          final active = _isTabActive(t.key, app.screen, isDoctor);
-          final labelColor = active ? const Color(0xFF15803D) : const Color(0xFF64748B);
+    return SafeArea(
+      top: false,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        height: 72,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(36),
+          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: tabs.map((t) {
+            final active = _isTabActive(t.key, app.screen, isDoctor);
+            final labelColor = active ? const Color(0xFF15803D) : const Color(0xFF64748B);
 
-          return Expanded(
-            child: Align(
-              alignment: Alignment.center,
-              child: InkWell(
-                onTap: () {
-                  app.goTab(isDoctor ? 'doctor' : t.key, t.key);
-                },
-                borderRadius: BorderRadius.circular(24),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: active ? const Color(0xFF15803D) : Colors.transparent,
-                      width: 1.2,
-                    ),
-                    color: active ? const Color(0xFF15803D).withOpacity(0.04) : Colors.transparent,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildIcon(t.key, active),
-                      const SizedBox(height: 2),
-                      Text(
-                        t.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                          color: labelColor,
-                        ),
+            return Expanded(
+              child: Align(
+                alignment: Alignment.center,
+                child: InkWell(
+                  onTap: () {
+                    app.goTab(isDoctor ? 'doctor' : t.key, t.key);
+                  },
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: active ? const Color(0xFF15803D) : Colors.transparent,
+                        width: 1.2,
                       ),
-                    ],
+                      color: active ? const Color(0xFF15803D).withOpacity(0.04) : Colors.transparent,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildIcon(t.key, active),
+                        const SizedBox(height: 2),
+                        Text(
+                          t.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                            color: labelColor,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
