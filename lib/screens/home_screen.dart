@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../data/mock_data.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
@@ -240,13 +239,12 @@ class HomeScreen extends StatelessWidget {
                                             alignment: Alignment.center,
                                             padding: const EdgeInsets.symmetric(vertical: 8),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF15803D).withOpacity(0.06),
-                                              border: Border.all(color: const Color(0xFF15803D), width: 1.2),
+                                              color: const Color(0xFF15803D),
                                               borderRadius: BorderRadius.circular(8),
                                             ),
                                             child: const Text(
                                               'View Details',
-                                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF15803D), letterSpacing: 0.2),
+                                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.2),
                                             ),
                                           ),
                                         ],
@@ -293,112 +291,11 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
 
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF), // Soft blue tint background
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFBFDBFE), width: 1.2), // Light blue border
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2563EB).withOpacity(0.04),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2563EB), // Solid blue icon background
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.phone, color: Colors.white, size: 20),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Need help?',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    color: Color(0xFF1E3A8A), // Dark blue text
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Call the lab directly',
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    color: const Color(0xFF1E3A8A).withOpacity(0.7),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          // Premium Call Button Pill
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2563EB), // Solid blue call button
-                              borderRadius: BorderRadius.circular(100),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF2563EB).withOpacity(0.25),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.call, color: Colors.white, size: 12),
-                                SizedBox(width: 4),
-                                Text(
-                                  '9894913330',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+
                   ],
                 ),
               ),
             ],
-          ),
-          Positioned(
-            right: 16, bottom: 16,
-            child: Column(
-              children: [
-                Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle, boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 20, offset: const Offset(0,8))]),
-                  child: const Icon(Icons.phone, color: Colors.white, size: 20),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: 44, height: 44,
-                  decoration: const BoxDecoration(color: Color(0xFF25D366), shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0x6625D366), blurRadius: 20, offset: Offset(0,8))]),
-                  child: const Icon(FontAwesomeIcons.whatsapp, color: Colors.white, size: 20),
-                ),
-              ],
-            ),
           ),
         ],
       ),

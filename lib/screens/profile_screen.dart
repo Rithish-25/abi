@@ -249,7 +249,95 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+
+                // Need Help Card (Moved from Home Screen)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF), // Soft blue tint background
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFBFDBFE), width: 1.2), // Light blue border
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF2563EB).withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2563EB), // Solid blue icon background
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.headset_mic, color: Colors.white, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Need help?',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Color(0xFF1E3A8A), // Dark blue text
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Call the lab directly',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: const Color(0xFF1E3A8A).withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Premium Call Button Pill
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2563EB), // Solid blue call button
+                          borderRadius: BorderRadius.circular(100),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF2563EB).withOpacity(0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.call, color: Colors.white, size: 12),
+                            SizedBox(width: 4),
+                            Text(
+                              '9894913330',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
 
                 // 4. Logout Section
                 InkWell(

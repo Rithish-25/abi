@@ -121,13 +121,6 @@ class BookingDetailsScreen extends StatelessWidget {
                   AppButton(label: 'View Report', variant: ButtonVariant.outline, onPressed: app.openBookingReport),
                   const SizedBox(height: 10),
                 ],
-                Center(
-                  child: Row(mainAxisSize: MainAxisSize.min, children: const [
-                    Icon(Icons.phone, size: 16, color: AppColors.textSecondary),
-                    SizedBox(width: 8),
-                    Text('Need help? Call 9894913330', style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
-                  ]),
-                ),
                 const SizedBox(height: 20),
               ],
             ),

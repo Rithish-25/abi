@@ -91,7 +91,7 @@ class ReportViewerScreen extends StatelessWidget {
                 label: 'Share',
                 icon: Icons.ios_share,
                 variant: ButtonVariant.outline,
-                color: const Color(0xFF334155),
+                color: const Color(0xFF15803D),
                 onPressed: () async {
                   final pdfBytes = await generateReportPdf(r, rows);
                   final fileName = 'Report_${r.id}.pdf';

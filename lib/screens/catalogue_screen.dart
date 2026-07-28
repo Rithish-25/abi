@@ -154,14 +154,22 @@ class CatalogueScreen extends StatelessWidget {
                             OutlinedButton(
                               onPressed: () => app.addToCart(t.id),
                               style: OutlinedButton.styleFrom(
-                                backgroundColor: inCart ? const Color(0xFF15803D) : Colors.white,
-                                side: const BorderSide(color: Color(0xFF15803D), width: 1.5),
+                                backgroundColor: inCart ? const Color(0xFFF1F5F9) : const Color(0xFF15803D),
+                                side: BorderSide(
+                                  color: inCart ? const Color(0xFFCBD5E1) : const Color(0xFF15803D),
+                                  width: 1.2,
+                                ),
                                 minimumSize: const Size(0, 32),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
                               ),
                               child: Text(
                                 inCart ? 'Added' : 'Add to Cart',
-                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: inCart ? Colors.white : const Color(0xFF15803D)),
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: inCart ? const Color(0xFF64748B) : Colors.white,
+                                ),
                               ),
                             ),
                           ],

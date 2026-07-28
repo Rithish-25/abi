@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'state/app_state.dart';
 import 'theme/app_colors.dart';
 import 'widgets/bottom_nav_bar.dart';
@@ -201,28 +202,79 @@ class AppRoot extends StatelessWidget {
             statusBarIconBrightness: Brightness.dark,
             statusBarBrightness: Brightness.light,
           ),
-          child: Column(
+          child: Stack(
             children: [
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  transitionBuilder: (child, animation) {
-                    final offsetAnimation = Tween<Offset>(
-                      begin: const Offset(0.08, 0.0),
-                      end: Offset.zero,
-                    ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
-                    return SlideTransition(
-                      position: offsetAnimation,
-                      child: FadeTransition(
-                        opacity: animation,
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: KeyedSubtree(key: ValueKey(app.screen), child: _buildScreen(app.screen)),
-                ),
+              Column(
+                children: [
+                  Expanded(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      transitionBuilder: (child, animation) {
+                        final offsetAnimation = Tween<Offset>(
+                          begin: const Offset(0.08, 0.0),
+                          end: Offset.zero,
+                        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+                        return SlideTransition(
+                          position: offsetAnimation,
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: KeyedSubtree(key: ValueKey(app.screen), child: _buildScreen(app.screen)),
+                    ),
+                  ),
+                  if (showNav) const BottomNavBar(),
+                ],
               ),
-              if (showNav) const BottomNavBar(),
+              // Floating headset & WhatsApp support buttons (User module pages only)
+              if (app.activeTab != 'doctor' &&
+                  !['splash', 'onboarding', 'login', 'doctorLogin', 'otp'].contains(app.screen) &&
+                  !isKeyboardOpen)
+                Positioned(
+                  right: 16,
+                  bottom: 96, // Positioned at a consistent height above bottom bars to prevent content overlap
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            )
+                          ],
+                        ),
+                        child: const Icon(Icons.headset_mic, color: Colors.white, size: 20),
+                      ),
+                      if (app.screen == 'home' || app.screen == 'profile') ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF25D366),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x6625D366),
+                                blurRadius: 20,
+                                offset: Offset(0, 8),
+                              )
+                            ],
+                          ),
+                          child: const Icon(FontAwesomeIcons.whatsapp, color: Colors.white, size: 20),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
             ],
           ),
         ),

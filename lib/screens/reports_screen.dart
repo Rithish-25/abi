@@ -126,10 +126,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                             Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: const Color(0xFF15803D),
                             foregroundColor: Colors.white,
                             elevation: 3,
-                            shadowColor: AppColors.primary.withOpacity(0.4),
+                            shadowColor: const Color(0xFF15803D).withOpacity(0.4),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                             minimumSize: const Size(0, 48),
                           ),
@@ -253,17 +253,75 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           onTap: () => app.openReport(r.id),
                           borderRadius: BorderRadius.circular(16),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(16)),
-                            child: Row(children: [
-                              Container(width: 44, height: 44, decoration: BoxDecoration(color: const Color(0xFFDC2626), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.description, color: Colors.white, size: 20)),
-                              const SizedBox(width: 12),
-                              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                Text(r.name, style: AppTextStyles.bodyBold.copyWith(fontSize: 13.5)),
-                                Text('${r.member} · ${r.date}', style: AppTextStyles.caption.copyWith(fontSize: 12)),
-                              ])),
-                              const Icon(Icons.chevron_right, color: AppColors.textMuted),
-                            ]),
+                            height: 128,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(color: AppColors.border),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFDC2626),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Icon(Icons.description, color: Colors.white, size: 18),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            r.name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTextStyles.bodyBold.copyWith(fontSize: 13.5),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '${r.member} · ${r.date}',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTextStyles.caption.copyWith(fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Spacer(),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 40,
+                                  child: OutlinedButton(
+                                    onPressed: () => app.openReport(r.id),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: const Color(0xFF15803D),
+                                      backgroundColor: const Color(0xFF15803D).withOpacity(0.04), // soft green tint background fill
+                                      side: const BorderSide(color: Color(0xFF15803D), width: 1.5),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                    child: const Text(
+                                      'View Details',
+                                      style: TextStyle(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF15803D),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },

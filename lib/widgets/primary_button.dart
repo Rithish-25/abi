@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/app_spacing.dart';
 
@@ -17,7 +16,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.variant = ButtonVariant.filled,
-    this.color = AppColors.primary,
+    this.color = const Color(0xFF15803D),
     this.icon,
   });
 

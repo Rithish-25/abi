@@ -19,9 +19,7 @@ class BottomNavBar extends StatelessWidget {
   }
 
   Widget _buildIcon(String key, bool active) {
-    const activeColor = Color(0xFF15803D); // Forest green active color
-    const inactiveColor = Color(0xFF64748B); // Slate grey inactive color
-    final color = active ? activeColor : inactiveColor;
+    final color = active ? Colors.white : Colors.white.withOpacity(0.65);
 
     switch (key) {
       // Patient tabs
@@ -79,13 +77,13 @@ class BottomNavBar extends StatelessWidget {
         margin: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         height: 72,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFF2563EB), // Blue background
           borderRadius: BorderRadius.circular(36),
-          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+          border: Border.all(color: Colors.white, width: 2.0), // White outline/border
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 12,
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 16,
               offset: const Offset(0, 4),
             ),
           ],
@@ -95,7 +93,7 @@ class BottomNavBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: tabs.map((t) {
             final active = _isTabActive(t.key, app.screen, isDoctor);
-            final labelColor = active ? const Color(0xFF15803D) : const Color(0xFF64748B);
+            final labelColor = active ? Colors.white : Colors.white.withOpacity(0.65);
 
             return Expanded(
               child: Align(
@@ -110,10 +108,10 @@ class BottomNavBar extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: active ? const Color(0xFF15803D) : Colors.transparent,
+                        color: active ? Colors.white : Colors.transparent,
                         width: 1.2,
                       ),
-                      color: active ? const Color(0xFF15803D).withOpacity(0.04) : Colors.transparent,
+                      color: active ? Colors.white.withOpacity(0.15) : Colors.transparent,
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,

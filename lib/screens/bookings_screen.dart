@@ -154,7 +154,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: ElevatedButton(
+                      child: ElevatedButton(
                           onPressed: () {
                             setState(() {
                               _selectedStatuses = tempStatuses;
@@ -162,10 +162,10 @@ class _BookingsScreenState extends State<BookingsScreen> {
                             Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: const Color(0xFF15803D),
                             foregroundColor: Colors.white,
                             elevation: 3,
-                            shadowColor: AppColors.primary.withOpacity(0.4),
+                            shadowColor: const Color(0xFF15803D).withOpacity(0.4),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                             minimumSize: const Size(0, 48),
                           ),
@@ -296,45 +296,69 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           borderRadius: BorderRadius.circular(16),
                           child: Padding(
                             padding: EdgeInsets.all(b.testNames.length > 1 ? 20 : 16),
-                            child: Row(
+                            child: Column(
                               children: [
-                                Container(
-                                  width: b.testNames.length > 1 ? 90 : 80,
-                                  height: b.testNames.length > 1 ? 90 : 80,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: _buildTestImage(b.testNames.first),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: b.testNames.length > 1 ? 90 : 80,
+                                      height: b.testNames.length > 1 ? 90 : 80,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF1F5F9),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: _buildTestImage(b.testNames.first),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Expanded(
-                                            child: Text(
-                                              'Booking ID: ${b.id}',
-                                              style: AppTextStyles.bodyBold.copyWith(fontSize: 12.5),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  'Booking ID: ${b.id}',
+                                                  style: AppTextStyles.bodyBold.copyWith(fontSize: 12.5),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              StatusBadge(b.status),
+                                            ],
                                           ),
-                                          const SizedBox(width: 8),
-                                          StatusBadge(b.status),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            b.testSummary,
+                                            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                                          ),
                                         ],
                                       ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        b.testSummary,
-                                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
-                                      ),
-                                    ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  width: double.infinity,
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF15803D).withOpacity(0.04),
+                                    border: Border.all(color: const Color(0xFF15803D), width: 1.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Text(
+                                    'View Details',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF15803D),
+                                      letterSpacing: 0.2,
+                                    ),
                                   ),
                                 ),
                               ],

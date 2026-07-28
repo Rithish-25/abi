@@ -7,10 +7,10 @@ class AppTextStyles {
   static TextStyle _base(double size, FontWeight w, Color c, {double? height, double? letterSpacing}) =>
       GoogleFonts.outfit(fontSize: size, fontWeight: w, color: c, height: height, letterSpacing: letterSpacing);
 
-  static TextStyle h1 = _base(22, FontWeight.w800, AppColors.textPrimary, letterSpacing: -0.2);
-  static TextStyle h2 = _base(20, FontWeight.w800, AppColors.textPrimary);
-  static TextStyle h3 = _base(17, FontWeight.w700, AppColors.textPrimary);
-  static TextStyle h4 = _base(15, FontWeight.w700, AppColors.textPrimary);
+  static TextStyle h1 = _base(22, FontWeight.w800, AppColors.primary, letterSpacing: -0.2);
+  static TextStyle h2 = _base(20, FontWeight.w800, AppColors.primary);
+  static TextStyle h3 = _base(17, FontWeight.w700, AppColors.primary);
+  static TextStyle h4 = _base(15, FontWeight.w700, AppColors.primary);
   static TextStyle bodyBold = _base(14, FontWeight.w600, AppColors.textPrimary);
   static TextStyle body = _base(14, FontWeight.w400, AppColors.textSecondary, height: 1.5);
   static TextStyle bodySmallBold = _base(12.5, FontWeight.w600, AppColors.textPrimary);
