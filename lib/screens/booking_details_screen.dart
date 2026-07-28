@@ -122,12 +122,12 @@ class BookingDetailsScreen extends StatelessWidget {
                     child: SizedBox(
                       width: double.infinity,
                       height: 36,
-                      child: OutlinedButton(
+                      child: ElevatedButton(
                         onPressed: app.openBookingReport,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF15803D),
-                          backgroundColor: Colors.transparent, // transparent/white background
-                          side: const BorderSide(color: Color(0xFF15803D), width: 1.5),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF15803D), // solid green fill
+                          foregroundColor: Colors.white,
+                          elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           padding: EdgeInsets.zero,
                         ),
@@ -136,7 +136,7 @@ class BookingDetailsScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF15803D),
+                            color: Colors.white,
                           ),
                         ),
                       ),
