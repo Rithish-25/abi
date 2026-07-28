@@ -298,24 +298,27 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                   ],
                                 ),
                                 const Spacer(),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 40,
-                                  child: OutlinedButton(
-                                    onPressed: () => app.openReport(r.id),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFF15803D),
-                                      backgroundColor: const Color(0xFF15803D).withOpacity(0.04), // soft green tint background fill
-                                      side: const BorderSide(color: Color(0xFF15803D), width: 1.5),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                      padding: EdgeInsets.zero,
-                                    ),
-                                    child: const Text(
-                                      'View Details',
-                                      style: TextStyle(
-                                        fontSize: 13.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF15803D),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  child: SizedBox(
+                                    width: double.infinity,
+                                    height: 36,
+                                    child: OutlinedButton(
+                                      onPressed: () => app.openReport(r.id),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: const Color(0xFF15803D),
+                                        backgroundColor: Colors.transparent, // transparent/white background
+                                        side: const BorderSide(color: Color(0xFF15803D), width: 1.5),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        padding: EdgeInsets.zero,
+                                      ),
+                                      child: const Text(
+                                        'View Details',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF15803D),
+                                        ),
                                       ),
                                     ),
                                   ),

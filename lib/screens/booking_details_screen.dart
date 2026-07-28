@@ -4,7 +4,6 @@ import '../state/app_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/back_header.dart';
-import '../widgets/primary_button.dart';
 
 class BookingDetailsScreen extends StatelessWidget {
   const BookingDetailsScreen({super.key});
@@ -117,8 +116,32 @@ class BookingDetailsScreen extends StatelessWidget {
                   _Row('Address', b.address),
                 ])),
                 const SizedBox(height: 14),
-                if (b.status == 'Report Ready') ...[
-                  AppButton(label: 'View Report', variant: ButtonVariant.outline, onPressed: app.openBookingReport),
+                 if (b.status == 'Report Ready') ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 36,
+                      child: OutlinedButton(
+                        onPressed: app.openBookingReport,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF15803D),
+                          backgroundColor: Colors.transparent, // transparent/white background
+                          side: const BorderSide(color: Color(0xFF15803D), width: 1.5),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: EdgeInsets.zero,
+                        ),
+                        child: const Text(
+                          'View Report',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF15803D),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 10),
                 ],
                 const SizedBox(height: 20),

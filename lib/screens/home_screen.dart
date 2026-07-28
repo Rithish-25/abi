@@ -169,8 +169,9 @@ class HomeScreen extends StatelessWidget {
                       Text('Blood Test Packages', style: AppTextStyles.h4.copyWith(fontSize: 18)),
                       GestureDetector(onTap: () => app.go('catalogue'), child: const Text('See all', style: TextStyle(color: Color(0xFF15803D), fontSize: 15, fontWeight: FontWeight.bold))),
                     ]),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     GridView.builder(
+                      padding: EdgeInsets.zero,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
