@@ -22,9 +22,8 @@ class BackHeader extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.primary,
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.03),
@@ -33,7 +32,7 @@ class BackHeader extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(Icons.chevron_left_rounded, size: 24, color: AppColors.primary),
+              child: const Icon(Icons.chevron_left_rounded, size: 24, color: Colors.white),
             ),
           ),
           const SizedBox(width: 20),

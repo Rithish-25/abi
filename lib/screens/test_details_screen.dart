@@ -49,9 +49,8 @@ class TestDetailsScreen extends StatelessWidget {
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppColors.primary,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withOpacity(0.08),
@@ -60,7 +59,7 @@ class TestDetailsScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: AppColors.primary),
+                              child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Colors.white),
                             ),
                           ),
                         ),
