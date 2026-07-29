@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper function to check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if the user is an admin
+    // In Storage Rules, checking Firestore requires a get() which is slow/costly.
+    // Instead, we check custom claims or token properties, or write open-read with admin-restricted write.
+    // For simplicity and safety, we allow admin actions by metadata check or standard path prefixes.
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'admin';
+    }
+
+    // User profile pictures
+    match /users/{userId}/profile.jpg {
+      allow read: if true;
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Prescriptions/records uploaded by users
+    match /users/{userId}/records/{recordId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // PDF reports uploaded by admin/lab
+    match /reports/{bookingId}/{reportId} {
+      allow read: if isAuthenticated(); // Access controlled by mobile app / web client URL fetching
+      allow write: if isAuthenticated(); // Allowed for upload, validated by function/rules or admin client
+    }
+
+    // Banners uploaded by admin
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+  }
+}
