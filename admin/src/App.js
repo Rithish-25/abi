@@ -4,12 +4,17 @@ import {
   getDocs, 
   addDoc, 
   updateDoc, 
-  deleteDoc, 
   doc, 
   setDoc,
   onSnapshot 
 } from 'firebase/firestore';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence
+} from 'firebase/auth';
 import { db, auth } from './firebase';
 import './App.css';
 
@@ -87,15 +92,19 @@ const initialDoctors = [
   { id: 'doc2', name: 'Dr. Ramesh Kumar', phone: '9843217650', specialty: 'General Physician', totalReferrals: 1, totalCommission: 65 }
 ];
 
+const ADMIN_EMAIL = 'admin@gmail.com';
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activePage, setActivePage] = useState('dashboard');
-  const [adminPhone, setAdminPhone] = useState('');
+  const [adminEmail, setAdminEmail] = useState('');
   
   // Login input states
-  const [loginPhone, setLoginPhone] = useState('');
-  const [loginOtp, setLoginOtp] = useState('');
-  const [showOtpField, setShowOtpField] = useState(false);
+  const [loginStep, setLoginStep] = useState('email');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
   
   // Dynamic collections states
   const [tests, setTests] = useState(initialTests);
@@ -117,14 +126,63 @@ function App() {
     }, 4000);
   };
 
-  // Check login states in localStorage on mount
-  useEffect(() => {
-    const isLogged = localStorage.getItem('admin_logged') === 'true';
-    const phone = localStorage.getItem('admin_phone') || '';
-    if (isLogged) {
-      setIsAuthenticated(true);
-      setAdminPhone(phone);
+  const isValidEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  };
+
+  const isAllowedAdminEmail = (email) => {
+    return email.trim().toLowerCase() === ADMIN_EMAIL;
+  };
+
+  const getAuthErrorMessage = (error) => {
+    switch (error?.code) {
+      case 'auth/invalid-email':
+        return 'Enter a valid email address.';
+      case 'auth/user-disabled':
+        return 'This account has been disabled.';
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+      case 'auth/invalid-login-credentials':
+        return 'Invalid email or password.';
+      case 'auth/operation-not-allowed':
+        return 'Email/Password sign-in is not enabled in Firebase Authentication.';
+      case 'auth/too-many-requests':
+        return 'Too many attempts. Try again later.';
+      case 'auth/network-request-failed':
+        return 'Network error while signing in. Check your connection.';
+      default:
+        return error?.message || 'Sign-in failed. Please try again.';
     }
+  };
+
+  // Persist Firebase Auth across refreshes and keep the UI in sync with the signed-in user.
+  useEffect(() => {
+    setPersistence(auth, browserLocalPersistence).catch((error) => {
+      console.warn('Unable to enable persisted auth session:', error.message);
+    });
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user?.email && isAllowedAdminEmail(user.email)) {
+        setIsAuthenticated(true);
+        setAdminEmail(user.email);
+        setLoginEmail(user.email);
+        setLoginStep('email');
+        setAuthError('');
+      } else if (user?.email) {
+        signOut(auth).catch((error) => {
+          console.warn('Unable to clear unauthorized session:', error.message);
+        });
+        setIsAuthenticated(false);
+        setAdminEmail('');
+        setAuthError('Only the admin account can access the Admin Panel.');
+      } else {
+        setIsAuthenticated(false);
+        setAdminEmail('');
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Firebase listener & Seeding synchronization
@@ -228,37 +286,92 @@ function App() {
     }
   }, []);
 
-  // Direct login credentials or real-time passcode bypass
-  const handleRequestOtp = (e) => {
+  const handleContinueToPassword = (e) => {
     e.preventDefault();
-    if (loginPhone.length !== 10) {
-      addToast('Please enter a valid 10-digit mobile number.', 'danger');
+
+    const trimmedEmail = loginEmail.trim();
+    if (!isValidEmail(trimmedEmail)) {
+      const message = 'Please enter a valid email address.';
+      setAuthError(message);
+      addToast(message, 'danger');
       return;
     }
-    // Simulate SMS dispatch
-    setShowOtpField(true);
-    addToast('OTP verification code successfully sent via SMS bypass: 4392', 'success');
+
+    if (!isAllowedAdminEmail(trimmedEmail)) {
+      const message = 'Only the admin account can access the Admin Panel.';
+      setAuthError(message);
+      addToast(message, 'danger');
+      return;
+    }
+
+    setAuthError('');
+    setLoginEmail(trimmedEmail);
+    setLoginStep('password');
   };
 
-  const handleVerifyOtp = (e) => {
+  const handleSignIn = async (e) => {
     e.preventDefault();
-    if (loginOtp === '4392' || loginPhone === '9894913330') {
+
+    if (!loginEmail.trim()) {
+      setLoginStep('email');
+      setAuthError('Please enter your email address first.');
+      return;
+    }
+
+    if (!loginPassword.trim()) {
+      const message = 'Please enter your password.';
+      setAuthError(message);
+      addToast(message, 'danger');
+      return;
+    }
+
+    setAuthLoading(true);
+    setAuthError('');
+
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+      const credential = await signInWithEmailAndPassword(auth, loginEmail.trim(), loginPassword);
+      const signedInEmail = credential.user?.email || loginEmail.trim();
+
+      if (!isAllowedAdminEmail(signedInEmail)) {
+        await signOut(auth);
+        const message = 'Only the admin account can access the Admin Panel.';
+        setAuthError(message);
+        addToast(message, 'danger');
+        return;
+      }
+
       setIsAuthenticated(true);
-      setAdminPhone(loginPhone);
-      localStorage.setItem('admin_logged', 'true');
-      localStorage.setItem('admin_phone', loginPhone);
+      setAdminEmail(signedInEmail);
+      setLoginEmail(signedInEmail);
+      setLoginPassword('');
+      setLoginStep('email');
+      setActivePage('dashboard');
       addToast('Administrator authenticated successfully.', 'success');
-    } else {
-      addToast('Invalid OTP passcode. Please try again.', 'danger');
+    } catch (error) {
+      const message = getAuthErrorMessage(error);
+      setAuthError(message);
+      addToast(message, 'danger');
+    } finally {
+      setAuthLoading(false);
     }
   };
 
   const handleLogout = () => {
-    setIsAuthenticated(false);
-    setAdminPhone('');
-    localStorage.removeItem('admin_logged');
-    localStorage.removeItem('admin_phone');
-    addToast('Logged out of Admin Panel.', 'info');
+    signOut(auth)
+      .catch((error) => {
+        console.warn('Sign out failed:', error.message);
+      })
+      .finally(() => {
+        setIsAuthenticated(false);
+        setAdminEmail('');
+        setLoginEmail('');
+        setLoginPassword('');
+        setLoginStep('email');
+        setAuthError('');
+        setActivePage('dashboard');
+        addToast('Logged out of Admin Panel.', 'info');
+      });
   };
 
   // Firestore update helper callbacks
@@ -319,7 +432,7 @@ function App() {
   if (!isAuthenticated) {
     return (
       <div className="auth-page">
-        <div className="auth-card">
+        <div className="auth-card animate-fade-in">
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
             <div style={{
               width: '48px',
@@ -340,47 +453,73 @@ function App() {
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Sign in to manage Abirami Laboratory</p>
           </div>
 
-          <form onSubmit={showOtpField ? handleVerifyOtp : handleRequestOtp}>
-            {!showOtpField ? (
+          <form onSubmit={loginStep === 'email' ? handleContinueToPassword : handleSignIn} key={loginStep} className="animate-fade-in">
+            {authError ? (
+              <div style={{
+                marginBottom: '0.75rem',
+                padding: '0.75rem 1rem',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--danger-tint)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                color: 'var(--danger)',
+                fontSize: '0.8125rem',
+                lineHeight: 1.45
+              }}>
+                {authError}
+              </div>
+            ) : null}
+            {loginStep === 'email' ? (
               <>
                 <div className="form-group">
-                  <label className="form-label">Phone Number</label>
+                  <label className="form-label">Email</label>
                   <input
-                    type="text"
-                    value={loginPhone}
-                    onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="9894913330"
+                    type="email"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    placeholder="Enter admin email"
                     className="form-control"
+                    autoComplete="email"
                     required
                   />
                 </div>
                 <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }}>
-                  Send OTP Code
+                  Continue
                 </button>
               </>
             ) : (
               <>
                 <div className="form-group">
-                  <label className="form-label">Verification OTP Code (Bypass: 4392)</label>
+                  <label className="form-label">Password</label>
                   <input
-                    type="text"
-                    value={loginOtp}
-                    onChange={(e) => setLoginOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    placeholder="Enter 4-digit code"
+                    type="password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="Enter password"
                     className="form-control"
-                    maxLength={4}
+                    autoComplete="current-password"
                     required
                   />
                 </div>
-                <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }}>
-                  Verify & Sign In
+                <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} disabled={authLoading}>
+                  {authLoading ? (
+                    <span className="auth-loading">
+                      <span className="auth-spinner" />
+                      Signing In...
+                    </span>
+                  ) : (
+                    'Verify & Sign In'
+                  )}
                 </button>
                 <button 
-                  onClick={() => setShowOtpField(false)} 
+                  type="button"
+                  onClick={() => {
+                    setLoginStep('email');
+                    setAuthError('');
+                  }} 
                   className="btn btn-secondary" 
                   style={{ width: '100%', marginTop: '0.5rem' }}
                 >
-                  Change Phone Number
+                  Change Email
                 </button>
               </>
             )}
@@ -411,13 +550,13 @@ function App() {
         activePage={activePage} 
         setActivePage={setActivePage} 
         handleLogout={handleLogout}
-        adminPhone={adminPhone}
+        adminPhone={adminEmail}
       />
       
       <div className="main-content">
         <Header 
           activePage={activePage} 
-          adminPhone={adminPhone} 
+          adminPhone={adminEmail} 
           handleLogout={handleLogout}
         />
         
