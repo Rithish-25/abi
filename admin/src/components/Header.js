@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Search, Bell, Shield, ChevronDown, Check } from 'lucide-react';
+import { Search, Bell, Shield, ChevronDown, Menu, X } from 'lucide-react';
 
-const Header = ({ activePage, adminPhone, handleLogout }) => {
+const Header = ({ activePage, adminPhone, handleLogout, isMobileSidebarOpen, openMobileSidebar, closeMobileSidebar }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
@@ -41,6 +41,15 @@ const Header = ({ activePage, adminPhone, handleLogout }) => {
       top: 0,
       zIndex: 90
     }}>
+      <button
+        type="button"
+        className="mobile-menu-btn"
+        aria-label={isMobileSidebarOpen ? 'Close navigation' : 'Open navigation'}
+        onClick={() => (isMobileSidebarOpen ? closeMobileSidebar?.() : openMobileSidebar?.())}
+      >
+        {isMobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
       {/* Title / Breadcrumb */}
       <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>{getPageTitle()}</h1>
@@ -225,7 +234,7 @@ const Header = ({ activePage, adminPhone, handleLogout }) => {
             }}>
               <div style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border-color)', marginBottom: '0.25rem' }}>
                 <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Signed in as</span>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>{adminPhone || '9894913330'}</span>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>{adminPhone || 'Admin'}</span>
               </div>
               <button
                 onClick={handleLogout}

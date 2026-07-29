@@ -14,7 +14,7 @@ import {
   Bell
 } from 'lucide-react';
 
-const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone }) => {
+const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobileSidebarOpen, closeMobileSidebar }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'users', label: 'Registered Patients', icon: Users },
@@ -41,7 +41,8 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone }) => {
       left: 0,
       top: 0,
       zIndex: 100
-    }}>
+    }}
+    data-mobile-open={isMobileSidebarOpen ? 'true' : 'false'}>
       {/* Sidebar Header */}
       <div className="sidebar-header" style={{
         padding: '1.75rem 1.5rem',
@@ -85,7 +86,10 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone }) => {
           return (
             <button
               key={item.id}
-              onClick={() => setActivePage(item.id)}
+              onClick={() => {
+                setActivePage(item.id);
+                if (closeMobileSidebar) closeMobileSidebar();
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',

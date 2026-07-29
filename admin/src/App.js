@@ -98,6 +98,8 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activePage, setActivePage] = useState('dashboard');
   const [adminEmail, setAdminEmail] = useState('');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   
   // Login input states
   const [loginStep, setLoginStep] = useState('email');
@@ -163,6 +165,8 @@ function App() {
     });
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setAuthReady(true);
+
       if (user?.email && isAllowedAdminEmail(user.email)) {
         setIsAuthenticated(true);
         setAdminEmail(user.email);
@@ -370,6 +374,7 @@ function App() {
         setLoginStep('email');
         setAuthError('');
         setActivePage('dashboard');
+        setIsMobileSidebarOpen(false);
         addToast('Logged out of Admin Panel.', 'info');
       });
   };
@@ -428,6 +433,32 @@ function App() {
       }
     } catch (_) {}
   };
+
+  if (!authReady) {
+    return (
+      <div className="auth-page">
+        <div className="auth-card animate-fade-in" style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'var(--accent)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 800,
+            color: 'white',
+            fontSize: '1.25rem',
+            marginBottom: '1rem'
+          }}>
+            AL
+          </div>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.5rem' }}>Restoring Session</h2>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Please wait while Firebase restores your admin session.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -551,6 +582,8 @@ function App() {
         setActivePage={setActivePage} 
         handleLogout={handleLogout}
         adminPhone={adminEmail}
+        isMobileSidebarOpen={isMobileSidebarOpen}
+        closeMobileSidebar={() => setIsMobileSidebarOpen(false)}
       />
       
       <div className="main-content">
@@ -558,7 +591,19 @@ function App() {
           activePage={activePage} 
           adminPhone={adminEmail} 
           handleLogout={handleLogout}
+          isMobileSidebarOpen={isMobileSidebarOpen}
+          openMobileSidebar={() => setIsMobileSidebarOpen(true)}
+          closeMobileSidebar={() => setIsMobileSidebarOpen(false)}
         />
+
+        {isMobileSidebarOpen ? (
+          <button
+            type="button"
+            className="sidebar-overlay"
+            aria-label="Close navigation"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+        ) : null}
         
         <div className="content-body">
           {activePage === 'dashboard' && (
