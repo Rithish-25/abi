@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/mock_data.dart';
 import '../models/models.dart';
 
@@ -10,6 +11,9 @@ class AppState extends ChangeNotifier {
   bool _isLoggedIn = false;
   bool _isDoctor = false;
   String _savedPhone = '';
+
+  List<BloodTest> _dbTests = [];
+  Map<String, List<ReportRow>> _dbReportRows = {};
 
   AppState() {
     phone = '';
@@ -42,6 +46,10 @@ class AppState extends ChangeNotifier {
         notifications = MockData.seedNotifications();
       }
 
+      // Trigger basic Firestore listeners for everyone
+      _setupCatalogListener();
+      _setupGlobalNotificationsListener();
+
       if (_isLoggedIn) {
         phone = _savedPhone;
         doctorLoggedIn = _isDoctor;
@@ -51,6 +59,7 @@ class AppState extends ChangeNotifier {
         } else {
           activeTab = 'home';
         }
+        _setupListenersForUser();
       } else {
         phone = '';
         doctorLoggedIn = false;
@@ -61,6 +70,314 @@ class AppState extends ChangeNotifier {
     } catch (e) {
       notifications = MockData.seedNotifications();
     }
+  }
+
+  void _setupCatalogListener() {
+    try {
+      FirebaseFirestore.instance.collection('tests').snapshots().listen((snapshot) {
+        final List<BloodTest> loadedTests = [];
+        for (var doc in snapshot.docs) {
+          final data = doc.data();
+          loadedTests.add(BloodTest(
+            id: doc.id,
+            name: data['name'] ?? '',
+            short: data['short'] ?? '',
+            desc: data['desc'] ?? '',
+            price: data['price'] ?? 0,
+            mrp: data['mrp'] ?? 0,
+            fasting: data['fasting'] ?? false,
+            sample: data['sample'] ?? '',
+            report: data['report'] ?? '',
+            prep: data['prep'] ?? '',
+            image: data['image'] ?? '',
+            isPackage: data['isPackage'] ?? false,
+            includedTestIds: data['includedTestIds'] != null ? List<String>.from(data['includedTestIds']) : [],
+          ));
+        }
+        if (loadedTests.isNotEmpty) {
+          _dbTests = loadedTests;
+          notifyListeners();
+        }
+      }, onError: (err) {
+        debugPrint("Catalog listener error: $err");
+      });
+    } catch (e) {
+      debugPrint("Firestore catalog connection failed: $e");
+    }
+  }
+
+  void _setupGlobalNotificationsListener() {
+    try {
+      FirebaseFirestore.instance.collection('notifications')
+        .snapshots()
+        .listen((snapshot) {
+          final List<AppNotification> loadedNotifs = [];
+          for (var doc in snapshot.docs) {
+            final data = doc.data();
+            final targetType = data['targetType'] ?? 'all_users';
+            final targetPhone = data['targetPhone'] ?? '';
+            
+            // Show either global broadcast or direct notification to this phone number
+            if (targetType == 'all_users' || (targetType == 'specific' && targetPhone == phone)) {
+              loadedNotifs.add(AppNotification(
+                id: loadedNotifs.length + 1,
+                kind: data['kind'] ?? 'offer',
+                title: data['title'] ?? '',
+                body: data['body'] ?? '',
+                time: data['dateString'] ?? 'Just now',
+                read: false,
+              ));
+            }
+          }
+          if (loadedNotifs.isNotEmpty) {
+            notifications = loadedNotifs;
+            notifyListeners();
+          }
+        }, onError: (err) => debugPrint("Notifications listener error: $err"));
+    } catch (_) {}
+  }
+
+  void _setupListenersForUser() {
+    if (phone.isEmpty && doctorPhone.isEmpty) return;
+    
+    final targetPhone = doctorLoggedIn ? doctorPhone : phone;
+    
+    // Auto-claim seed bookings for this user session in Firestore
+    try {
+      final List<String> seedDocIds = ['AB2314', 'AB2298', 'AB2276', 'AB2250'];
+      for (var docId in seedDocIds) {
+        FirebaseFirestore.instance.collection('bookings').doc(docId).get().then((docSnap) {
+          if (docSnap.exists) {
+            final data = docSnap.data();
+            if (data != null && data['userId'] != targetPhone) {
+              debugPrint("LOG CLAIM BOOKING: claiming $docId for user $targetPhone");
+              FirebaseFirestore.instance.collection('bookings').doc(docId).update({'userId': targetPhone});
+            } else {
+              debugPrint("LOG CLAIM BOOKING: $docId already claimed by $targetPhone");
+            }
+          } else {
+            debugPrint("LOG CLAIM BOOKING: $docId does not exist in Firestore yet");
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("LOG CLAIM BOOKING ERROR: $e");
+    }
+
+    // 1. Listen to user bookings
+    try {
+      FirebaseFirestore.instance.collection('bookings')
+        .where('userId', isEqualTo: targetPhone)
+        .snapshots()
+        .listen((snapshot) {
+          debugPrint("LOG BOOKINGS TRIGGERED: targetPhone=$targetPhone, docCount=${snapshot.docs.length}");
+          final List<Booking> loadedBookings = [];
+          for (var doc in snapshot.docs) {
+            final data = doc.data();
+            debugPrint("LOG BOOKING: id=${doc.id}, status=${data['status']}, userId=${data['userId']}");
+            String status = data['status'] ?? 'Confirmed';
+            if (status == 'Reports Ready') {
+              status = 'Report Ready';
+            }
+            loadedBookings.add(Booking(
+              id: doc.id,
+              date: data['date'] ?? '',
+              testNames: data['testNames'] != null ? List<String>.from(data['testNames']) : [],
+              member: data['member'] ?? '',
+              status: status,
+              amount: data['amount'] ?? 0,
+              address: data['address'] ?? '',
+              slot: data['slot'] ?? '',
+            ));
+          }
+          bookings = loadedBookings;
+          notifyListeners();
+        });
+    } catch (_) {}
+
+    // 2. Listen to diagnostic reports
+    try {
+      FirebaseFirestore.instance.collection('reports')
+        .snapshots()
+        .listen((snapshot) {
+          final List<LabReport> loadedReports = [];
+          final Map<String, List<ReportRow>> loadedRows = {};
+          for (var doc in snapshot.docs) {
+            final data = doc.data();
+            final String reportId = doc.id;
+            
+            // Only load reports for the logged in user or their family member
+            final memberName = data['member'] ?? '';
+            
+            loadedReports.add(LabReport(
+              id: reportId,
+              name: data['name'] ?? '',
+              date: data['date'] ?? '',
+              member: memberName,
+              status: data['status'] ?? 'Report Ready',
+            ));
+            
+            final List<dynamic>? rawRows = data['rows'];
+            if (rawRows != null) {
+              loadedRows[reportId] = rawRows.map((item) {
+                final rowMap = item as Map<String, dynamic>;
+                return ReportRow(
+                  name: rowMap['name'] ?? '',
+                  value: rowMap['value'] ?? '',
+                  range: rowMap['range'] ?? '',
+                  abnormal: rowMap['abnormal'] ?? false,
+                );
+              }).toList();
+            }
+          }
+          if (loadedReports.isNotEmpty) {
+            reports = loadedReports;
+            _dbReportRows = loadedRows;
+            notifyListeners();
+          }
+        });
+    } catch (_) {}
+
+    // 3. Listen to family members
+    try {
+      FirebaseFirestore.instance.collection('users').doc(targetPhone).collection('family')
+        .snapshots()
+        .listen((snapshot) async {
+          if (snapshot.docs.isEmpty) {
+            final colRef = FirebaseFirestore.instance.collection('users').doc(targetPhone).collection('family');
+            await colRef.doc('1').set({
+              'id': 1,
+              'name': userName,
+              'relation': 'Self',
+              'age': '34',
+              'gender': 'Male',
+            });
+            await colRef.doc('2').set({
+              'id': 2,
+              'name': 'Meena Karthik',
+              'relation': 'Wife',
+              'age': '31',
+              'gender': 'Female',
+            });
+            await colRef.doc('3').set({
+              'id': 3,
+              'name': 'Aadhira',
+              'relation': 'Daughter',
+              'age': '6',
+              'gender': 'Female',
+            });
+            return;
+          }
+          final List<FamilyMember> loaded = [];
+          for (var doc in snapshot.docs) {
+            final data = doc.data();
+            loaded.add(FamilyMember(
+              id: data['id'] ?? 0,
+              name: data['name'] ?? '',
+              relation: data['relation'] ?? '',
+              age: data['age'] ?? '',
+              gender: data['gender'] ?? '',
+            ));
+          }
+          loaded.sort((a, b) => a.id.compareTo(b.id));
+          family = loaded;
+          notifyListeners();
+        });
+    } catch (_) {}
+
+    // 4. Listen to saved addresses
+    try {
+      FirebaseFirestore.instance.collection('users').doc(targetPhone).collection('addresses')
+        .snapshots()
+        .listen((snapshot) async {
+          if (snapshot.docs.isEmpty) {
+            final colRef = FirebaseFirestore.instance.collection('users').doc(targetPhone).collection('addresses');
+            await colRef.doc('1').set({
+              'id': 1,
+              'label': 'Home',
+              'line': '12, Bharathi Street, Thindal, Erode - 638012',
+              'phone': targetPhone,
+            });
+            await colRef.doc('2').set({
+              'id': 2,
+              'label': 'Work',
+              'line': '45, Perundurai Road, Erode - 638011',
+              'phone': targetPhone,
+            });
+            return;
+          }
+          final List<SavedAddress> loaded = [];
+          for (var doc in snapshot.docs) {
+            final data = doc.data();
+            loaded.add(SavedAddress(
+              id: data['id'] ?? 0,
+              label: data['label'] ?? '',
+              line: data['line'] ?? '',
+              phone: data['phone'] ?? '',
+            ));
+          }
+          loaded.sort((a, b) => a.id.compareTo(b.id));
+          addresses = loaded;
+          notifyListeners();
+        });
+    } catch (_) {}
+
+    // 5. Listen to doctor patient referrals (if doctor)
+    if (doctorLoggedIn) {
+      try {
+        FirebaseFirestore.instance.collection('doctors').doc(doctorPhone).collection('patients')
+          .snapshots()
+          .listen((snapshot) {
+            final List<DoctorPatient> loaded = [];
+            for (var doc in snapshot.docs) {
+              final data = doc.data();
+              loaded.add(DoctorPatient(
+                id: data['id'] ?? 0,
+                name: data['name'] ?? '',
+                phone: data['phone'] ?? '',
+                tests: data['tests'] != null ? List<String>.from(data['tests']) : [],
+                date: data['date'] ?? '',
+                status: data['status'] ?? 'Confirmed',
+                commission: data['commission'] ?? 0,
+              ));
+            }
+            if (loaded.isNotEmpty) {
+              doctorPatients = loaded;
+              notifyListeners();
+            }
+          });
+      } catch (_) {}
+    }
+    
+    // 6. Listen to user profile (to sync userName dynamically)
+    try {
+      FirebaseFirestore.instance.collection('users').doc(targetPhone)
+        .snapshots()
+        .listen((snapshot) {
+          if (snapshot.exists) {
+            final data = snapshot.data();
+            if (data != null && data['name'] != null) {
+              final String dbName = data['name'] as String;
+              userName = dbName;
+              notifyListeners();
+
+              // Sync Self family member doc '1' in lockstep
+              FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(targetPhone)
+                  .collection('family')
+                  .doc('1')
+                  .set({
+                'id': 1,
+                'name': dbName,
+                'relation': 'Self',
+                'age': '34',
+                'gender': 'Male',
+              }, SetOptions(merge: true));
+            }
+          }
+        });
+    } catch (_) {}
   }
 
   Future<void> _saveCart() async {
@@ -99,14 +416,14 @@ class AppState extends ChangeNotifier {
       await prefs.setBool('is_logged_in', loggedIn);
       await prefs.setBool('is_doctor', isDoc);
       await prefs.setString('user_phone', phoneNum);
-    } catch (e) {
-      // ignore
-    }
+    } catch (_) {}
   }
+
   String activeTab = 'home';
 
   // auth
   String phone = '';
+  String userName = 'Karthik Raja';
   List<String> otp = ['', '', '', ''];
   bool phoneError = false;
   bool otpError = false;
@@ -242,6 +559,21 @@ class AppState extends ChangeNotifier {
   Future<void> verifyOtp() async {
     if (otp.join().length == 4) {
       await _saveLoginState(true, false, phone);
+
+      // Create profile document in Firestore
+      try {
+        FirebaseFirestore.instance.collection('users').doc(phone).set({
+          'id': phone,
+          'phone': phone,
+          'name': 'Karthik Raja',
+          'role': 'user',
+          'relation': 'Self',
+          'age': '34',
+          'gender': 'Male',
+        }, SetOptions(merge: true));
+      } catch (_) {}
+
+      _setupListenersForUser();
       goTab('home', 'home');
     } else {
       otpError = true;
@@ -272,6 +604,28 @@ class AppState extends ChangeNotifier {
     history.clear();
     screen = 'doctorDashboard';
     await _saveLoginState(true, true, doctorPhone);
+
+    // Save/merge doctor profile in Firestore
+    try {
+      FirebaseFirestore.instance.collection('users').doc(doctorPhone).set({
+        'id': doctorPhone,
+        'phone': doctorPhone,
+        'name': 'Dr. Senthil Kumar',
+        'role': 'doctor',
+        'relation': 'Self',
+        'age': '45',
+        'gender': 'Male',
+      }, SetOptions(merge: true));
+
+      FirebaseFirestore.instance.collection('doctors').doc(doctorPhone).set({
+        'id': doctorPhone,
+        'name': 'Dr. Senthil Kumar',
+        'phone': doctorPhone,
+        'specialty': 'Diabetologist',
+      }, SetOptions(merge: true));
+    } catch (_) {}
+
+    _setupListenersForUser();
     notifyListeners();
   }
 
@@ -306,7 +660,8 @@ class AppState extends ChangeNotifier {
   }
 
   List<BloodTest> get filteredItems {
-    return MockData.allItems.where((t) {
+    final list = _dbTests.isNotEmpty ? _dbTests : MockData.allItems;
+    return list.where((t) {
       final matchSearch = search.isEmpty || t.name.toLowerCase().contains(search.toLowerCase());
       final matchFilter = selectedFilter == 'all' ||
           (selectedFilter == 'tests' && !t.isPackage) ||
@@ -315,7 +670,12 @@ class AppState extends ChangeNotifier {
     }).toList();
   }
 
-  BloodTest get selectedTest => selectedTestId == null ? MockData.tests.first : MockData.findById(selectedTestId!);
+  BloodTest get selectedTest {
+    final list = _dbTests.isNotEmpty ? _dbTests : MockData.tests;
+    return selectedTestId == null 
+        ? list.first 
+        : list.firstWhere((t) => t.id == selectedTestId, orElse: () => list.first);
+  }
 
   // ----- cart -----
   void addToCart(String id) {
@@ -333,7 +693,11 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<BloodTest> get cartItems => cart.map(MockData.findById).toList();
+  List<BloodTest> get cartItems {
+    final list = _dbTests.isNotEmpty ? _dbTests : MockData.allItems;
+    return cart.map((id) => list.firstWhere((t) => t.id == id, orElse: () => MockData.findById(id))).toList();
+  }
+  
   int get cartTotal => cartItems.fold(0, (a, c) => a + c.price);
   int get cartMrpTotal => cartItems.fold(0, (a, c) => a + c.mrp);
   int get cartSavings => cartMrpTotal - cartTotal;
@@ -367,8 +731,24 @@ class AppState extends ChangeNotifier {
 
   void addFamilyMember(String name, String relation, String age, String gender) {
     if (name.trim().isEmpty) return;
-    final id = family.map((m) => m.id).reduce((a, b) => a > b ? a : b) + 1;
-    family.add(FamilyMember(id: id, name: name, relation: relation, age: age.isEmpty ? '-' : age, gender: gender));
+    final id = family.isEmpty ? 1 : family.map((m) => m.id).reduce((a, b) => a > b ? a : b) + 1;
+    final newMember = FamilyMember(id: id, name: name, relation: relation, age: age.isEmpty ? '-' : age, gender: gender);
+    family.add(newMember);
+
+    // Save to Firestore subcollection /users/{phone}/family
+    final targetPhone = doctorLoggedIn ? doctorPhone : phone;
+    if (targetPhone.isNotEmpty) {
+      try {
+        FirebaseFirestore.instance.collection('users').doc(targetPhone).collection('family').doc(id.toString()).set({
+          'id': id,
+          'name': name,
+          'relation': relation,
+          'age': age.isEmpty ? '-' : age,
+          'gender': gender,
+        });
+      } catch (_) {}
+    }
+    
     selectedMemberIds = [id];
     showAddMember = false;
     notifyListeners();
@@ -381,10 +761,49 @@ class AppState extends ChangeNotifier {
 
   void addAddress(String label, String line, String phoneNo) {
     if (line.trim().isEmpty) return;
-    final id = addresses.map((a) => a.id).reduce((a, b) => a > b ? a : b) + 1;
-    addresses.add(SavedAddress(id: id, label: label, line: line, phone: phoneNo.isEmpty ? '9894913330' : phoneNo));
+    final id = addresses.isEmpty ? 1 : addresses.map((a) => a.id).reduce((a, b) => a > b ? a : b) + 1;
+    final newAddress = SavedAddress(id: id, label: label, line: line, phone: phoneNo.isEmpty ? '9894913330' : phoneNo);
+    addresses.add(newAddress);
+
+    // Save to Firestore subcollection /users/{phone}/addresses
+    final targetPhone = doctorLoggedIn ? doctorPhone : phone;
+    if (targetPhone.isNotEmpty) {
+      try {
+        FirebaseFirestore.instance.collection('users').doc(targetPhone).collection('addresses').doc(id.toString()).set({
+          'id': id,
+          'label': label,
+          'line': line,
+          'phone': newAddress.phone,
+        });
+      } catch (_) {}
+    }
+
     selectedAddressId = id;
     showAddAddress = false;
+    notifyListeners();
+  }
+
+  void updateAddress(int id, String label, String line, String phoneNo) {
+    if (line.trim().isEmpty) return;
+    
+    // Update local list
+    final idx = addresses.indexWhere((a) => a.id == id);
+    if (idx != -1) {
+      addresses[idx] = SavedAddress(id: id, label: label, line: line, phone: phoneNo.isEmpty ? '9894913330' : phoneNo);
+    }
+
+    // Update in Firestore
+    final targetPhone = doctorLoggedIn ? doctorPhone : phone;
+    if (targetPhone.isNotEmpty) {
+      try {
+        FirebaseFirestore.instance.collection('users').doc(targetPhone).collection('addresses').doc(id.toString()).update({
+          'label': label,
+          'line': line,
+          'phone': phoneNo.isEmpty ? '9894913330' : phoneNo,
+        });
+      } catch (_) {}
+    }
+    
     notifyListeners();
   }
 
@@ -402,19 +821,37 @@ class AppState extends ChangeNotifier {
     final items = cartItems;
     final total = items.fold(0, (a, c) => a + c.price) * selectedMemberIds.length;
     final id = 'AB' + (2300 + bookings.length + (DateTime.now().millisecond % 90)).toString();
-    bookings.insert(
-      0,
-      Booking(
-        id: id,
-        date: '23/07/2026',
-        testNames: items.map((c) => c.name).toList(),
-        member: selectedMembersNames,
-        status: 'Confirmed',
-        amount: total,
-        address: selectedAddress.line,
-        slot: '24/07/2026, 7:30 AM',
-      ),
+    final newBooking = Booking(
+      id: id,
+      date: '23/07/2026',
+      testNames: items.map((c) => c.name).toList(),
+      member: selectedMembersNames,
+      status: 'Confirmed',
+      amount: total,
+      address: selectedAddress.line,
+      slot: '24/07/2026, 7:30 AM',
     );
+    bookings.insert(0, newBooking);
+
+    // Save to Firestore bookings collection
+    final targetPhone = doctorLoggedIn ? doctorPhone : phone;
+    try {
+      FirebaseFirestore.instance.collection('bookings').doc(id).set({
+        'id': id,
+        'date': newBooking.date,
+        'testNames': newBooking.testNames,
+        'testSummary': newBooking.testSummary,
+        'member': newBooking.member,
+        'status': newBooking.status,
+        'amount': newBooking.amount,
+        'address': newBooking.address,
+        'slot': newBooking.slot,
+        'assignedTech': '',
+        'userId': targetPhone,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {}
+
     lastBookingId = id;
     cart.clear();
     _saveCart();
@@ -442,6 +879,10 @@ class AppState extends ChangeNotifier {
 
   LabReport get selectedReportObj =>
       reports.firstWhere((r) => r.id == selectedReportId, orElse: () => reports.first);
+
+  List<ReportRow> getReportRows(String reportId) {
+    return _dbReportRows[reportId] ?? (MockData.reportRows[reportId] ?? MockData.reportRows['AB2314']!);
+  }
 
   void setReportSearch(String v) {
     reportSearch = v;
@@ -496,21 +937,60 @@ class AppState extends ChangeNotifier {
 
   void submitReferral() {
     if (refPatientName.trim().isEmpty || refTests.isEmpty) return;
-    final items = refTests.map(MockData.findById).toList();
+    final list = _dbTests.isNotEmpty ? _dbTests : MockData.allItems;
+    final items = refTests.map((id) => list.firstWhere((t) => t.id == id, orElse: () => MockData.findById(id))).toList();
     final commission = (items.fold(0, (a, c) => a + c.price) * 0.1).round();
     final id = doctorPatients.isEmpty ? 1 : doctorPatients.map((p) => p.id).reduce((a, b) => a > b ? a : b) + 1;
-    doctorPatients.insert(
-      0,
-      DoctorPatient(
-        id: id,
-        name: refPatientName,
-        phone: refPatientPhone,
-        tests: items.map((t) => t.name).toList(),
-        date: '23/07/2026',
-        status: 'Confirmed',
-        commission: commission,
-      ),
+    
+    final newPatient = DoctorPatient(
+      id: id,
+      name: refPatientName,
+      phone: refPatientPhone,
+      tests: items.map((t) => t.name).toList(),
+      date: '23/07/2026',
+      status: 'Confirmed',
+      commission: commission,
     );
+    doctorPatients.insert(0, newPatient);
+
+    // Save to Firestore under subcollection /doctors/{doctorPhone}/patients
+    if (doctorPhone.isNotEmpty) {
+      try {
+        final docRef = FirebaseFirestore.instance.collection('doctors').doc(doctorPhone);
+        
+        docRef.collection('patients').doc(id.toString()).set({
+          'id': id,
+          'name': refPatientName,
+          'phone': refPatientPhone,
+          'tests': newPatient.tests,
+          'date': '23/07/2026',
+          'status': 'Confirmed',
+          'commission': commission,
+        });
+
+        docRef.get().then((docSnap) {
+          if (docSnap.exists) {
+            final data = docSnap.data() ?? {};
+            final currentReferrals = data['totalReferrals'] ?? 0;
+            final currentCommission = data['totalCommission'] ?? 0;
+            docRef.update({
+              'totalReferrals': currentReferrals + 1,
+              'totalCommission': currentCommission + commission,
+            });
+          } else {
+            docRef.set({
+              'id': doctorPhone,
+              'name': 'Dr. Senthil Kumar',
+              'phone': doctorPhone,
+              'specialty': 'Diabetologist',
+              'totalReferrals': 1,
+              'totalCommission': commission,
+            }, SetOptions(merge: true));
+          }
+        });
+      } catch (_) {}
+    }
+
     refPatientName = '';
     refPatientPhone = '';
     refTests.clear();
@@ -523,8 +1003,54 @@ class AppState extends ChangeNotifier {
   int get doctorCommissionPaid => (doctorCommissionTotal * 0.75).round();
   int get doctorCommissionPending => doctorCommissionTotal - doctorCommissionPaid;
 
+  List<BloodTest> get bloodTests {
+    final list = _dbTests.isNotEmpty ? _dbTests : MockData.tests;
+    return list.where((t) => !t.isPackage).toList();
+  }
+
+  List<BloodTest> get healthPackages {
+    final list = _dbTests.isNotEmpty ? _dbTests : MockData.packages;
+    return list.where((t) => t.isPackage).toList();
+  }
+
+  List<BloodTest> get allItems {
+    return _dbTests.isNotEmpty ? _dbTests : MockData.allItems;
+  }
+
+  BloodTest findById(String id) {
+    final list = _dbTests.isNotEmpty ? _dbTests : MockData.allItems;
+    return list.firstWhere((t) => t.id == id, orElse: () => MockData.findById(id));
+  }
+
+  Future<void> updateUserName(String newName) async {
+    if (newName.trim().isEmpty) return;
+    userName = newName;
+    notifyListeners();
+
+    final targetPhone = doctorLoggedIn ? doctorPhone : phone;
+    if (targetPhone.isNotEmpty) {
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(targetPhone).update({
+          'name': newName,
+        });
+
+        // Update Self family member name as well
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(targetPhone)
+            .collection('family')
+            .doc('1')
+            .update({
+          'name': newName,
+        });
+      } catch (_) {}
+    }
+  }
+
   void setDemoState(String s) {
     demoState = s;
     notifyListeners();
   }
 }
+
+

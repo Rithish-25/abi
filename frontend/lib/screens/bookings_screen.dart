@@ -24,7 +24,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
       if (filter == 'Upcoming' && (bookingStatus == 'Confirmed' || bookingStatus == 'Sample Collected')) {
         return true;
       }
-      if (filter == 'Cancelled' && bookingStatus == 'Cancelled') {
+      if (filter == 'Cancelled' && (bookingStatus == 'Cancelled' || bookingStatus == 'Rejected')) {
         return true;
       }
       if (filter == 'Completed' && bookingStatus == 'Report Ready') {
@@ -34,10 +34,11 @@ class _BookingsScreenState extends State<BookingsScreen> {
     return false;
   }
 
-  Widget _buildTestImage(String testName) {
-    final test = MockData.allItems.firstWhere(
+  Widget _buildTestImage(String testName, AppState app) {
+    final list = app.allItems;
+    final test = list.firstWhere(
       (t) => t.name == testName || t.short == testName,
-      orElse: () => MockData.tests.first,
+      orElse: () => list.first,
     );
     return Image.asset(
       test.image.isNotEmpty ? test.image : 'assets/cbc.jpg',
@@ -309,7 +310,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                       ),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(12),
-                                        child: _buildTestImage(b.testNames.first),
+                                        child: _buildTestImage(b.testNames.first, app),
                                       ),
                                     ),
                                     const SizedBox(width: 14),

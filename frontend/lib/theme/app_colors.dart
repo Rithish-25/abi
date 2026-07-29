@@ -30,6 +30,7 @@ class AppColors {
       case 'Confirmed':
         return primary;
       case 'Cancelled':
+      case 'Rejected':
         return danger;
       default:
         return textSecondary;
@@ -45,6 +46,7 @@ class AppColors {
       case 'Confirmed':
         return primaryTint;
       case 'Cancelled':
+      case 'Rejected':
         return dangerTint;
       default:
         return const Color(0xFFF1F5F9);

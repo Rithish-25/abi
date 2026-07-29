@@ -60,10 +60,10 @@ const initialUsers = [
 ];
 
 const initialBookings = [
-  { id: 'AB2314', date: '20/07/2026', testNames: ['CBC (Complete Blood Count)', 'Blood Sugar (Fasting / PP / HbA1c)'], testSummary: 'CBC + Blood Sugar', member: 'Karthik Raja', status: 'Report Ready', amount: 798, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '20/07/2026, 7:30 AM', assignedTech: 'Venkatesh Prasad' },
-  { id: 'AB2298', date: '21/07/2026', testNames: ['Thyroid Test', 'Lipid Profile'], testSummary: 'Thyroid + Lipid', member: 'Meena Karthik', status: 'Sample Collected', amount: 1248, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '23/07/2026, 8:00 AM', assignedTech: 'Saravanan M' },
-  { id: 'AB2276', date: '18/07/2026', testNames: ['Thyroid Test'], testSummary: 'Thyroid Test', member: 'Karthik Raja', status: 'Confirmed', amount: 599, address: '45, Perundurai Road, Erode - 638011', slot: '24/07/2026, 7:00 AM', assignedTech: '' },
-  { id: 'AB2250', date: '02/07/2026', testNames: ['Urine Test'], testSummary: 'Urine Test', member: 'Aadhira', status: 'Cancelled', amount: 199, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '-', assignedTech: '' }
+  { id: 'AB2314', date: '20/07/2026', testNames: ['CBC (Complete Blood Count)', 'Blood Sugar (Fasting / PP / HbA1c)'], testSummary: 'CBC + Blood Sugar', member: 'Karthik Raja', status: 'Report Ready', amount: 798, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '20/07/2026, 7:30 AM', assignedTech: 'Venkatesh Prasad', userId: '9894913330' },
+  { id: 'AB2298', date: '21/07/2026', testNames: ['Thyroid Test', 'Lipid Profile'], testSummary: 'Thyroid + Lipid', member: 'Meena Karthik', status: 'Sample Collected', amount: 1248, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '23/07/2026, 8:00 AM', assignedTech: 'Saravanan M', userId: '9894913330' },
+  { id: 'AB2276', date: '18/07/2026', testNames: ['Thyroid Test'], testSummary: 'Thyroid Test', member: 'Karthik Raja', status: 'Confirmed', amount: 599, address: '45, Perundurai Road, Erode - 638011', slot: '24/07/2026, 7:00 AM', assignedTech: '', userId: '9894913330' },
+  { id: 'AB2250', date: '02/07/2026', testNames: ['Urine Test'], testSummary: 'Urine Test', member: 'Aadhira', status: 'Cancelled', amount: 199, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '-', assignedTech: '', userId: '9894913330' }
 ];
 
 const initialReports = [
@@ -132,6 +132,22 @@ function App() {
     if (process.env.REACT_APP_FIREBASE_API_KEY === 'your-api-key-here') {
       return; // Fallback to mock lists
     }
+
+    // Perform a one-time upgrade for mock bookings to add userId if missing
+    const upgradeBookings = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'bookings'));
+        snap.forEach(async (docSnap) => {
+          const data = docSnap.data();
+          if (!data.userId) {
+            await updateDoc(doc(db, 'bookings', docSnap.id), { userId: '9894913330' });
+          }
+        });
+      } catch (err) {
+        console.warn('Upgrade bookings error:', err);
+      }
+    };
+    upgradeBookings();
 
     const seedCollectionIfEmpty = async (colName, seedArray) => {
       try {

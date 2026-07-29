@@ -14,7 +14,7 @@ class TestDetailsScreen extends StatelessWidget {
     final app = context.watch<AppState>();
     final t = app.selectedTest;
     final inCart = app.cart.contains(t.id);
-    final included = t.includedTestIds.map(MockData.findById).toList();
+    final included = t.includedTestIds.map(app.findById).toList();
 
     return Container(
       color: Colors.white,

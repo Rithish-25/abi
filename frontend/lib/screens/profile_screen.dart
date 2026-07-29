@@ -13,7 +13,7 @@ class ProfileScreen extends StatelessWidget {
     
     // Check if the current user is a doctor or patient to render appropriate name/details
     final isDoc = app.doctorLoggedIn;
-    final name = isDoc ? 'Dr. Ramesh Kumar' : 'Karthik Raja';
+    final name = isDoc ? 'Dr. Senthil Kumar' : app.userName;
     final phone = app.phone.isNotEmpty ? app.phone : '98949 13330';
 
     return Container(
@@ -94,17 +94,52 @@ class ProfileScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFF1F5F9),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.edit_rounded,
-                          color: AppColors.textSecondary,
-                          size: 18,
+                      GestureDetector(
+                        onTap: isDoc ? null : () {
+                          final textCtrl = TextEditingController(text: app.userName);
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('Edit Name', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                content: TextField(
+                                  controller: textCtrl,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Full Name',
+                                    hintText: 'Enter your name',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  autofocus: true,
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      app.updateUserName(textCtrl.text);
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('Save', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF1F5F9),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.edit_rounded,
+                            color: AppColors.textSecondary,
+                            size: 18,
+                          ),
                         ),
                       ),
                     ],

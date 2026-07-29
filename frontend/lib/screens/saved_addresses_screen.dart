@@ -16,6 +16,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
   final lineCtrl = TextEditingController();
   final phoneCtrl = TextEditingController();
   String label = 'Home';
+  int? editingAddressId;
 
   @override
   Widget build(BuildContext context) {
@@ -38,14 +39,39 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                           const SizedBox(height: 4),
                           Text(a.phone, style: AppTextStyles.caption.copyWith(fontSize: 11.5)),
                         ])),
+                        IconButton(
+                          icon: Icon(Icons.edit_rounded, color: editingAddressId == a.id ? AppColors.primary : AppColors.textSecondary, size: 18),
+                          onPressed: () {
+                            setState(() {
+                              editingAddressId = a.id;
+                              label = a.label;
+                              lineCtrl.text = a.line;
+                              phoneCtrl.text = a.phone;
+                              if (!app.showAddAddress) {
+                                app.toggleAddAddress();
+                              }
+                            });
+                          },
+                        ),
                       ]),
                     )),
                 InkWell(
-                  onTap: app.toggleAddAddress,
+                  onTap: () {
+                    setState(() {
+                      editingAddressId = null;
+                      lineCtrl.clear();
+                      phoneCtrl.clear();
+                    });
+                    app.toggleAddAddress();
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5), borderRadius: BorderRadius.circular(16)),
-                    child: const Row(children: [Icon(Icons.add, color: AppColors.primary), SizedBox(width: 10), Text('Add new address', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13.5))]),
+                    child: Row(children: [
+                      Icon(editingAddressId != null ? Icons.close : Icons.add, color: AppColors.primary),
+                      const SizedBox(width: 10),
+                      Text(editingAddressId != null ? 'Cancel editing' : 'Add new address', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13.5))
+                    ]),
                   ),
                 ),
                 if (app.showAddAddress) ...[
@@ -65,11 +91,24 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                       const SizedBox(height: 10),
                       TextField(controller: phoneCtrl, keyboardType: TextInputType.phone, decoration: AppTextStyles.inputDecoration(hintText: 'Contact number')),
                       const SizedBox(height: 10),
-                      AppButton(label: 'Save address', onPressed: () {
-                        app.addAddress(label, lineCtrl.text, phoneCtrl.text);
-                        lineCtrl.clear();
-                        phoneCtrl.clear();
-                      }),
+                      AppButton(
+                        label: editingAddressId != null ? 'Update address' : 'Save address',
+                        onPressed: () {
+                          if (editingAddressId != null) {
+                            app.updateAddress(editingAddressId!, label, lineCtrl.text, phoneCtrl.text);
+                          } else {
+                            app.addAddress(label, lineCtrl.text, phoneCtrl.text);
+                          }
+                          setState(() {
+                            editingAddressId = null;
+                            if (app.showAddAddress) {
+                              app.toggleAddAddress();
+                            }
+                          });
+                          lineCtrl.clear();
+                          phoneCtrl.clear();
+                        },
+                      ),
                     ]),
                   ),
                 ],

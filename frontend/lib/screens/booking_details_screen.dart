@@ -13,7 +13,7 @@ class BookingDetailsScreen extends StatelessWidget {
     final app = context.watch<AppState>();
     final b = app.selectedBookingObj;
     final pipeline = ['Pending', 'Confirmed', 'Sample Collected', 'Under Process', 'Report Ready'];
-    final isCancelled = b.status == 'Cancelled';
+    final isCancelled = b.status == 'Cancelled' || b.status == 'Rejected';
     
     int curIdx = 0;
     if (b.status == 'Confirmed') {
@@ -71,10 +71,10 @@ class BookingDetailsScreen extends StatelessWidget {
               children: [
                 _Card(
                   child: isCancelled
-                      ? Row(children: const [
-                          Icon(Icons.cancel, color: AppColors.danger),
-                          SizedBox(width: 10),
-                          Text('This booking was cancelled', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                      ? Row(children: [
+                          const Icon(Icons.cancel, color: AppColors.danger),
+                          const SizedBox(width: 10),
+                          Text(b.status == 'Rejected' ? 'This booking was rejected' : 'This booking was cancelled', style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                         ])
                       : Column(
                           children: List.generate(pipeline.length, (i) {

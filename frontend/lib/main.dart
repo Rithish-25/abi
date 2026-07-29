@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'state/app_state.dart';
 import 'theme/app_colors.dart';
 import 'widgets/bottom_nav_bar.dart';
@@ -39,13 +40,29 @@ import 'screens/doctor_reports_screen.dart';
 import 'screens/doctor_commission_screen.dart';
 import 'screens/doctor_profile_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
     statusBarBrightness: Brightness.light,
   ));
+  
+  try {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: "AIzaSyDss-RuDNVHe91nIq-zd-DvGUWiUbPCDQQ",
+        authDomain: "abirami-laboratory.firebaseapp.com",
+        projectId: "abirami-laboratory",
+        storageBucket: "abirami-laboratory.firebasestorage.app",
+        messagingSenderId: "898467903181",
+        appId: "1:898467903181:web:2cf699f6e9864018c8db84",
+      ),
+    );
+  } catch (e) {
+    debugPrint("Firebase init failed: $e");
+  }
+
   runApp(const AbiramiLabApp());
 }
 

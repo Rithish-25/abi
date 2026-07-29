@@ -64,7 +64,7 @@ class _DoctorReferralScreenState extends State<DoctorReferralScreen> {
                 const SizedBox(height: 20),
                 const Text('Select blood tests', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
                 const SizedBox(height: 10),
-                ...MockData.tests.map((t) {
+                ...app.bloodTests.map((t) {
                   final selected = app.refTests.contains(t.id);
                   return Container(
                     margin: const EdgeInsets.only(bottom: 8),

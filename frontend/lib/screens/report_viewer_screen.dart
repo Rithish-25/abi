@@ -16,7 +16,7 @@ class ReportViewerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     final r = app.selectedReportObj;
-    final rows = MockData.reportRows[r.id] ?? MockData.reportRows['AB2314']!;
+    final rows = app.getReportRows(r.id);
     return Container(
       color: AppColors.background,
       child: Column(

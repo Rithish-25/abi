@@ -54,7 +54,7 @@ class HomeScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('Good morning,', style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12, fontWeight: FontWeight.w500)),
-                              const Text('Karthik Raja', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700)),
+                              Text(app.userName, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700)),
                             ],
                           ),
                         ),
@@ -180,9 +180,9 @@ class HomeScreen extends StatelessWidget {
                         crossAxisSpacing: 10,
                         mainAxisSpacing: 10,
                       ),
-                      itemCount: MockData.tests.length,
+                      itemCount: app.bloodTests.length,
                       itemBuilder: (_, i) {
-                        final t = MockData.tests[i];
+                        final t = app.bloodTests[i];
                         return InkWell(
                           onTap: () => app.openTest(t.id),
                           child: Container(

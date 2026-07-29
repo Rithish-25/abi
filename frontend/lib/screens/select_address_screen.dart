@@ -16,6 +16,7 @@ class _SelectAddressScreenState extends State<SelectAddressScreen> {
   final lineCtrl = TextEditingController();
   final phoneCtrl = TextEditingController();
   String label = 'Home';
+  int? editingAddressId;
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +51,23 @@ class _SelectAddressScreenState extends State<SelectAddressScreen> {
                             Text(a.label, style: AppTextStyles.bodyBold.copyWith(fontSize: 13.5)),
                             Text(a.line, style: AppTextStyles.bodySmall.copyWith(fontSize: 12)),
                           ])),
+                          IconButton(
+                            icon: Icon(Icons.edit_rounded, color: editingAddressId == a.id ? AppColors.primary : AppColors.textSecondary, size: 18),
+                            onPressed: () {
+                              setState(() {
+                                editingAddressId = a.id;
+                                label = a.label;
+                                lineCtrl.text = a.line;
+                                phoneCtrl.text = a.phone;
+                                if (!app.showAddAddress) {
+                                  app.toggleAddAddress();
+                                }
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 8),
                           Container(
-                            margin: const EdgeInsets.only(top: 2),
+                            margin: const EdgeInsets.only(top: 8),
                             width: 22, height: 22,
                             decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: selected ? AppColors.primary : const Color(0xFFCBD5E1), width: 2)),
                             child: selected ? Center(child: Container(width: 12, height: 12, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle))) : null,
@@ -62,11 +78,22 @@ class _SelectAddressScreenState extends State<SelectAddressScreen> {
                   );
                 }),
                 InkWell(
-                  onTap: app.toggleAddAddress,
+                  onTap: () {
+                    setState(() {
+                      editingAddressId = null;
+                      lineCtrl.clear();
+                      phoneCtrl.clear();
+                    });
+                    app.toggleAddAddress();
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5), borderRadius: BorderRadius.circular(16)),
-                    child: const Row(children: [Icon(Icons.add, color: AppColors.primary), SizedBox(width: 10), Text('Add new address', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13.5))]),
+                    child: Row(children: [
+                      Icon(editingAddressId != null ? Icons.close : Icons.add, color: AppColors.primary),
+                      const SizedBox(width: 10),
+                      Text(editingAddressId != null ? 'Cancel editing' : 'Add new address', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13.5))
+                    ]),
                   ),
                 ),
                 if (app.showAddAddress) ...[
@@ -87,9 +114,19 @@ class _SelectAddressScreenState extends State<SelectAddressScreen> {
                       TextField(controller: phoneCtrl, keyboardType: TextInputType.phone, decoration: AppTextStyles.inputDecoration(hintText: 'Contact number')),
                       const SizedBox(height: 10),
                       AppButton(
-                        label: 'Save address',
+                        label: editingAddressId != null ? 'Update address' : 'Save address',
                         onPressed: () {
-                          app.addAddress(label, lineCtrl.text, phoneCtrl.text);
+                          if (editingAddressId != null) {
+                            app.updateAddress(editingAddressId!, label, lineCtrl.text, phoneCtrl.text);
+                          } else {
+                            app.addAddress(label, lineCtrl.text, phoneCtrl.text);
+                          }
+                          setState(() {
+                            editingAddressId = null;
+                            if (app.showAddAddress) {
+                              app.toggleAddAddress();
+                            }
+                          });
                           lineCtrl.clear();
                           phoneCtrl.clear();
                         },
