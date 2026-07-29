@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Stethoscope, HandMetal, CheckCircle, Plus, Send, AlertTriangle, KeyRound, CheckSquare, BellRing } from 'lucide-react';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '../firebase';
 import Table from '../components/Table';
 import Modal from '../components/Modal';
 
@@ -76,15 +78,37 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
     setShowPayoutModal(false);
   };
 
-  const handleSendNotification = () => {
+  const handleSendNotification = async () => {
     if (!notifTitle.trim() || !notifBody.trim()) {
       addToast('Please enter both title and body for the notification.', 'danger');
       return;
     }
-    addToast(`Push notification successfully pushed to ${selectedDoctor.name} (${selectedDoctor.phone}).`, 'success');
-    setNotifTitle('');
-    setNotifBody('');
-    setShowNotifModal(false);
+    if (!selectedDoctor?.phone) {
+      addToast('Doctor phone number is missing for this notification.', 'danger');
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, 'notifications'), {
+        title: notifTitle.trim(),
+        body: notifBody.trim(),
+        kind: 'offer',
+        targetType: 'specific',
+        targetPhone: selectedDoctor.phone,
+        targetRole: 'doctor',
+        recipientName: selectedDoctor.name,
+        timestamp: new Date().toISOString(),
+        dateString: new Date().toLocaleDateString('en-IN') + ', ' + new Date().toLocaleTimeString('en-IN'),
+      });
+
+      addToast(`Push notification successfully pushed to ${selectedDoctor.name} (${selectedDoctor.phone}).`, 'success');
+      setNotifTitle('');
+      setNotifBody('');
+      setShowNotifModal(false);
+    } catch (err) {
+      console.error('Error sending doctor notification:', err);
+      addToast('Failed to save doctor notification.', 'danger');
+    }
   };
 
   // Columns definition for Doctors List

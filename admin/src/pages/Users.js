@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Search, ShieldAlert, Send, Eye, Shield, KeyRound, BellRing } from 'lucide-react';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '../firebase';
 import Table from '../components/Table';
 import Modal from '../components/Modal';
 
@@ -39,16 +41,37 @@ const Users = ({ users, setUsers, addToast }) => {
     setShowRoleModal(false);
   };
 
-  const handleSendNotification = () => {
+  const handleSendNotification = async () => {
     if (!notifTitle.trim() || !notifBody.trim()) {
       addToast('Please enter both title and body for the notification.', 'danger');
       return;
     }
-    // Simulate push alert delivery
-    addToast(`Push notification sent successfully to ${selectedUser.name} (${selectedUser.phone}).`, 'success');
-    setNotifTitle('');
-    setNotifBody('');
-    setShowNotifModal(false);
+    if (!selectedUser?.phone) {
+      addToast('User phone number is missing for this notification.', 'danger');
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, 'notifications'), {
+        title: notifTitle.trim(),
+        body: notifBody.trim(),
+        kind: 'offer',
+        targetType: 'specific',
+        targetPhone: selectedUser.phone,
+        targetRole: 'user',
+        recipientName: selectedUser.name,
+        timestamp: new Date().toISOString(),
+        dateString: new Date().toLocaleDateString('en-IN') + ', ' + new Date().toLocaleTimeString('en-IN'),
+      });
+
+      addToast(`Push notification sent successfully to ${selectedUser.name} (${selectedUser.phone}).`, 'success');
+      setNotifTitle('');
+      setNotifBody('');
+      setShowNotifModal(false);
+    } catch (err) {
+      console.error('Error sending user notification:', err);
+      addToast('Failed to save user notification.', 'danger');
+    }
   };
 
   // Columns definition for Table component

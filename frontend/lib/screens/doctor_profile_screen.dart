@@ -11,6 +11,7 @@ class DoctorProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     final phone = app.doctorPhone.isNotEmpty ? app.doctorPhone : '98765 43210';
+    final doctorName = app.doctorDisplayName;
 
     return Container(
       color: AppColors.background,
@@ -29,7 +30,8 @@ class DoctorProfileScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                    border:
+                        Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.02),
@@ -70,8 +72,8 @@ class DoctorProfileScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Dr. Ramesh Kumar',
+                            Text(
+                              doctorName,
                               style: TextStyle(
                                 color: AppColors.textPrimary,
                                 fontSize: 17,
@@ -147,7 +149,8 @@ class DoctorProfileScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                    border:
+                        Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.02),
@@ -161,7 +164,8 @@ class DoctorProfileScreen extends StatelessWidget {
                     children: [
                       _buildInfoRow('Qualifications', 'MBBS, MD (Pathology)'),
                       const Divider(color: Color(0xFFF1F5F9), height: 24),
-                      _buildInfoRow('Registration No.', 'MCI-98745 (Tamil Nadu)'),
+                      _buildInfoRow(
+                          'Registration No.', 'MCI-98745 (Tamil Nadu)'),
                       const Divider(color: Color(0xFFF1F5F9), height: 24),
                       _buildInfoRow('Specialty', 'Laboratory Medicine'),
                     ],
@@ -199,7 +203,8 @@ class DoctorProfileScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                    border:
+                        Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.02),
@@ -211,7 +216,8 @@ class DoctorProfileScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      _buildInfoRow('Hospital/Clinic', 'Abirami Diagnostic Lab'),
+                      _buildInfoRow(
+                          'Hospital/Clinic', 'Abirami Diagnostic Lab'),
                       const Divider(color: Color(0xFFF1F5F9), height: 24),
                       _buildInfoRow('Location', 'Thindal, Erode, Tamil Nadu'),
                     ],
@@ -249,7 +255,8 @@ class DoctorProfileScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                    border:
+                        Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.02),
@@ -261,9 +268,11 @@ class DoctorProfileScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      _buildInfoRow('Total Patients Referred', '${app.doctorPatients.length}'),
+                      _buildInfoRow('Total Patients Referred',
+                          '${app.doctorPatients.length}'),
                       const Divider(color: Color(0xFFF1F5F9), height: 24),
-                      _buildInfoRow('Total Earnings (Month)', '₹${app.doctorCommissionTotal}'),
+                      _buildInfoRow('Total Earnings (Month)',
+                          '₹${app.doctorCommissionTotal}'),
                       const Divider(color: Color(0xFFF1F5F9), height: 24),
                       _buildInfoRow('Payout Account', 'xxxx xxxx 4321 (SBI)'),
                     ],

@@ -10,11 +10,13 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
-    
+
     // Check if the current user is a doctor or patient to render appropriate name/details
     final isDoc = app.doctorLoggedIn;
-    final name = isDoc ? 'Dr. Senthil Kumar' : app.userName;
-    final phone = app.phone.isNotEmpty ? app.phone : '98949 13330';
+    final name = isDoc ? app.doctorDisplayName : app.userName;
+    final phone = isDoc
+        ? (app.doctorPhone.isNotEmpty ? app.doctorPhone : '98765 43210')
+        : (app.phone.isNotEmpty ? app.phone : '98949 13330');
 
     return Container(
       color: AppColors.background,
@@ -22,7 +24,8 @@ class ProfileScreen extends StatelessWidget {
         children: [
           BackHeader(
             title: 'Profile',
-            onBack: () => app.goTab(isDoc ? 'doctor' : 'home', isDoc ? 'doctorDashboard' : 'home'),
+            onBack: () => app.goTab(
+                isDoc ? 'doctor' : 'home', isDoc ? 'doctorDashboard' : 'home'),
           ),
           Expanded(
             child: ListView(
@@ -33,7 +36,8 @@ class ProfileScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                    border:
+                        Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.02),
@@ -95,39 +99,52 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       GestureDetector(
-                        onTap: isDoc ? null : () {
-                          final textCtrl = TextEditingController(text: app.userName);
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text('Edit Name', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                content: TextField(
-                                  controller: textCtrl,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Full Name',
-                                    hintText: 'Enter your name',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  autofocus: true,
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      app.updateUserName(textCtrl.text);
-                                      Navigator.pop(context);
-                                    },
-                                    child: const Text('Save', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
+                        onTap: isDoc
+                            ? null
+                            : () {
+                                final textCtrl =
+                                    TextEditingController(text: app.userName);
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: const Text('Edit Name',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16)),
+                                      content: TextField(
+                                        controller: textCtrl,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Full Name',
+                                          hintText: 'Enter your name',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        autofocus: true,
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text('Cancel',
+                                              style: TextStyle(
+                                                  color:
+                                                      AppColors.textSecondary)),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            app.updateUserName(textCtrl.text);
+                                            Navigator.pop(context);
+                                          },
+                                          child: const Text('Save',
+                                              style: TextStyle(
+                                                  color: AppColors.primary,
+                                                  fontWeight: FontWeight.bold)),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
                         child: Container(
                           width: 36,
                           height: 36,
@@ -177,7 +194,8 @@ class ProfileScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                    border:
+                        Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.02),
@@ -252,7 +270,8 @@ class ProfileScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                    border:
+                        Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.02),
@@ -288,11 +307,14 @@ class ProfileScreen extends StatelessWidget {
 
                 // Need Help Card (Moved from Home Screen)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEFF6FF), // Soft blue tint background
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFBFDBFE), width: 1.2), // Light blue border
+                    border: Border.all(
+                        color: const Color(0xFFBFDBFE),
+                        width: 1.2), // Light blue border
                     boxShadow: [
                       BoxShadow(
                         color: const Color(0xFF2563EB).withOpacity(0.04),
@@ -307,10 +329,12 @@ class ProfileScreen extends StatelessWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2563EB), // Solid blue icon background
+                          color: const Color(
+                              0xFF2563EB), // Solid blue icon background
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.headset_mic, color: Colors.white, size: 20),
+                        child: const Icon(Icons.headset_mic,
+                            color: Colors.white, size: 20),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -339,9 +363,11 @@ class ProfileScreen extends StatelessWidget {
                       const SizedBox(width: 8),
                       // Premium Call Button Pill
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2563EB), // Solid blue call button
+                          color:
+                              const Color(0xFF2563EB), // Solid blue call button
                           borderRadius: BorderRadius.circular(100),
                           boxShadow: [
                             BoxShadow(

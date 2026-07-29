@@ -13,22 +13,30 @@ class DoctorLoginScreen extends StatefulWidget {
 }
 
 class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
-  final FocusNode _focusNode = FocusNode();
-  bool _isFocused = false;
+  final FocusNode _nameFocusNode = FocusNode();
+  final FocusNode _phoneFocusNode = FocusNode();
+  bool _isNameFocused = false;
+  bool _isPhoneFocused = false;
 
   @override
   void initState() {
     super.initState();
-    _focusNode.addListener(() {
+    _nameFocusNode.addListener(() {
       setState(() {
-        _isFocused = _focusNode.hasFocus;
+        _isNameFocused = _nameFocusNode.hasFocus;
+      });
+    });
+    _phoneFocusNode.addListener(() {
+      setState(() {
+        _isPhoneFocused = _phoneFocusNode.hasFocus;
       });
     });
   }
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    _nameFocusNode.dispose();
+    _phoneFocusNode.dispose();
     super.dispose();
   }
 
@@ -51,7 +59,8 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.secondary.withOpacity(0.15), width: 1.5),
+              border: Border.all(
+                  color: AppColors.secondary.withOpacity(0.15), width: 1.5),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.secondary.withOpacity(0.08),
@@ -60,14 +69,17 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
                 ),
               ],
             ),
-            child: const Icon(Icons.medical_services, color: AppColors.secondary, size: 28),
+            child: const Icon(Icons.medical_services,
+                color: AppColors.secondary, size: 28),
           ),
           const SizedBox(height: 24),
           Text('Doctor Portal', style: AppTextStyles.h1),
           const SizedBox(height: 6),
-          Text('Refer patients, view their reports & track your commission.', style: AppTextStyles.body),
+          Text('Refer patients, view their reports & track your commission.',
+              style: AppTextStyles.body),
           const SizedBox(height: 28),
-          Text('Registered mobile number', style: AppTextStyles.bodySmallBold.copyWith(fontSize: 12)),
+          Text('Doctor name',
+              style: AppTextStyles.bodySmallBold.copyWith(fontSize: 12)),
           const SizedBox(height: 8),
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
@@ -76,13 +88,64 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
             decoration: BoxDecoration(
               color: AppColors.surface,
               border: Border.all(
-                color: app.doctorPhoneError 
-                    ? AppColors.danger 
-                    : (_isFocused ? AppColors.secondary : AppColors.border), 
+                color: app.doctorNameError
+                    ? AppColors.danger
+                    : (_isNameFocused ? AppColors.secondary : AppColors.border),
                 width: 1.5,
               ),
               borderRadius: BorderRadius.circular(14),
-              boxShadow: _isFocused && !app.doctorPhoneError
+              boxShadow: _isNameFocused && !app.doctorNameError
+                  ? [
+                      BoxShadow(
+                        color: AppColors.secondary.withOpacity(0.08),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      )
+                    ]
+                  : null,
+            ),
+            child: TextField(
+              focusNode: _nameFocusNode,
+              textCapitalization: TextCapitalization.words,
+              onChanged: app.setDoctorName,
+              textAlignVertical: TextAlignVertical.center,
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+                hintText: 'Enter doctor name',
+                contentPadding: EdgeInsets.symmetric(vertical: 10),
+              ),
+              style: AppTextStyles.bodyBold.copyWith(fontSize: 15),
+            ),
+          ),
+          if (app.doctorNameError) ...[
+            const SizedBox(height: 8),
+            const Text('Enter the doctor name',
+                style: TextStyle(
+                    color: AppColors.danger,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500)),
+          ],
+          const SizedBox(height: 20),
+          Text('Registered mobile number',
+              style: AppTextStyles.bodySmallBold.copyWith(fontSize: 12)),
+          const SizedBox(height: 8),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              border: Border.all(
+                color: app.doctorPhoneError
+                    ? AppColors.danger
+                    : (_isPhoneFocused
+                        ? AppColors.secondary
+                        : AppColors.border),
+                width: 1.5,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: _isPhoneFocused && !app.doctorPhoneError
                   ? [
                       BoxShadow(
                         color: AppColors.secondary.withOpacity(0.08),
@@ -95,13 +158,14 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text('+91', style: AppTextStyles.bodyBold.copyWith(fontSize: 15)),
+                Text('+91',
+                    style: AppTextStyles.bodyBold.copyWith(fontSize: 15)),
                 const SizedBox(width: 8),
                 Container(width: 1, height: 20, color: AppColors.border),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
-                    focusNode: _focusNode,
+                    focusNode: _phoneFocusNode,
                     keyboardType: TextInputType.phone,
                     maxLength: 10,
                     onChanged: app.setDoctorPhone,
@@ -120,10 +184,22 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
           ),
           if (app.doctorPhoneError) ...[
             const SizedBox(height: 8),
-            const Text('Enter a valid 10-digit mobile number not starting with 0', style: TextStyle(color: AppColors.danger, fontSize: 12, fontWeight: FontWeight.w500)),
+            const Text(
+                'Enter a valid 10-digit mobile number not starting with 0',
+                style: TextStyle(
+                    color: AppColors.danger,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500)),
           ],
           const Spacer(),
-          AppButton(label: 'Continue', color: AppColors.secondary, onPressed: app.doctorPhone.length == 10 ? app.doctorLogin : null),
+          AppButton(
+            label: 'Continue',
+            color: AppColors.secondary,
+            onPressed:
+                app.doctorPhone.length == 10 && app.doctorName.trim().isNotEmpty
+                    ? app.doctorLogin
+                    : null,
+          ),
           const SizedBox(height: 24),
           Center(
             child: GestureDetector(
@@ -132,9 +208,14 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text("Users login", style: TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600)),
+                  Text("Users login",
+                      style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600)),
                   SizedBox(width: 4),
-                  Icon(Icons.arrow_forward_rounded, color: AppColors.primary, size: 14),
+                  Icon(Icons.arrow_forward_rounded,
+                      color: AppColors.primary, size: 14),
                 ],
               ),
             ),
