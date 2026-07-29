@@ -27,6 +27,7 @@ import Collections from './pages/Collections';
 import Reports from './pages/Reports';
 import Payments from './pages/Payments';
 import Marketing from './pages/Marketing';
+import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 
 // Mock Seed Data
@@ -477,6 +478,12 @@ function App() {
 
           {activePage === 'marketing' && (
             <Marketing 
+              addToast={addToast}
+            />
+          )}
+
+          {activePage === 'notifications' && (
+            <Notifications 
               addToast={addToast}
             />
           )}

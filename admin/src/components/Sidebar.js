@@ -10,7 +10,8 @@ import {
   CreditCard, 
   Percent, 
   Settings, 
-  LogOut 
+  LogOut,
+  Bell
 } from 'lucide-react';
 
 const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone }) => {
@@ -24,6 +25,7 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone }) => {
     { id: 'reports', label: 'Dispatch Reports', icon: FileText },
     { id: 'payments', label: 'Payments Ledger', icon: CreditCard },
     { id: 'marketing', label: 'Banners & Offers', icon: Percent },
+    { id: 'notifications', label: 'Notification Management', icon: Bell },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Eye, Filter, Calendar, MapPin, CheckCircle, Clock, Truck, ShieldAlert } from 'lucide-react';
+import { Search, Eye, Filter, Calendar, MapPin, CheckCircle, Clock, Truck, ShieldAlert, FileSpreadsheet, FileDown, Upload } from 'lucide-react';
 import Table from '../components/Table';
 import Modal from '../components/Modal';
 
@@ -9,6 +9,7 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [assignedTechnician, setAssignedTechnician] = useState('');
+  const [newSlotDate, setNewSlotDate] = useState('');
 
   // Sample collection technicians database
   const techniciansList = [
@@ -39,6 +40,39 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
     addToast(`Booking status for ${selectedBooking.id} updated to: ${status}`, 'success');
   };
 
+  const handleReschedule = () => {
+    if (!selectedBooking) return;
+    if (!newSlotDate.trim()) {
+      addToast('Please specify a new rescheduled date and time slot.', 'danger');
+      return;
+    }
+    const updated = bookings.map(b => 
+      b.id === selectedBooking.id 
+        ? { ...b, slot: newSlotDate } 
+        : b
+    );
+    setBookings(updated);
+    setSelectedBooking({ ...selectedBooking, slot: newSlotDate });
+    addToast(`Booking ${selectedBooking.id} successfully rescheduled to: ${newSlotDate}`, 'success');
+    setNewSlotDate('');
+  };
+
+  const handleUploadBill = (e) => {
+    if (!selectedBooking) return;
+    if (e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const billPath = `files/bills/${selectedBooking.id}_bill.pdf`;
+      const updated = bookings.map(b => 
+        b.id === selectedBooking.id 
+          ? { ...b, billUrl: billPath, billName: file.name } 
+          : b
+      );
+      setBookings(updated);
+      setSelectedBooking({ ...selectedBooking, billUrl: billPath, billName: file.name });
+      addToast(`Lab Bill Copy "${file.name}" uploaded successfully for booking ${selectedBooking.id}!`, 'success');
+    }
+  };
+
   const handleAssignTechnician = () => {
     if (!assignedTechnician) {
       addToast('Please select a technician to assign.', 'danger');
@@ -63,7 +97,7 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
     )},
     { header: 'Patient Name', field: 'member', sortable: true },
     { header: 'Tests Summary', field: 'testSummary', render: (val, row) => (
-      <div style={{ maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.testNames.join(', ')}>
+      <div style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.testNames.join(', ')}>
         {val}
       </div>
     )},
@@ -76,11 +110,22 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
     { header: 'Amount', field: 'amount', sortable: true, render: (val) => (
       <span style={{ fontWeight: 700 }}>₹{val}</span>
     )},
+    { header: 'Bill copy', field: 'billUrl', render: (val, row) => (
+      val ? (
+        <span style={{ fontSize: '0.75rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 600 }}>
+          <CheckCircle size={12} />
+          Uploaded
+        </span>
+      ) : (
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Pending</span>
+      )
+    )},
     { header: 'Status', field: 'status', sortable: true, render: (val) => (
       <span className={`badge ${
-        val === 'Report Ready' ? 'badge-success' : 
+        val === 'Reports Ready' || val === 'Report Ready' ? 'badge-success' : 
+        val === 'Report Delivered' || val === 'Delivered' ? 'badge-success' : 
         val === 'Sample Collected' ? 'badge-info' : 
-        val === 'Cancelled' ? 'badge-danger' : 
+        val === 'Cancelled' || val === 'Rejected' ? 'badge-danger' : 
         'badge-warning'
       }`}>
         {val}
@@ -92,8 +137,8 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} className="animate-fade-in">
       {/* Page Title */}
       <div>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>Bookings Log Dashboard</h2>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Track home blood test appointments, update statuses, and assign logistical technicians</p>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>Bookings & Appointment Log</h2>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Approve, reject, reschedule, dispatch technicians, and upload lab bills</p>
       </div>
 
       {/* Filter and Search Card */}
@@ -129,8 +174,10 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
             <option value="all">All Booking Statuses</option>
             <option value="Confirmed">Confirmed</option>
             <option value="Sample Collected">Sample Collected</option>
-            <option value="Report Ready">Report Ready</option>
-            <option value="Cancelled">Cancelled</option>
+            <option value="Reports Ready">Reports Ready</option>
+            <option value="Report Delivered">Report Delivered</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled / Rejected</option>
           </select>
         </div>
       </div>
@@ -162,7 +209,7 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
       <Modal
         isOpen={showDetailModal}
         onClose={() => setShowDetailModal(false)}
-        title={`Manage Booking appointment - ${selectedBooking?.id}`}
+        title={`Booking Manager - ${selectedBooking?.id}`}
         footer={<button className="btn btn-secondary" onClick={() => setShowDetailModal(false)}>Close Manager</button>}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -189,7 +236,7 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
             </div>
             <div>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block' }}>Scheduled Slot</span>
-              <span style={{ fontSize: '0.8125rem' }}>{selectedBooking?.slot}</span>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--accent)' }}>{selectedBooking?.slot}</span>
             </div>
           </div>
 
@@ -215,8 +262,64 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
             </div>
           </div>
 
+          {/* Bill copy upload (Bill Management) */}
+          <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+            <span className="form-label">Bill Management (Upload Bill Copy - Lab)</span>
+            {selectedBooking?.billUrl ? (
+              <div style={{ display: 'flex', alignItems: 'center', justify: 'space-between', padding: '0.5rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                  <CheckCircle size={14} />
+                  Bill Copied: {selectedBooking.billName || 'lab_bill_copy.pdf'}
+                </span>
+                <input
+                  type="file"
+                  accept=".pdf,.png,.jpg"
+                  id="replaceBillInput"
+                  onChange={handleUploadBill}
+                  style={{ display: 'none' }}
+                />
+                <label htmlFor="replaceBillInput" className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer', margin: 0 }}>
+                  Replace
+                </label>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <input
+                  type="file"
+                  accept=".pdf,.png,.jpg"
+                  id="uploadBillInput"
+                  onChange={handleUploadBill}
+                  style={{ display: 'none' }}
+                />
+                <label htmlFor="uploadBillInput" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.5rem 1rem', fontSize: '0.8125rem', cursor: 'pointer', margin: 0 }}>
+                  <Upload size={14} />
+                  Upload Lab Copy Receipt
+                </label>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>PDF, PNG or JPG (Max 5MB)</span>
+              </div>
+            )}
+          </div>
+
+          {/* Reschedule Booking Slot */}
+          <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+            <span className="form-label">Reschedule Appointment Slot</span>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                value={newSlotDate}
+                onChange={(e) => setNewSlotDate(e.target.value)}
+                placeholder="e.g. 25/07/2026, 9:00 AM - 10:00 AM"
+                className="form-control"
+                style={{ flexGrow: 1 }}
+              />
+              <button onClick={handleReschedule} className="btn btn-secondary" style={{ flexShrink: 0 }}>
+                Reschedule
+              </button>
+            </div>
+          </div>
+
           {/* Logistics & Assign technician */}
-          {selectedBooking?.status !== 'Cancelled' && (
+          {selectedBooking?.status !== 'Cancelled' && selectedBooking?.status !== 'Rejected' && (
             <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
               <span className="form-label">Technician Assignment (Home Collection)</span>
               
@@ -246,15 +349,15 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
 
           {/* Status Controls */}
           <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-            <span className="form-label">Update Booking Milestones</span>
+            <span className="form-label">Appointment Actions & Milestones</span>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <button 
                 onClick={() => handleStatusUpdate('Confirmed')}
                 disabled={selectedBooking?.status === 'Confirmed'}
-                className="btn btn-secondary"
+                className="btn btn-primary"
                 style={{ flexGrow: 1, padding: '0.5rem', fontSize: '0.8125rem' }}
               >
-                Confirm Booking
+                Approve (Confirm)
               </button>
               <button 
                 onClick={() => handleStatusUpdate('Sample Collected')}
@@ -265,12 +368,36 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
                 Collect Sample
               </button>
               <button 
-                onClick={() => handleStatusUpdate('Cancelled')}
-                disabled={selectedBooking?.status === 'Cancelled'}
+                onClick={() => handleStatusUpdate('Reports Ready')}
+                disabled={selectedBooking?.status === 'Reports Ready'}
+                className="btn btn-secondary"
+                style={{ flexGrow: 1, padding: '0.5rem', fontSize: '0.8125rem' }}
+              >
+                Reports Ready
+              </button>
+              <button 
+                onClick={() => handleStatusUpdate('Report Delivered')}
+                disabled={selectedBooking?.status === 'Report Delivered'}
+                className="btn btn-secondary"
+                style={{ flexGrow: 1, padding: '0.5rem', fontSize: '0.8125rem' }}
+              >
+                Report Delivered
+              </button>
+              <button 
+                onClick={() => handleStatusUpdate('Delivered')}
+                disabled={selectedBooking?.status === 'Delivered'}
+                className="btn btn-secondary"
+                style={{ flexGrow: 1, padding: '0.5rem', fontSize: '0.8125rem' }}
+              >
+                Delivered
+              </button>
+              <button 
+                onClick={() => handleStatusUpdate('Rejected')}
+                disabled={selectedBooking?.status === 'Rejected' || selectedBooking?.status === 'Cancelled'}
                 className="btn btn-danger"
                 style={{ flexGrow: 1, padding: '0.5rem', fontSize: '0.8125rem' }}
               >
-                Cancel Appointment
+                Reject Appointment
               </button>
             </div>
           </div>
