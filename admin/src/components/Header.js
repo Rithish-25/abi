@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import { Search, Bell, Shield, ChevronDown, Menu, X } from 'lucide-react';
 
-const Header = ({ activePage, adminPhone, handleLogout, isMobileSidebarOpen, openMobileSidebar, closeMobileSidebar }) => {
+const Header = ({ 
+  activePage, 
+  adminPhone, 
+  handleLogout, 
+  isMobileSidebarOpen, 
+  openMobileSidebar, 
+  closeMobileSidebar,
+  notifications = [],
+  markAllRead,
+  markRead,
+  clearAll
+}) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-
-  // Mock admin notifications
-  const adminNotifications = [
-    { id: 1, title: 'New Booking Request', body: 'Karthik Raja booked CBC Test for tomorrow.', time: '5m ago', read: false },
-    { id: 2, title: 'Payment Confirmed', body: 'Payment of ₹1,248 received for booking AB2298.', time: '1h ago', read: true },
-    { id: 3, title: 'New Referral Registered', body: 'Dr. Senthil referred patient Priya S.', time: '1d ago', read: true }
-  ];
 
   const getPageTitle = () => {
     switch (activePage) {
@@ -36,7 +40,7 @@ const Header = ({ activePage, adminPhone, handleLogout, isMobileSidebarOpen, ope
       padding: '0 2rem',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'between',
+      justifyContent: 'space-between',
       position: 'sticky',
       top: 0,
       zIndex: 90
@@ -118,19 +122,21 @@ const Header = ({ activePage, adminPhone, handleLogout, isMobileSidebarOpen, ope
             className="hover-bg"
           >
             <Bell size={18} />
-            <span style={{
-              position: 'absolute',
-              top: '6px',
-              right: '6px',
-              width: '8px',
-              height: '8px',
-              backgroundColor: 'var(--danger)',
-              borderRadius: '50%'
-            }} />
+            {notifications.some(n => !n.read) && (
+              <span style={{
+                position: 'absolute',
+                top: '6px',
+                right: '6px',
+                width: '8px',
+                height: '8px',
+                backgroundColor: 'var(--danger)',
+                borderRadius: '50%'
+              }} />
+            )}
           </button>
 
           {showNotifications && (
-            <div style={{
+            <div className="notification-dropdown" style={{
               position: 'absolute',
               right: 0,
               top: '48px',
@@ -150,32 +156,65 @@ const Header = ({ activePage, adminPhone, handleLogout, isMobileSidebarOpen, ope
                 alignItems: 'center'
               }}>
                 <h4 style={{ fontSize: '0.875rem', fontWeight: 700, margin: 0 }}>System Notifications</h4>
-                <button style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--accent)',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}>
-                  Mark read
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  {notifications.length > 0 && (
+                    <>
+                      <button 
+                        onClick={markAllRead}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--accent)',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Mark read
+                      </button>
+                      <span style={{ color: 'var(--border-color)', fontSize: '0.75rem' }}>|</span>
+                    </>
+                  )}
+                  <button 
+                    onClick={clearAll}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--danger)',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Clear all
+                  </button>
+                </div>
               </div>
               <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
-                {adminNotifications.map((notif) => (
-                  <div key={notif.id} style={{
-                    padding: '0.875rem 1.25rem',
-                    borderBottom: '1px solid var(--border-color)',
-                    backgroundColor: notif.read ? 'transparent' : 'rgba(13, 148, 136, 0.03)',
-                    cursor: 'pointer'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: notif.read ? 600 : 700 }}>{notif.title}</span>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{notif.time}</span>
-                    </div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>{notif.body}</p>
+                {notifications.length === 0 ? (
+                  <div style={{ padding: '2.5rem 1.25rem', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.8125rem' }}>
+                    No notifications
                   </div>
-                ))}
+                ) : (
+                  notifications.map((notif) => (
+                    <div 
+                      key={notif.id} 
+                      style={{
+                        padding: '0.875rem 1.25rem',
+                        borderBottom: '1px solid var(--border-color)',
+                        backgroundColor: notif.read ? 'transparent' : 'rgba(37, 99, 235, 0.03)',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => markRead(notif.id)}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                        <span style={{ fontSize: '0.8125rem', fontWeight: notif.read ? 600 : 700 }}>{notif.title}</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{notif.time}</span>
+                      </div>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>{notif.body}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}

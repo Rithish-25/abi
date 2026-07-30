@@ -32,8 +32,8 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
   return (
     <div className="sidebar" style={{
       width: '260px',
-      backgroundColor: 'var(--bg-secondary)',
-      borderRight: '1px solid var(--border-color)',
+      backgroundColor: 'var(--sidebar-bg)',
+      borderRight: '1px solid var(--sidebar-border)',
       display: 'flex',
       flexDirection: 'column',
       height: '100vh',
@@ -46,7 +46,7 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
       {/* Sidebar Header */}
       <div className="sidebar-header" style={{
         padding: '1.75rem 1.5rem',
-        borderBottom: '1px solid var(--border-color)',
+        borderBottom: '1px solid var(--sidebar-border)',
         display: 'flex',
         alignItems: 'center',
         gap: '0.75rem'
@@ -55,19 +55,19 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
           width: '32px',
           height: '32px',
           borderRadius: 'var(--radius-sm)',
-          backgroundColor: 'var(--accent)',
+          backgroundColor: 'var(--sidebar-text-primary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontWeight: 800,
-          color: 'white',
+          color: 'var(--sidebar-bg)',
           fontSize: '1rem'
         }}>
           AL
         </div>
         <div>
-          <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Abirami Lab</h2>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Admin Dashboard</span>
+          <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.02em', margin: 0, color: 'var(--sidebar-text-primary)' }}>Abirami Lab</h2>
+          <span style={{ fontSize: '0.75rem', color: 'var(--sidebar-text-secondary)', fontWeight: 500, opacity: 0.7 }}>Admin Dashboard</span>
         </div>
       </div>
 
@@ -96,8 +96,9 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
                 gap: '0.75rem',
                 padding: '0.75rem 1rem',
                 border: 'none',
-                background: isActive ? 'var(--bg-active)' : 'none',
-                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                background: isActive ? 'var(--sidebar-active)' : 'none',
+                color: isActive ? 'var(--sidebar-text-primary)' : 'var(--sidebar-text-secondary)',
+                opacity: isActive ? 1 : 0.8,
                 borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
                 textAlign: 'left',
@@ -108,18 +109,20 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+                  e.currentTarget.style.color = 'var(--sidebar-text-primary)';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                  e.currentTarget.style.opacity = '1';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.color = 'var(--text-secondary)';
+                  e.currentTarget.style.color = 'var(--sidebar-text-secondary)';
                   e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.opacity = '0.8';
                 }
               }}
             >
-              <Icon size={18} style={{ color: isActive ? 'var(--accent)' : 'inherit' }} />
+              <Icon size={18} style={{ color: isActive ? 'var(--sidebar-text-primary)' : 'inherit' }} />
               {item.label}
             </button>
           );
@@ -129,7 +132,7 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
       {/* Sidebar Footer */}
       <div className="sidebar-footer" style={{
         padding: '1.25rem 1.5rem',
-        borderTop: '1px solid var(--border-color)',
+        borderTop: '1px solid var(--sidebar-border)',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.75rem'
@@ -139,19 +142,19 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
             width: '36px',
             height: '36px',
             borderRadius: 'var(--radius-full)',
-            backgroundColor: 'var(--bg-active)',
+            backgroundColor: 'var(--sidebar-active)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '0.875rem',
             fontWeight: 700,
-            color: 'var(--accent)'
+            color: 'var(--sidebar-text-primary)'
           }}>
             A
           </div>
           <div style={{ overflow: 'hidden' }}>
-            <h4 style={{ fontSize: '0.8125rem', fontWeight: 600, margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>Administrator</h4>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{adminPhone || '98949 13330'}</span>
+            <h4 style={{ fontSize: '0.8125rem', fontWeight: 600, margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', color: 'var(--sidebar-text-primary)' }}>Administrator</h4>
+            <span style={{ fontSize: '0.75rem', color: 'var(--sidebar-text-secondary)', opacity: 0.7 }}>{adminPhone || '98949 13330'}</span>
           </div>
         </div>
         
@@ -164,22 +167,22 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
             gap: '0.5rem',
             width: '100%',
             padding: '0.625rem',
-            backgroundColor: 'transparent',
-            border: '1px solid var(--border-color)',
+            backgroundColor: 'var(--danger)',
+            border: '1px solid var(--danger)',
             borderRadius: 'var(--radius-sm)',
-            color: 'var(--danger)',
+            color: '#ffffff',
             fontSize: '0.8125rem',
             fontWeight: 600,
             cursor: 'pointer',
             transition: 'all 0.15s ease'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--danger-tint)';
-            e.currentTarget.style.borderColor = 'var(--danger)';
+            e.currentTarget.style.backgroundColor = '#b91c1c';
+            e.currentTarget.style.borderColor = '#b91c1c';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.borderColor = 'var(--border-color)';
+            e.currentTarget.style.backgroundColor = 'var(--danger)';
+            e.currentTarget.style.borderColor = 'var(--danger)';
           }}
         >
           <LogOut size={14} />

@@ -103,19 +103,21 @@ const Users = ({ users, setUsers, addToast }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} className="animate-fade-in">
       {/* Title block with OTP log trigger button */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="page-header">
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>Registered Patients Ledger</h2>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Manage profiles, assign credentials, view real-time OTP logs, and trigger push alerts</p>
         </div>
-        <button 
-          onClick={() => setShowOtpModal(true)}
-          className="btn btn-secondary"
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: 'var(--accent)', color: 'var(--accent)' }}
-        >
-          <KeyRound size={16} />
-          Real-time OTP Audit
-        </button>
+        <div className="page-header-actions">
+          <button 
+            onClick={() => setShowOtpModal(true)}
+            className="btn btn-secondary"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: 'var(--accent)', color: 'var(--accent)' }}
+          >
+            <KeyRound size={16} />
+            Real-time OTP Audit
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Card */}

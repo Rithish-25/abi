@@ -134,12 +134,12 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} className="animate-fade-in">
       {/* Title block with action buttons */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="page-header">
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>Doctor Affiliates & Referrals</h2>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Manage medical affiliations, track commissions, review doctor OTP codes, and trigger direct alert messages</p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div className="page-header-actions">
           <button 
             onClick={() => setShowOtpModal(true)}
             className="btn btn-secondary"

@@ -97,7 +97,7 @@ const Notifications = ({ addToast }) => {
         <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Send alerts, broad promotions, updates, and custom push notification logs to patient and doctor profiles</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-6" style={{ gridTemplateColumns: '1fr 2fr' }}>
+      <div className="notifications-layout-grid">
         {/* Send Broadcast form */}
         <div className="card flex flex-col" style={{ gap: '1.25rem' }}>
           <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

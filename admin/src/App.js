@@ -102,7 +102,6 @@ function App() {
   const [authReady, setAuthReady] = useState(false);
   
   // Login input states
-  const [loginStep, setLoginStep] = useState('email');
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
@@ -118,6 +117,55 @@ function App() {
 
   // App notification toasts list
   const [toasts, setToasts] = useState([]);
+
+  // Persistent notification logs driven by Firestore bookings
+  const [dismissedBookings, setDismissedBookings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('dismissed_bookings');
+      return saved ? JSON.parse(saved) : [];
+    } catch (_) {
+      return [];
+    }
+  });
+
+  const [readBookings, setReadBookings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('read_bookings');
+      return saved ? JSON.parse(saved) : [];
+    } catch (_) {
+      return [];
+    }
+  });
+
+  const activeNotifications = bookings
+    .filter(b => !dismissedBookings.includes(b.id))
+    .map(b => ({
+      id: b.id,
+      title: 'New Booking Request',
+      body: `${b.member} booked ${b.testSummary || (b.testNames ? b.testNames.join(', ') : 'Tests')}.`,
+      time: b.date || 'Recently',
+      read: readBookings.includes(b.id)
+    }));
+
+  const handleMarkAllNotificationsRead = () => {
+    const activeIds = bookings.map(b => b.id);
+    const newRead = Array.from(new Set([...readBookings, ...activeIds]));
+    setReadBookings(newRead);
+    localStorage.setItem('read_bookings', JSON.stringify(newRead));
+  };
+
+  const handleMarkNotificationRead = (id) => {
+    const newRead = Array.from(new Set([...readBookings, id]));
+    setReadBookings(newRead);
+    localStorage.setItem('read_bookings', JSON.stringify(newRead));
+  };
+
+  const handleClearAllNotifications = () => {
+    const currentIds = bookings.map(b => b.id);
+    const newDismissed = Array.from(new Set([...dismissedBookings, ...currentIds]));
+    setDismissedBookings(newDismissed);
+    localStorage.setItem('dismissed_bookings', JSON.stringify(newDismissed));
+  };
 
   // Toast notifier
   const addToast = (message, type = 'info') => {
@@ -171,7 +219,6 @@ function App() {
         setIsAuthenticated(true);
         setAdminEmail(user.email);
         setLoginEmail(user.email);
-        setLoginStep('email');
         setAuthError('');
       } else if (user?.email) {
         signOut(auth).catch((error) => {
@@ -290,10 +337,17 @@ function App() {
     }
   }, []);
 
-  const handleContinueToPassword = (e) => {
+  const handleSignIn = async (e) => {
     e.preventDefault();
 
     const trimmedEmail = loginEmail.trim();
+    if (!trimmedEmail) {
+      const message = 'Please enter your email address.';
+      setAuthError(message);
+      addToast(message, 'danger');
+      return;
+    }
+
     if (!isValidEmail(trimmedEmail)) {
       const message = 'Please enter a valid email address.';
       setAuthError(message);
@@ -305,20 +359,6 @@ function App() {
       const message = 'Only the admin account can access the Admin Panel.';
       setAuthError(message);
       addToast(message, 'danger');
-      return;
-    }
-
-    setAuthError('');
-    setLoginEmail(trimmedEmail);
-    setLoginStep('password');
-  };
-
-  const handleSignIn = async (e) => {
-    e.preventDefault();
-
-    if (!loginEmail.trim()) {
-      setLoginStep('email');
-      setAuthError('Please enter your email address first.');
       return;
     }
 
@@ -334,8 +374,8 @@ function App() {
 
     try {
       await setPersistence(auth, browserLocalPersistence);
-      const credential = await signInWithEmailAndPassword(auth, loginEmail.trim(), loginPassword);
-      const signedInEmail = credential.user?.email || loginEmail.trim();
+      const credential = await signInWithEmailAndPassword(auth, trimmedEmail, loginPassword);
+      const signedInEmail = credential.user?.email || trimmedEmail;
 
       if (!isAllowedAdminEmail(signedInEmail)) {
         await signOut(auth);
@@ -349,7 +389,6 @@ function App() {
       setAdminEmail(signedInEmail);
       setLoginEmail(signedInEmail);
       setLoginPassword('');
-      setLoginStep('email');
       setActivePage('dashboard');
       addToast('Administrator authenticated successfully.', 'success');
     } catch (error) {
@@ -371,7 +410,6 @@ function App() {
         setAdminEmail('');
         setLoginEmail('');
         setLoginPassword('');
-        setLoginStep('email');
         setAuthError('');
         setActivePage('dashboard');
         setIsMobileSidebarOpen(false);
@@ -484,7 +522,7 @@ function App() {
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Sign in to manage Abirami Laboratory</p>
           </div>
 
-          <form onSubmit={loginStep === 'email' ? handleContinueToPassword : handleSignIn} key={loginStep} className="animate-fade-in">
+          <form onSubmit={handleSignIn} className="animate-fade-in">
             {authError ? (
               <div style={{
                 marginBottom: '0.75rem',
@@ -499,61 +537,40 @@ function App() {
                 {authError}
               </div>
             ) : null}
-            {loginStep === 'email' ? (
-              <>
-                <div className="form-group">
-                  <label className="form-label">Email</label>
-                  <input
-                    type="email"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="Enter admin email"
-                    className="form-control"
-                    autoComplete="email"
-                    required
-                  />
-                </div>
-                <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }}>
-                  Continue
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="form-group">
-                  <label className="form-label">Password</label>
-                  <input
-                    type="password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="Enter password"
-                    className="form-control"
-                    autoComplete="current-password"
-                    required
-                  />
-                </div>
-                <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} disabled={authLoading}>
-                  {authLoading ? (
-                    <span className="auth-loading">
-                      <span className="auth-spinner" />
-                      Signing In...
-                    </span>
-                  ) : (
-                    'Verify & Sign In'
-                  )}
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => {
-                    setLoginStep('email');
-                    setAuthError('');
-                  }} 
-                  className="btn btn-secondary" 
-                  style={{ width: '100%', marginTop: '0.5rem' }}
-                >
-                  Change Email
-                </button>
-              </>
-            )}
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="Enter admin email"
+                className="form-control"
+                autoComplete="email"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="Enter password"
+                className="form-control"
+                autoComplete="current-password"
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={authLoading}>
+              {authLoading ? (
+                <span className="auth-loading">
+                  <span className="auth-spinner" />
+                  Signing In...
+                </span>
+              ) : (
+                'Sign In'
+              )}
+            </button>
           </form>
         </div>
       </div>
@@ -594,6 +611,10 @@ function App() {
           isMobileSidebarOpen={isMobileSidebarOpen}
           openMobileSidebar={() => setIsMobileSidebarOpen(true)}
           closeMobileSidebar={() => setIsMobileSidebarOpen(false)}
+          notifications={activeNotifications}
+          markAllRead={handleMarkAllNotificationsRead}
+          markRead={handleMarkNotificationRead}
+          clearAll={handleClearAllNotifications}
         />
 
         {isMobileSidebarOpen ? (

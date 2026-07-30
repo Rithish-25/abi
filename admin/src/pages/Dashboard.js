@@ -70,7 +70,7 @@ const Dashboard = ({ bookings, users, doctors, setActivePage }) => {
       </div>
 
       {/* Charts and Feeds Layout */}
-      <div className="grid grid-cols-3 gap-6" style={{ gridTemplateColumns: '2fr 1fr' }}>
+      <div className="dashboard-layout-grid">
         {/* Left Side: Sales and Bookings Chart */}
         <div className="card flex flex-col">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

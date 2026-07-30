@@ -19,7 +19,7 @@ const Settings = ({ addToast }) => {
         <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Configure system variables, home sample collection parameters, and backup utilities</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-6" style={{ gridTemplateColumns: '2fr 1fr' }}>
+      <div className="settings-layout-grid">
         {/* Left Side: General System Variables */}
         <div className="card flex flex-col" style={{ gap: '1.25rem' }}>
           <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

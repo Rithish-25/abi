@@ -142,7 +142,7 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
       </div>
 
       {/* Filter and Search Card */}
-      <div className="card grid grid-cols-2 gap-4" style={{ gridTemplateColumns: '2fr 1fr' }}>
+      <div className="card bookings-filter-grid">
         {/* Search */}
         <div style={{ position: 'relative', width: '100%' }}>
           <input

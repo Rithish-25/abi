@@ -88,7 +88,7 @@ const Table = ({ columns, data, keyField = 'id', actions, pageSize = 5 }) => {
 
       {/* Pagination Footer */}
       {sortedData.length > pageSize && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+        <div className="table-pagination" style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
           <div>
             Showing <strong>{Math.min((currentPage - 1) * pageSize + 1, sortedData.length)}</strong> to{' '}
             <strong>{Math.min(currentPage * pageSize, sortedData.length)}</strong> of{' '}
