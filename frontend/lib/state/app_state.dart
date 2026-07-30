@@ -759,7 +759,7 @@ class AppState extends ChangeNotifier {
   }
 
   List<BloodTest> get filteredItems {
-    final list = _dbTests.isNotEmpty ? _dbTests : MockData.allItems;
+    final list = allItems;
     return list.where((t) {
       final matchSearch =
           search.isEmpty || t.name.toLowerCase().contains(search.toLowerCase());
@@ -795,7 +795,7 @@ class AppState extends ChangeNotifier {
   }
 
   List<BloodTest> get cartItems {
-    final list = _dbTests.isNotEmpty ? _dbTests : MockData.allItems;
+    final list = allItems;
     return cart
         .map((id) => list.firstWhere((t) => t.id == id,
             orElse: () => MockData.findById(id)))
@@ -1095,7 +1095,7 @@ class AppState extends ChangeNotifier {
 
   void submitReferral() {
     if (refPatientName.trim().isEmpty || refTests.isEmpty) return;
-    final list = _dbTests.isNotEmpty ? _dbTests : MockData.allItems;
+    final list = allItems;
     final items = refTests
         .map((id) => list.firstWhere((t) => t.id == id,
             orElse: () => MockData.findById(id)))
@@ -1180,7 +1180,8 @@ class AppState extends ChangeNotifier {
   }
 
   List<BloodTest> get allItems {
-    return _dbTests.isNotEmpty ? _dbTests : MockData.allItems;
+    final list = _dbTests.isNotEmpty ? _dbTests : MockData.allItems;
+    return list.where((t) => !t.isPackage).toList();
   }
 
   BloodTest findById(String id) {
