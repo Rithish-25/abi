@@ -279,7 +279,7 @@ class AppState extends ChangeNotifier {
             testNames: data['testNames'] != null
                 ? List<String>.from(data['testNames'])
                 : [],
-            member: data['member'] ?? '',
+            member: (data['member'] ?? '').toString().replaceAll('Karthik Raja', userName.isNotEmpty ? userName : 'Karthik Raja'),
             status: status,
             amount: data['amount'] ?? 0,
             address: data['address'] ?? '',
@@ -547,7 +547,7 @@ class AppState extends ChangeNotifier {
 
   // auth
   String phone = '';
-  String userName = 'Karthik Raja';
+  String userName = '';
   List<String> otp = ['', '', '', ''];
   bool phoneError = false;
   bool otpError = false;
@@ -583,7 +583,9 @@ class AppState extends ChangeNotifier {
   final List<String> cart = [];
 
   // booking flow
-  late List<FamilyMember> family = MockData.seedFamily();
+  late List<FamilyMember> family = [
+    FamilyMember(id: 1, name: userName.isNotEmpty ? userName : 'Self', relation: 'Self', age: '34', gender: 'Male'),
+  ];
   late List<SavedAddress> addresses = MockData.seedAddresses();
   List<int> selectedMemberIds = [1];
   int selectedAddressId = 1;
@@ -1125,15 +1127,27 @@ class AppState extends ChangeNotifier {
         (items.fold(0, (a, c) => a + c.price) * selectedMemberIds.length) + homeCollectionFee;
     final id =
         'AB${2300 + bookings.length + (DateTime.now().millisecond % 90)}';
+    final now = DateTime.now();
+    final day = now.day.toString().padLeft(2, '0');
+    final month = now.month.toString().padLeft(2, '0');
+    final year = now.year.toString();
+    final formattedDate = '$day/$month/$year';
+
+    final tomorrow = now.add(const Duration(days: 1));
+    final tDay = tomorrow.day.toString().padLeft(2, '0');
+    final tMonth = tomorrow.month.toString().padLeft(2, '0');
+    final tYear = tomorrow.year.toString();
+    final formattedSlot = '$tDay/$tMonth/$tYear, 7:00 AM - 8:00 AM';
+
     final newBooking = Booking(
       id: id,
-      date: '23/07/2026',
+      date: formattedDate,
       testNames: items.map((c) => c.name).toList(),
       member: selectedMembersNames,
       status: 'Confirmed',
       amount: total,
       address: selectedAddress.line,
-      slot: '24/07/2026, 7:30 AM',
+      slot: formattedSlot,
     );
     bookings.insert(0, newBooking);
 

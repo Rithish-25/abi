@@ -85,10 +85,16 @@ const Reports = ({ bookings, setBookings, reports, setReports, addToast }) => {
 
     // Save report configuration in the reports state
     const reportIndex = reports.findIndex(r => r.id === selectedBooking.id);
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    const formattedDate = `${day}/${month}/${year}`;
+
     const updatedReport = {
       id: selectedBooking.id,
       name: selectedBooking.testNames.join(' + '),
-      date: '23/07/2026',
+      date: formattedDate,
       member: selectedBooking.member,
       status: 'Report Ready',
       rows: reportRows,

@@ -242,22 +242,54 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
           {/* Test item lines */}
           <div>
             <span className="form-label">Chosen Diagnostics</span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-              {selectedBooking?.testNames.map((t, index) => (
-                <div key={index} style={{
-                  padding: '0.625rem 0.75rem',
-                  fontSize: '0.8125rem',
-                  backgroundColor: 'var(--bg-primary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}>
-                  <div style={{ width: '6px', height: '6px', backgroundColor: 'var(--accent)', borderRadius: '50%' }} />
-                  {t}
-                </div>
-              ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {(() => {
+                const members = selectedBooking?.member ? selectedBooking.member.split(',').map(m => m.trim()) : [];
+                if (members.length <= 1) {
+                  return selectedBooking?.testNames.map((t, index) => (
+                    <div key={index} style={{
+                      padding: '0.625rem 0.75rem',
+                      fontSize: '0.8125rem',
+                      backgroundColor: 'var(--bg-primary)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 'var(--radius-sm)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      <div style={{ width: '6px', height: '6px', backgroundColor: 'var(--accent)', borderRadius: '50%' }} />
+                      {t}
+                    </div>
+                  ));
+                }
+                return members.map((m, mIdx) => (
+                  <div key={mIdx} style={{
+                    padding: '0.75rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-sm)',
+                  }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', display: 'block', marginBottom: '0.5rem' }}>
+                      {m}
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                      {selectedBooking?.testNames.map((t, index) => (
+                        <div key={index} style={{
+                          fontSize: '0.75rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          paddingLeft: '0.5rem',
+                          color: 'var(--text-primary)'
+                        }}>
+                          <div style={{ width: '4px', height: '4px', backgroundColor: 'var(--text-secondary)', borderRadius: '50%' }} />
+                          {t}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
 

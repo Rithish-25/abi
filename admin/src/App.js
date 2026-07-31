@@ -136,7 +136,16 @@ function App() {
     }
   });
 
-  const activeNotifications = bookings
+  const displayBookings = bookings.map(b => {
+    const userDoc = users.find(u => u.id === b.userId || u.phone === b.userId);
+    if (!userDoc) return b;
+    return {
+      ...b,
+      member: b.member ? b.member.replace(/Karthik Raja/g, userDoc.name) : userDoc.name
+    };
+  });
+
+  const activeNotifications = displayBookings
     .filter(b => !dismissedBookings.includes(b.id))
     .map(b => ({
       id: b.id,
@@ -147,7 +156,7 @@ function App() {
     }));
 
   const handleMarkAllNotificationsRead = () => {
-    const activeIds = bookings.map(b => b.id);
+    const activeIds = displayBookings.map(b => b.id);
     const newRead = Array.from(new Set([...readBookings, ...activeIds]));
     setReadBookings(newRead);
     localStorage.setItem('read_bookings', JSON.stringify(newRead));
@@ -289,7 +298,26 @@ function App() {
       // Real-time synchronization listeners
       const unsubBookings = onSnapshot(collection(db, 'bookings'), (snap) => {
         const list = [];
-        snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
+        snap.forEach(doc => {
+          const data = doc.data();
+          let dateStr = data.date;
+          if (data.timestamp && data.timestamp.seconds) {
+            const d = new Date(data.timestamp.seconds * 1000);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            dateStr = `${day}/${month}/${year}`;
+          }
+          list.push({ id: doc.id, ...data, date: dateStr });
+        });
+        list.sort((a, b) => {
+          if (a.timestamp && b.timestamp) {
+            const secA = a.timestamp.seconds || 0;
+            const secB = b.timestamp.seconds || 0;
+            if (secA !== secB) return secB - secA;
+          }
+          return b.id.localeCompare(a.id);
+        });
         if (list.length > 0) setBookings(list);
       });
 
@@ -618,7 +646,7 @@ function App() {
         <div className="content-body">
           {activePage === 'dashboard' && (
             <Dashboard 
-              bookings={bookings} 
+              bookings={displayBookings} 
               users={users} 
               doctors={doctors}
               setActivePage={setActivePage}
@@ -637,7 +665,7 @@ function App() {
             <Doctors 
               doctors={doctors} 
               setDoctors={updateDoctors} 
-              doctorPatients={bookings}
+              doctorPatients={displayBookings}
               setDoctorPatients={updateBookings}
               addToast={addToast}
             />
@@ -645,7 +673,7 @@ function App() {
 
           {activePage === 'bookings' && (
             <Bookings 
-              bookings={bookings} 
+              bookings={displayBookings} 
               setBookings={updateBookings} 
               addToast={addToast}
             />
@@ -663,7 +691,7 @@ function App() {
 
           {activePage === 'collections' && (
             <Collections 
-              bookings={bookings} 
+              bookings={displayBookings} 
               setBookings={updateBookings} 
               addToast={addToast}
             />
@@ -671,7 +699,7 @@ function App() {
 
           {activePage === 'reports' && (
             <Reports 
-              bookings={bookings} 
+              bookings={displayBookings} 
               setBookings={updateBookings} 
               reports={reports}
               setReports={updateReports}
@@ -681,7 +709,7 @@ function App() {
 
           {activePage === 'payments' && (
             <Payments 
-              bookings={bookings} 
+              bookings={displayBookings} 
               addToast={addToast}
             />
           )}
