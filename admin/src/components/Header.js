@@ -11,7 +11,9 @@ const Header = ({
   notifications = [],
   markAllRead,
   markRead,
-  clearAll
+  clearAll,
+  globalSearchQuery = '',
+  setGlobalSearchQuery = () => {}
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -76,6 +78,8 @@ const Header = ({
           <input
             type="text"
             placeholder="Global search..."
+            value={globalSearchQuery}
+            onChange={(e) => setGlobalSearchQuery(e.target.value)}
             style={{
               width: '100%',
               padding: '0.5rem 1rem 0.5rem 2.25rem',

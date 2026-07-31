@@ -185,17 +185,6 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>Laboratory Catalog</h2>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Manage categories, specific blood tests, and bundled health checkup packages</p>
         </div>
-        <button 
-          onClick={() => {
-            resetForm();
-            setShowTestModal(true);
-          }}
-          className="btn btn-primary"
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-        >
-          <Plus size={16} />
-          {activeTab === 'packages' ? 'Add Package' : 'Add Test'}
-        </button>
       </div>
 
       {/* Tabs */}

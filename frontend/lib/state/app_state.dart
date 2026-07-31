@@ -223,37 +223,7 @@ class AppState extends ChangeNotifier {
 
     final targetPhone = doctorLoggedIn ? doctorPhone : phone;
 
-    // Auto-claim seed bookings for this user session in Firestore
-    try {
-      final List<String> seedDocIds = ['AB2314', 'AB2298', 'AB2276', 'AB2250'];
-      for (var docId in seedDocIds) {
-        FirebaseFirestore.instance
-            .collection('bookings')
-            .doc(docId)
-            .get()
-            .then((docSnap) {
-          if (docSnap.exists) {
-            final data = docSnap.data();
-            if (data != null && data['userId'] != targetPhone) {
-              debugPrint(
-                  "LOG CLAIM BOOKING: claiming $docId for user $targetPhone");
-              FirebaseFirestore.instance
-                  .collection('bookings')
-                  .doc(docId)
-                  .update({'userId': targetPhone});
-            } else {
-              debugPrint(
-                  "LOG CLAIM BOOKING: $docId already claimed by $targetPhone");
-            }
-          } else {
-            debugPrint(
-                "LOG CLAIM BOOKING: $docId does not exist in Firestore yet");
-          }
-        });
-      }
-    } catch (e) {
-      debugPrint("LOG CLAIM BOOKING ERROR: $e");
-    }
+
 
     // 1. Listen to user bookings
     try {
@@ -265,7 +235,11 @@ class AppState extends ChangeNotifier {
         debugPrint(
             "LOG BOOKINGS TRIGGERED: targetPhone=$targetPhone, docCount=${snapshot.docs.length}");
         final List<Booking> loadedBookings = [];
+        final List<String> seedIds = ['AB2314', 'AB2298', 'AB2276', 'AB2250'];
         for (var doc in snapshot.docs) {
+          if (seedIds.contains(doc.id)) {
+            continue;
+          }
           final data = doc.data();
           debugPrint(
               "LOG BOOKING: id=${doc.id}, status=${data['status']}, userId=${data['userId']}");
@@ -302,9 +276,18 @@ class AppState extends ChangeNotifier {
         for (var doc in snapshot.docs) {
           final data = doc.data();
           final String reportId = doc.id;
+          final List<String> seedIds = ['AB2314', 'AB2298', 'AB2276', 'AB2250'];
+          if (seedIds.contains(reportId)) {
+            continue;
+          }
 
           // Only load reports for the logged in user or their family member
-          final memberName = data['member'] ?? '';
+          final String rUserId = data['userId'] ?? '';
+          final bool isOwnBooking = bookings.any((b) => b.id == reportId);
+          if (rUserId != targetPhone && !isOwnBooking) {
+            continue;
+          }
+          final memberName = (data['member'] ?? '').toString().replaceAll('Karthik Raja', userName.isNotEmpty ? userName : 'Karthik Raja');
 
           loadedReports.add(LabReport(
             id: reportId,
@@ -327,11 +310,9 @@ class AppState extends ChangeNotifier {
             }).toList();
           }
         }
-        if (loadedReports.isNotEmpty) {
-          reports = loadedReports;
-          _dbReportRows = loadedRows;
-          notifyListeners();
-        }
+        reports = loadedReports;
+        _dbReportRows = loadedRows;
+        notifyListeners();
       });
     } catch (_) {}
 
@@ -350,33 +331,31 @@ class AppState extends ChangeNotifier {
               .collection('family');
           await colRef.doc('1').set({
             'id': 1,
-            'name': userName,
+            'name': userName.isNotEmpty ? userName : 'Self',
             'relation': 'Self',
             'age': '34',
             'gender': 'Male',
-          });
-          await colRef.doc('2').set({
-            'id': 2,
-            'name': 'Meena Karthik',
-            'relation': 'Wife',
-            'age': '31',
-            'gender': 'Female',
-          });
-          await colRef.doc('3').set({
-            'id': 3,
-            'name': 'Aadhira',
-            'relation': 'Daughter',
-            'age': '6',
-            'gender': 'Female',
           });
           return;
         }
         final List<FamilyMember> loaded = [];
         for (var doc in snapshot.docs) {
           final data = doc.data();
+          final String name = data['name'] ?? '';
+          if (name == 'Meena Karthik' || name == 'Aadhira') {
+            try {
+              FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(targetPhone)
+                  .collection('family')
+                  .doc(doc.id)
+                  .delete();
+            } catch (_) {}
+            continue;
+          }
           loaded.add(FamilyMember(
             id: data['id'] ?? 0,
-            name: data['name'] ?? '',
+            name: name,
             relation: data['relation'] ?? '',
             age: data['age'] ?? '',
             gender: data['gender'] ?? '',
@@ -397,36 +376,57 @@ class AppState extends ChangeNotifier {
           .snapshots()
           .listen((snapshot) async {
         if (snapshot.docs.isEmpty) {
-          final colRef = FirebaseFirestore.instance
-              .collection('users')
-              .doc(targetPhone)
-              .collection('addresses');
-          await colRef.doc('1').set({
-            'id': 1,
-            'label': 'Home',
-            'line': '12, Bharathi Street, Thindal, Erode - 638012',
-            'phone': targetPhone,
-          });
-          await colRef.doc('2').set({
-            'id': 2,
-            'label': 'Work',
-            'line': '45, Perundurai Road, Erode - 638011',
-            'phone': targetPhone,
-          });
           return;
         }
         final List<SavedAddress> loaded = [];
         for (var doc in snapshot.docs) {
           final data = doc.data();
+          final String label = data['label'] ?? '';
+          final String line = data['line'] ?? '';
+          if (line == '45, Perundurai Road, Erode - 638011' || line == '12, Bharathi Street, Thindal, Erode - 638012') {
+            try {
+              FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(targetPhone)
+                  .collection('addresses')
+                  .doc(doc.id)
+                  .delete();
+            } catch (_) {}
+            continue;
+          }
           loaded.add(SavedAddress(
             id: data['id'] ?? 0,
-            label: data['label'] ?? '',
-            line: data['line'] ?? '',
+            label: label,
+            line: line,
             phone: data['phone'] ?? '',
           ));
         }
         loaded.sort((a, b) => a.id.compareTo(b.id));
         addresses = loaded;
+        notifyListeners();
+      });
+    } catch (_) {}
+
+    // 4.5. Listen to medical records
+    try {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(targetPhone)
+          .collection('records')
+          .snapshots()
+          .listen((snapshot) {
+        final List<MedicalRecord> loaded = [];
+        for (var doc in snapshot.docs) {
+          final data = doc.data();
+          loaded.add(MedicalRecord(
+            id: data['id'] ?? 0,
+            type: data['type'] ?? '',
+            title: data['title'] ?? '',
+            date: data['date'] ?? '',
+          ));
+        }
+        loaded.sort((a, b) => b.id.compareTo(a.id));
+        records = loaded;
         notifyListeners();
       });
     } catch (_) {}
@@ -491,6 +491,11 @@ class AppState extends ChangeNotifier {
               'gender': dbGender,
             }, SetOptions(merge: true));
           }
+        } else {
+          if (!doctorLoggedIn) {
+            debugPrint("Logged in user document does not exist in Firebase. Logging out...");
+            logout();
+          }
         }
       });
     } catch (_) {}
@@ -546,6 +551,7 @@ class AppState extends ChangeNotifier {
   String activeTab = 'home';
 
   // auth
+  String loginType = 'patient';
   String phone = '';
   String userName = '';
   List<String> otp = ['', '', '', ''];
@@ -586,26 +592,26 @@ class AppState extends ChangeNotifier {
   late List<FamilyMember> family = [
     FamilyMember(id: 1, name: userName.isNotEmpty ? userName : 'Self', relation: 'Self', age: '34', gender: 'Male'),
   ];
-  late List<SavedAddress> addresses = MockData.seedAddresses();
+  late List<SavedAddress> addresses = [];
   List<int> selectedMemberIds = [1];
   int selectedAddressId = 1;
   String paymentMethod = 'upi';
   String? lastBookingId;
   bool showAddMember = false;
   bool showAddAddress = false;
-
-  late List<Booking> bookings = MockData.seedBookings();
+ 
+  late List<Booking> bookings = [];
   String? selectedBookingId;
-  late List<LabReport> reports = MockData.seedReports();
+  late List<LabReport> reports = [];
   String? selectedReportId;
   String reportSearch = '';
   String reportFilter = 'all'; // all | completed | pending
-  late List<MedicalRecord> records = MockData.seedRecords();
+  late List<MedicalRecord> records = [];
   String? uploadMode;
   List<AppNotification> notifications = [];
-
+ 
   // doctor
-  late List<DoctorPatient> doctorPatients = MockData.seedDoctorPatients();
+  late List<DoctorPatient> doctorPatients = [];
   String refPatientName = '';
   String refPatientPhone = '';
   final List<String> refTests = [];
@@ -676,6 +682,7 @@ class AppState extends ChangeNotifier {
     }
     otp = ['', '', '', ''];
     otpError = false;
+    loginType = 'patient';
     doctorPhone = '';
     doctorName = '';
 
@@ -686,7 +693,7 @@ class AppState extends ChangeNotifier {
         'phone': phone,
         'code': generatedOtp,
         'type': 'Patient Login',
-        'name': userName.isEmpty ? 'Karthik Raja' : userName,
+        'name': userName.isEmpty ? 'Patient' : userName,
         'timestamp': FieldValue.serverTimestamp(),
         'status': 'Pending',
       });
@@ -711,7 +718,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> verifyOtp() async {
     if (otp.join().length == 4) {
-      if (doctorPhone.isNotEmpty && doctorName.isNotEmpty) {
+      if (loginType == 'doctor') {
         // Log in as Doctor!
         doctorLoggedIn = true;
         activeTab = 'doctor';
@@ -865,6 +872,7 @@ class AppState extends ChangeNotifier {
     }
     otp = ['', '', '', ''];
     otpError = false;
+    loginType = 'doctor';
     phone = '';
 
     // Generate random 4-digit OTP code and write to Firestore
@@ -889,6 +897,7 @@ class AppState extends ChangeNotifier {
     activeTab = 'home';
     history.clear();
     phone = '';
+    loginType = 'patient';
     doctorPhone = '';
     doctorLoggedIn = false;
     doctorName = '';
@@ -897,6 +906,13 @@ class AppState extends ChangeNotifier {
     phoneError = false;
     otp = ['', '', '', ''];
     notifications = [];
+    bookings = [];
+    reports = [];
+    addresses = [];
+    family = [
+      FamilyMember(id: 1, name: '', relation: 'Self', age: '34', gender: 'Male'),
+    ];
+    doctorPatients = [];
     _setupGlobalNotificationsListener();
     notifyListeners();
   }
@@ -1197,12 +1213,32 @@ class AppState extends ChangeNotifier {
     go('reportViewer');
   }
 
-  LabReport get selectedReportObj => reports
-      .firstWhere((r) => r.id == selectedReportId, orElse: () => reports.first);
+  LabReport get selectedReportObj {
+    try {
+      return reports.firstWhere((r) => r.id == selectedReportId);
+    } catch (_) {
+      try {
+        final booking = bookings.firstWhere((b) => b.id == selectedReportId);
+        return LabReport(
+          id: booking.id,
+          name: booking.testNames.join(' + '),
+          date: booking.date,
+          member: booking.member,
+          status: booking.status == 'Report Ready' ? 'Report Ready' : 'Pending',
+        );
+      } catch (_) {}
+      return LabReport(
+        id: selectedReportId ?? 'Unknown',
+        name: 'Diagnostic Report',
+        date: '',
+        member: userName.isNotEmpty ? userName : 'Patient',
+        status: 'Pending',
+      );
+    }
+  }
 
   List<ReportRow> getReportRows(String reportId) {
-    return _dbReportRows[reportId] ??
-        (MockData.reportRows[reportId] ?? MockData.reportRows['AB2314']!);
+    return _dbReportRows[reportId] ?? [];
   }
 
   void setReportSearch(String v) {
@@ -1232,17 +1268,33 @@ class AppState extends ChangeNotifier {
     go('uploadRecord');
   }
 
-  void saveRecord(String title) {
+  Future<void> saveRecord(String title) async {
+    final String targetPhone = doctorLoggedIn ? doctorPhone : phone;
+    if (targetPhone.isEmpty) return;
+
     final id = records.isEmpty
         ? 1
         : records.map((r) => r.id).reduce((a, b) => a > b ? a : b) + 1;
-    records.insert(
-        0,
-        MedicalRecord(
-            id: id,
-            type: uploadMode ?? 'report',
-            title: title.isEmpty ? 'Untitled record' : title,
-            date: '23/07/2026'));
+
+    final today = DateTime.now();
+    final day = today.day.toString().padLeft(2, '0');
+    final month = today.month.toString().padLeft(2, '0');
+    final formattedDate = '$day/$month/${today.year}';
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(targetPhone)
+          .collection('records')
+          .doc(id.toString())
+          .set({
+        'id': id,
+        'type': uploadMode ?? 'report',
+        'title': title.isEmpty ? 'Untitled record' : title,
+        'date': formattedDate,
+      });
+    } catch (_) {}
+
     goTab('records', 'records');
   }
 

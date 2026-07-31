@@ -109,10 +109,11 @@ function App() {
   // Dynamic collections states
   const [tests, setTests] = useState(initialTests);
   const [categories, setCategories] = useState(initialCategories);
-  const [users, setUsers] = useState(initialUsers);
-  const [bookings, setBookings] = useState(initialBookings);
-  const [reports, setReports] = useState(initialReports);
-  const [doctors, setDoctors] = useState(initialDoctors);
+  const [users, setUsers] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
 
   // App notification toasts list
   const [toasts, setToasts] = useState([]);
@@ -144,6 +145,47 @@ function App() {
       member: b.member ? b.member.replace(/Karthik Raja/g, userDoc.name) : userDoc.name
     };
   });
+
+  const q = globalSearchQuery.toLowerCase().trim();
+
+  const filteredUsers = q
+    ? users.filter(u => (u.name || '').toLowerCase().includes(q) || (u.phone || '').toLowerCase().includes(q))
+    : users;
+
+  const filteredBookings = q
+    ? displayBookings.filter(b => 
+        (b.id || '').toLowerCase().includes(q) || 
+        (b.member || '').toLowerCase().includes(q) || 
+        (b.testSummary || '').toLowerCase().includes(q) || 
+        (b.status || '').toLowerCase().includes(q) || 
+        (b.testNames || []).some(n => n.toLowerCase().includes(q))
+      )
+    : displayBookings;
+
+  const filteredDoctors = q
+    ? doctors.filter(d => 
+        (d.name || '').toLowerCase().includes(q) || 
+        (d.phone || '').toLowerCase().includes(q) || 
+        (d.specialty || '').toLowerCase().includes(q)
+      )
+    : doctors;
+
+  const filteredTests = q
+    ? tests.filter(t => 
+        (t.name || '').toLowerCase().includes(q) || 
+        (t.short || '').toLowerCase().includes(q) || 
+        (t.desc || '').toLowerCase().includes(q)
+      )
+    : tests;
+
+  const filteredReports = q
+    ? reports.filter(r => 
+        (r.id || '').toLowerCase().includes(q) || 
+        (r.name || '').toLowerCase().includes(q) || 
+        (r.member || '').toLowerCase().includes(q) || 
+        (r.status || '').toLowerCase().includes(q)
+      )
+    : reports;
 
   const activeNotifications = displayBookings
     .filter(b => !dismissedBookings.includes(b.id))
@@ -250,22 +292,6 @@ function App() {
       return; // Fallback to mock lists
     }
 
-    // Perform a one-time upgrade for mock bookings to add userId if missing
-    const upgradeBookings = async () => {
-      try {
-        const snap = await getDocs(collection(db, 'bookings'));
-        snap.forEach(async (docSnap) => {
-          const data = docSnap.data();
-          if (!data.userId) {
-            await updateDoc(doc(db, 'bookings', docSnap.id), { userId: '9894913330' });
-          }
-        });
-      } catch (err) {
-        console.warn('Upgrade bookings error:', err);
-      }
-    };
-    upgradeBookings();
-
     const seedCollectionIfEmpty = async (colName, seedArray) => {
       try {
         const colRef = collection(db, colName);
@@ -287,12 +313,8 @@ function App() {
     };
 
     // Trigger seeding of all datasets to Firestore
-    seedCollectionIfEmpty('bookings', initialBookings);
     seedCollectionIfEmpty('tests', initialTests);
     seedCollectionIfEmpty('categories', initialCategories);
-    seedCollectionIfEmpty('users', initialUsers);
-    seedCollectionIfEmpty('reports', initialReports);
-    seedCollectionIfEmpty('doctors', initialDoctors);
 
     try {
       // Real-time synchronization listeners
@@ -318,37 +340,37 @@ function App() {
           }
           return b.id.localeCompare(a.id);
         });
-        if (list.length > 0) setBookings(list);
+        setBookings(list);
       });
 
       const unsubTests = onSnapshot(collection(db, 'tests'), (snap) => {
         const list = [];
         snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
-        if (list.length > 0) setTests(list);
+        setTests(list);
       });
 
       const unsubCategories = onSnapshot(collection(db, 'categories'), (snap) => {
         const list = [];
         snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
-        if (list.length > 0) setCategories(list);
+        setCategories(list);
       });
 
       const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
         const list = [];
         snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
-        if (list.length > 0) setUsers(list);
+        setUsers(list);
       });
 
       const unsubReports = onSnapshot(collection(db, 'reports'), (snap) => {
         const list = [];
         snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
-        if (list.length > 0) setReports(list);
+        setReports(list);
       });
 
       const unsubDoctors = onSnapshot(collection(db, 'doctors'), (snap) => {
         const list = [];
         snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
-        if (list.length > 0) setDoctors(list);
+        setDoctors(list);
       });
 
       return () => {
@@ -632,6 +654,8 @@ function App() {
           markAllRead={handleMarkAllNotificationsRead}
           markRead={handleMarkNotificationRead}
           clearAll={handleClearAllNotifications}
+          globalSearchQuery={globalSearchQuery}
+          setGlobalSearchQuery={setGlobalSearchQuery}
         />
 
         {isMobileSidebarOpen ? (
@@ -646,16 +670,16 @@ function App() {
         <div className="content-body">
           {activePage === 'dashboard' && (
             <Dashboard 
-              bookings={displayBookings} 
-              users={users} 
-              doctors={doctors}
+              bookings={filteredBookings} 
+              users={filteredUsers} 
+              doctors={filteredDoctors}
               setActivePage={setActivePage}
             />
           )}
 
           {activePage === 'users' && (
             <Users 
-              users={users} 
+              users={filteredUsers} 
               setUsers={updateUsers} 
               addToast={addToast}
             />
@@ -663,9 +687,9 @@ function App() {
 
           {activePage === 'doctors' && (
             <Doctors 
-              doctors={doctors} 
+              doctors={filteredDoctors} 
               setDoctors={updateDoctors} 
-              doctorPatients={displayBookings}
+              doctorPatients={filteredBookings}
               setDoctorPatients={updateBookings}
               addToast={addToast}
             />
@@ -673,7 +697,7 @@ function App() {
 
           {activePage === 'bookings' && (
             <Bookings 
-              bookings={displayBookings} 
+              bookings={filteredBookings} 
               setBookings={updateBookings} 
               addToast={addToast}
             />
@@ -681,7 +705,7 @@ function App() {
 
           {activePage === 'tests' && (
             <Tests 
-              tests={tests} 
+              tests={filteredTests} 
               setTests={updateTests} 
               categories={categories} 
               setCategories={updateCategories} 
@@ -691,7 +715,7 @@ function App() {
 
           {activePage === 'collections' && (
             <Collections 
-              bookings={displayBookings} 
+              bookings={filteredBookings} 
               setBookings={updateBookings} 
               addToast={addToast}
             />
@@ -699,9 +723,9 @@ function App() {
 
           {activePage === 'reports' && (
             <Reports 
-              bookings={displayBookings} 
+              bookings={filteredBookings} 
               setBookings={updateBookings} 
-              reports={reports}
+              reports={filteredReports}
               setReports={updateReports}
               addToast={addToast}
             />
@@ -709,7 +733,7 @@ function App() {
 
           {activePage === 'payments' && (
             <Payments 
-              bookings={displayBookings} 
+              bookings={filteredBookings} 
               addToast={addToast}
             />
           )}
