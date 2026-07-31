@@ -3,7 +3,6 @@ import {
   collection, 
   getDocs, 
   addDoc, 
-  updateDoc, 
   doc, 
   setDoc,
   onSnapshot 
@@ -53,42 +52,6 @@ const initialCategories = [
   { id: 'heart', label: 'Heart Care' },
   { id: 'thyroid', label: 'Thyroid Care' },
   { id: 'fever', label: 'Fever Care' }
-];
-
-const initialUsers = [
-  { id: 'u1', phone: '9894913330', name: 'Karthik Raja', relation: 'Self', age: '34', gender: 'Male', role: 'admin' },
-  { id: 'u2', phone: '9876543210', name: 'Dr. Senthil Kumar', relation: 'Self', age: '45', gender: 'Male', role: 'doctor' },
-  { id: 'u3', phone: '9865321470', name: 'Meena Karthik', relation: 'Wife', age: '31', gender: 'Female', role: 'user' },
-  { id: 'u4', phone: '9843217650', name: 'Suresh Babu', relation: 'Self', age: '50', gender: 'Male', role: 'user' },
-  { id: 'u5', phone: '9845012345', name: 'Venkatesh Prasad', relation: 'Self', age: '29', gender: 'Male', role: 'technician' }
-];
-
-const initialBookings = [
-  { id: 'AB2314', date: '20/07/2026', testNames: ['CBC (Complete Blood Count)', 'Blood Sugar (Fasting / PP / HbA1c)'], testSummary: 'CBC + Blood Sugar', member: 'Karthik Raja', status: 'Report Ready', amount: 798, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '20/07/2026, 7:30 AM', assignedTech: 'Venkatesh Prasad', userId: '9894913330' },
-  { id: 'AB2298', date: '21/07/2026', testNames: ['Thyroid Test', 'Lipid Profile'], testSummary: 'Thyroid + Lipid', member: 'Meena Karthik', status: 'Sample Collected', amount: 1248, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '23/07/2026, 8:00 AM', assignedTech: 'Saravanan M', userId: '9894913330' },
-  { id: 'AB2276', date: '18/07/2026', testNames: ['Thyroid Test'], testSummary: 'Thyroid Test', member: 'Karthik Raja', status: 'Confirmed', amount: 599, address: '45, Perundurai Road, Erode - 638011', slot: '24/07/2026, 7:00 AM', assignedTech: '', userId: '9894913330' },
-  { id: 'AB2250', date: '02/07/2026', testNames: ['Urine Test'], testSummary: 'Urine Test', member: 'Aadhira', status: 'Cancelled', amount: 199, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '-', assignedTech: '', userId: '9894913330' }
-];
-
-const initialReports = [
-  { id: 'AB2314', name: 'CBC + Blood Sugar', date: '20/07/2026', member: 'Karthik Raja', status: 'Report Ready', rows: [
-    { name: 'Hemoglobin', value: '13.8 g/dL', range: '13-17', abnormal: false },
-    { name: 'WBC Count', value: '7,200 /uL', range: '4,000-11,000', abnormal: false },
-    { name: 'Platelet Count', value: '2.4 L/uL', range: '1.5-4.5 L', abnormal: false },
-    { name: 'Fasting Sugar', value: '108 mg/dL', range: '70-100', abnormal: true },
-    { name: 'HbA1c', value: '5.9 %', range: '<5.7', abnormal: true }
-  ]},
-  { id: 'AB2199', name: 'Lipid Profile', date: '28/06/2026', member: 'Karthik Raja', status: 'Report Ready', rows: [
-    { name: 'Total Cholesterol', value: '176 mg/dL', range: '<200', abnormal: false },
-    { name: 'HDL', value: '42 mg/dL', range: '>40', abnormal: false },
-    { name: 'LDL', value: '110 mg/dL', range: '<100', abnormal: true },
-    { name: 'Triglycerides', value: '138 mg/dL', range: '<150', abnormal: false }
-  ]}
-];
-
-const initialDoctors = [
-  { id: 'doc1', name: 'Dr. Senthil Kumar', phone: '9876543210', specialty: 'Diabetologist', totalReferrals: 3, totalCommission: 275 },
-  { id: 'doc2', name: 'Dr. Ramesh Kumar', phone: '9843217650', specialty: 'General Physician', totalReferrals: 1, totalCommission: 65 }
 ];
 
 const ADMIN_EMAIL = 'admin@gmail.com';

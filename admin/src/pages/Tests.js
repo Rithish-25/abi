@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, Edit2, Trash2, Check, Layers, FlaskConical, Box } from 'lucide-react';
+import { Search, Edit2, Trash2, Check, Layers, FlaskConical, Box } from 'lucide-react';
 import Table from '../components/Table';
 import Modal from '../components/Modal';
 
@@ -9,7 +9,6 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
   
   // Modals status
   const [showTestModal, setShowTestModal] = useState(false);
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
   
   const [selectedItem, setSelectedItem] = useState(null); // for edit mode
 
