@@ -31,7 +31,6 @@ import Tests from './pages/Tests';
 import Collections from './pages/Collections';
 import Reports from './pages/Reports';
 import Payments from './pages/Payments';
-import Marketing from './pages/Marketing';
 import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 
@@ -476,21 +475,16 @@ function App() {
     return (
       <div className="auth-page">
         <div className="auth-card animate-fade-in" style={{ textAlign: 'center' }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: 'var(--radius-md)',
-            backgroundColor: 'var(--accent)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 800,
-            color: 'white',
-            fontSize: '1.25rem',
-            marginBottom: '1rem'
-          }}>
-            AL
-          </div>
+          <img 
+            src="/admin-logo.png" 
+            alt="Abirami Lab Admin Logo"
+            style={{
+              width: '130px',
+              height: 'auto',
+              objectFit: 'contain',
+              marginBottom: '1rem'
+            }}
+          />
           <h2 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.5rem' }}>Restoring Session</h2>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Please wait while Firebase restores your admin session.</p>
         </div>
@@ -503,21 +497,16 @@ function App() {
       <div className="auth-page">
         <div className="auth-card animate-fade-in">
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--accent)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 800,
-              color: 'white',
-              fontSize: '1.25rem',
-              marginBottom: '1rem'
-            }}>
-              AL
-            </div>
+            <img 
+              src="/admin-logo.png" 
+              alt="Abirami Lab Admin Logo"
+              style={{
+                width: '120px',
+                height: 'auto',
+                objectFit: 'contain',
+                marginBottom: '1rem'
+              }}
+            />
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.25rem' }}>Administrator Login</h2>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Sign in to manage Abirami Laboratory</p>
           </div>
@@ -697,11 +686,6 @@ function App() {
             />
           )}
 
-          {activePage === 'marketing' && (
-            <Marketing 
-              addToast={addToast}
-            />
-          )}
 
           {activePage === 'notifications' && (
             <Notifications 
