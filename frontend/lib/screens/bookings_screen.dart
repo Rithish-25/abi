@@ -21,7 +21,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
   bool _matchesStatusFilter(String bookingStatus) {
     if (_selectedStatuses.isEmpty) return true;
     for (final filter in _selectedStatuses) {
-      if (filter == 'Upcoming' && (bookingStatus == 'Confirmed' || bookingStatus == 'Sample Collected')) {
+      if (filter == 'Upcoming' && (bookingStatus == 'Confirmed' || bookingStatus == 'Sample Collected' || bookingStatus == 'Under Process')) {
         return true;
       }
       if (filter == 'Cancelled' && (bookingStatus == 'Cancelled' || bookingStatus == 'Rejected')) {

@@ -45,7 +45,7 @@ const Collections = ({ bookings, setBookings, addToast }) => {
     { header: 'Logistics Status', field: 'status', sortable: true, render: (val) => (
       <span className={`badge ${
         val === 'Report Ready' ? 'badge-success' : 
-        val === 'Sample Collected' ? 'badge-info' : 
+        val === 'Sample Collected' || val === 'Under Process' ? 'badge-info' : 
         'badge-warning'
       }`}>
         {val}
@@ -143,7 +143,8 @@ const Collections = ({ bookings, setBookings, addToast }) => {
             >
               <option value="Confirmed">Technician Scheduled</option>
               <option value="Sample Collected">Sample Collected (In Transit to Lab)</option>
-              <option value="Report Ready">Processing Complete</option>
+              <option value="Under Process">Under Process (At Central Lab)</option>
+              <option value="Report Ready">Processing Complete (Report Ready)</option>
             </select>
           </div>
         </div>

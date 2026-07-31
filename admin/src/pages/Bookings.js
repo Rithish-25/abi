@@ -122,9 +122,8 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
     )},
     { header: 'Status', field: 'status', sortable: true, render: (val) => (
       <span className={`badge ${
-        val === 'Reports Ready' || val === 'Report Ready' ? 'badge-success' : 
-        val === 'Report Delivered' || val === 'Delivered' ? 'badge-success' : 
-        val === 'Sample Collected' ? 'badge-info' : 
+        val === 'Report Ready' || val === 'Reports Ready' ? 'badge-success' : 
+        val === 'Sample Collected' || val === 'Under Process' || val === 'Confirmed' ? 'badge-info' : 
         val === 'Cancelled' || val === 'Rejected' ? 'badge-danger' : 
         'badge-warning'
       }`}>
@@ -172,11 +171,11 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
             style={{ fontSize: '0.8125rem', padding: '0.5rem' }}
           >
             <option value="all">All Booking Statuses</option>
+            <option value="Pending">Pending</option>
             <option value="Confirmed">Confirmed</option>
             <option value="Sample Collected">Sample Collected</option>
-            <option value="Reports Ready">Reports Ready</option>
-            <option value="Report Delivered">Report Delivered</option>
-            <option value="Delivered">Delivered</option>
+            <option value="Under Process">Under Process</option>
+            <option value="Report Ready">Report Ready</option>
             <option value="Cancelled">Cancelled / Rejected</option>
           </select>
         </div>
@@ -368,28 +367,20 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
                 Collect Sample
               </button>
               <button 
-                onClick={() => handleStatusUpdate('Reports Ready')}
-                disabled={selectedBooking?.status === 'Reports Ready'}
+                onClick={() => handleStatusUpdate('Under Process')}
+                disabled={selectedBooking?.status === 'Under Process'}
                 className="btn btn-secondary"
                 style={{ flexGrow: 1, padding: '0.5rem', fontSize: '0.8125rem' }}
               >
-                Reports Ready
+                Under Process
               </button>
               <button 
-                onClick={() => handleStatusUpdate('Report Delivered')}
-                disabled={selectedBooking?.status === 'Report Delivered'}
+                onClick={() => handleStatusUpdate('Report Ready')}
+                disabled={selectedBooking?.status === 'Report Ready'}
                 className="btn btn-secondary"
                 style={{ flexGrow: 1, padding: '0.5rem', fontSize: '0.8125rem' }}
               >
-                Report Delivered
-              </button>
-              <button 
-                onClick={() => handleStatusUpdate('Delivered')}
-                disabled={selectedBooking?.status === 'Delivered'}
-                className="btn btn-secondary"
-                style={{ flexGrow: 1, padding: '0.5rem', fontSize: '0.8125rem' }}
-              >
-                Delivered
+                Report Ready
               </button>
               <button 
                 onClick={() => handleStatusUpdate('Rejected')}

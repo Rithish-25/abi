@@ -28,6 +28,7 @@ class AppColors {
       case 'Sample Collected':
         return warning;
       case 'Confirmed':
+      case 'Under Process':
         return primary;
       case 'Cancelled':
       case 'Rejected':
@@ -44,6 +45,7 @@ class AppColors {
       case 'Sample Collected':
         return warningTint;
       case 'Confirmed':
+      case 'Under Process':
         return primaryTint;
       case 'Cancelled':
       case 'Rejected':

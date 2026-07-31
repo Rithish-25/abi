@@ -19,7 +19,7 @@ const Reports = ({ bookings, setBookings, reports, setReports, addToast }) => {
   const [paramAbnormal, setParamAbnormal] = useState(false);
 
   // Filter bookings that have either had samples collected or reports ready
-  const bookingsForReports = bookings.filter(b => b.status === 'Sample Collected' || b.status === 'Report Ready');
+  const bookingsForReports = bookings.filter(b => b.status === 'Sample Collected' || b.status === 'Under Process' || b.status === 'Report Ready');
 
   const filteredBookings = bookingsForReports.filter(b => 
     b.member.toLowerCase().includes(searchTerm.toLowerCase()) ||
