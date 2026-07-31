@@ -39,6 +39,7 @@ import 'screens/referral_success_screen.dart';
 import 'screens/doctor_reports_screen.dart';
 import 'screens/doctor_commission_screen.dart';
 import 'screens/doctor_profile_screen.dart';
+import 'screens/registration_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -104,6 +105,8 @@ class AppRoot extends StatelessWidget {
         return const LoginScreen();
       case 'otp':
         return const OtpScreen();
+      case 'registration':
+        return const RegistrationScreen();
       case 'home':
         return const HomeScreen();
       case 'search':
@@ -247,7 +250,7 @@ class AppRoot extends StatelessWidget {
               ),
               // Floating headset & WhatsApp support buttons (User module pages only)
               if (app.activeTab != 'doctor' &&
-                  !['splash', 'onboarding', 'login', 'doctorLogin', 'otp'].contains(app.screen) &&
+                  !['splash', 'onboarding', 'login', 'doctorLogin', 'otp', 'registration'].contains(app.screen) &&
                   !isKeyboardOpen)
                 Positioned(
                   right: 16,

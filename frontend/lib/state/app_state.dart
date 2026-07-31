@@ -743,31 +743,90 @@ class AppState extends ChangeNotifier {
         } catch (_) {}
       } else {
         // Log in as Patient!
-        await _saveLoginState(true, false, phone);
-
         try {
-          FirebaseFirestore.instance.collection('otp_logs').doc(phone).update({
-            'status': 'Verified',
-          });
-          FirebaseFirestore.instance.collection('users').doc(phone).set({
-            'id': phone,
-            'phone': phone,
-            'name': 'Karthik Raja',
-            'role': 'user',
-            'relation': 'Self',
-            'age': '34',
-            'gender': 'Male',
-          }, SetOptions(merge: true));
-        } catch (_) {}
-
-        _setupListenersForUser();
-        _setupGlobalNotificationsListener();
-        goTab('home', 'home');
+          final userSnap = await FirebaseFirestore.instance.collection('users').doc(phone).get();
+          if (userSnap.exists) {
+            final data = userSnap.data();
+            if (data != null && data['name'] != null) {
+              userName = data['name'] as String;
+            }
+            await _saveLoginState(true, false, phone);
+            try {
+              FirebaseFirestore.instance.collection('otp_logs').doc(phone).update({
+                'status': 'Verified',
+              });
+            } catch (_) {}
+            _setupListenersForUser();
+            _setupGlobalNotificationsListener();
+            goTab('home', 'home');
+          } else {
+            go('registration');
+          }
+        } catch (_) {
+          await _saveLoginState(true, false, phone);
+          _setupListenersForUser();
+          _setupGlobalNotificationsListener();
+          goTab('home', 'home');
+        }
       }
     } else {
       otpError = true;
       notifyListeners();
     }
+  }
+
+  Future<void> registerPatient({
+    required String name,
+    required String age,
+    required String gender,
+    required String address,
+  }) async {
+    userName = name;
+    await _saveLoginState(true, false, phone);
+
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      
+      final userDoc = FirebaseFirestore.instance.collection('users').doc(phone);
+      batch.set(userDoc, {
+        'id': phone,
+        'phone': phone,
+        'name': name,
+        'role': 'user',
+        'relation': 'Self',
+        'age': age,
+        'gender': gender,
+      }, SetOptions(merge: true));
+
+      final familyDoc = userDoc.collection('family').doc('1');
+      batch.set(familyDoc, {
+        'id': 1,
+        'name': name,
+        'relation': 'Self',
+        'age': age,
+        'gender': gender,
+      }, SetOptions(merge: true));
+
+      final addressDoc = userDoc.collection('addresses').doc('1');
+      batch.set(addressDoc, {
+        'id': 1,
+        'label': 'Home',
+        'line': address,
+        'phone': phone,
+      }, SetOptions(merge: true));
+
+      await batch.commit();
+
+      try {
+        FirebaseFirestore.instance.collection('otp_logs').doc(phone).update({
+          'status': 'Verified',
+        });
+      } catch (_) {}
+    } catch (_) {}
+
+    _setupListenersForUser();
+    _setupGlobalNotificationsListener();
+    goTab('home', 'home');
   }
 
   void goDoctorLogin() => go('doctorLogin');
