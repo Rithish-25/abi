@@ -15,6 +15,8 @@ class BookingSummaryScreen extends StatelessWidget {
     final items = app.cartItems;
     final member = app.selectedMember;
     final address = app.selectedAddress;
+    final selectedMembers = app.family.where((m) => app.selectedMemberIds.contains(m.id)).toList();
+
     return Container(
       color: AppColors.background,
       child: Column(
@@ -36,15 +38,47 @@ class BookingSummaryScreen extends StatelessWidget {
                       )),
                 ])),
                 const SizedBox(height: 14),
-                _Card(child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('PATIENT', style: AppTextStyles.caption.copyWith(letterSpacing: 0.5)),
-                    const SizedBox(height: 4),
-                    Text(member.name, style: AppTextStyles.bodyBold.copyWith(fontSize: 14)),
-                    Text('${member.relation} · ${member.age} yrs', style: AppTextStyles.bodySmall.copyWith(fontSize: 12)),
-                  ]),
-                  GestureDetector(onTap: () => app.go('selectMember'), child: const Text('Change', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600))),
-                ])),
+                _Card(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('PATIENTS (${selectedMembers.length})', style: AppTextStyles.caption.copyWith(letterSpacing: 0.5)),
+                          GestureDetector(
+                            onTap: () => app.go('selectMember'),
+                            child: const Text('Change', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ...selectedMembers.map((m) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 14,
+                                  backgroundColor: AppColors.primaryTint,
+                                  child: Text(
+                                    m.name.isNotEmpty ? m.name[0].toUpperCase() : '',
+                                    style: const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(m.name, style: AppTextStyles.bodyBold.copyWith(fontSize: 13)),
+                                    Text('${m.relation} · ${m.age} yrs · ${m.gender}', style: AppTextStyles.bodySmall.copyWith(fontSize: 11)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          )),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 14),
                 _Card(child: Row(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -64,13 +98,13 @@ class BookingSummaryScreen extends StatelessWidget {
                 ])),
                 const SizedBox(height: 14),
                 _Card(child: Column(children: [
-                  _Row('Item total', '₹${app.cartMrpTotal}'),
-                  _Row('Discount', '-₹${app.cartSavings}', color: AppColors.success),
+                  _Row('Item total', '₹${app.cartMrpTotal * selectedMembers.length}'),
+                  _Row('Discount', '-₹${app.cartSavings * selectedMembers.length}', color: AppColors.success),
                   _Row('Home collection fee', app.homeCollectionFee > 0 ? '₹${app.homeCollectionFee}' : 'Free', color: app.homeCollectionFee > 0 ? AppColors.textPrimary : AppColors.success),
                   const Divider(height: 20, color: AppColors.border),
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                     Text('To pay', style: AppTextStyles.bodyBold.copyWith(fontSize: 14)),
-                    Text('₹${app.cartTotal + app.homeCollectionFee}', style: AppTextStyles.h2.copyWith(fontSize: 17)),
+                    Text('₹${(app.cartTotal * selectedMembers.length) + app.homeCollectionFee}', style: AppTextStyles.h2.copyWith(fontSize: 17)),
                   ]),
                 ])),
                 const SizedBox(height: 16),
@@ -80,7 +114,7 @@ class BookingSummaryScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: AppColors.border))),
-            child: AppButton(label: 'Proceed to Pay · ₹${app.cartTotal + app.homeCollectionFee}', onPressed: () => app.go('payment')),
+            child: AppButton(label: 'Proceed to Pay · ₹${(app.cartTotal * selectedMembers.length) + app.homeCollectionFee}', onPressed: () => app.go('payment')),
           ),
         ],
       ),

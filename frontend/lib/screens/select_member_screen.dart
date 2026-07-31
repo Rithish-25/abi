@@ -39,8 +39,8 @@ class _SelectMemberScreenState extends State<SelectMemberScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         decoration: BoxDecoration(
-                          color: selected ? AppColors.primaryTint : Colors.white,
-                          border: Border.all(color: selected ? AppColors.primary : AppColors.border, width: 1.5),
+                          color: Colors.white,
+                          border: Border.all(color: AppColors.border, width: 1.5),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Row(children: [

@@ -14,9 +14,7 @@ class PaymentScreen extends StatelessWidget {
     final app = context.watch<AppState>();
     final methods = [
       ('upi', 'UPI (Google Pay, PhonePe, Paytm)', Icons.qr_code),
-      ('card', 'Credit / Debit Card', Icons.credit_card),
-      ('cod', 'Pay at Home (Cash/UPI)', Icons.home),
-      ('online', 'Pay Online (Google Pay / PhonePe)', Icons.payments),
+      ('cod', 'Pay at Home (COD)', Icons.home),
     ];
     return Container(
       color: AppColors.background,
@@ -32,7 +30,7 @@ class PaymentScreen extends StatelessWidget {
                   child: Column(children: [
                     const Text('Amount to pay', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                     const SizedBox(height: 4),
-                    Text('₹${app.cartTotal}', style: AppTextStyles.h1.copyWith(fontSize: 32)),
+                    Text('₹${(app.cartTotal * app.selectedMemberIds.length) + app.homeCollectionFee}', style: AppTextStyles.h1.copyWith(fontSize: 32)),
                   ]),
                 ),
                 Text('CHOOSE PAYMENT METHOD', style: AppTextStyles.caption.copyWith(letterSpacing: 0.5)),
@@ -71,7 +69,7 @@ class PaymentScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: AppColors.border))),
-            child: AppButton(label: 'Pay ₹${app.cartTotal}', onPressed: app.confirmBooking),
+            child: AppButton(label: 'Pay ₹${(app.cartTotal * app.selectedMemberIds.length) + app.homeCollectionFee}', onPressed: app.confirmBooking),
           ),
         ],
       ),

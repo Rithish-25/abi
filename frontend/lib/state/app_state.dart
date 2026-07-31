@@ -474,6 +474,9 @@ class AppState extends ChangeNotifier {
             userName = dbName;
             notifyListeners();
 
+            final String dbAge = (data['age'] ?? '34').toString();
+            final String dbGender = (data['gender'] ?? 'Male').toString();
+
             // Sync Self family member doc '1' in lockstep
             FirebaseFirestore.instance
                 .collection('users')
@@ -484,8 +487,8 @@ class AppState extends ChangeNotifier {
               'id': 1,
               'name': dbName,
               'relation': 'Self',
-              'age': '34',
-              'gender': 'Male',
+              'age': dbAge,
+              'gender': dbGender,
             }, SetOptions(merge: true));
           }
         }

@@ -28,6 +28,14 @@ const Settings = ({ addToast }) => {
   }, []);
 
   const handleSaveSettings = async () => {
+    if (!labPhone.trim()) {
+      addToast('Please enter the Support Helpdesk Hotline number.', 'danger');
+      return;
+    }
+    if (labPhone.length !== 10) {
+      addToast('Support Helpdesk Hotline must be exactly a 10-digit number.', 'danger');
+      return;
+    }
     try {
       await setDoc(doc(db, 'settings', 'global'), {
         labName,
@@ -65,7 +73,13 @@ const Settings = ({ addToast }) => {
 
           <div className="form-group">
             <label className="form-label">Support Helpdesk Hotline</label>
-            <input type="text" value={labPhone} onChange={(e) => setLabPhone(e.target.value)} className="form-control" />
+            <input 
+              type="text" 
+              value={labPhone} 
+              onChange={(e) => setLabPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} 
+              className="form-control" 
+              placeholder="10-digit mobile number"
+            />
           </div>
 
           <div className="form-group">
