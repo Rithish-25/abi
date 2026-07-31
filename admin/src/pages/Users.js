@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, ShieldAlert, Send, Eye, Shield, KeyRound, BellRing } from 'lucide-react';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, query, onSnapshot, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import Table from '../components/Table';
 import Modal from '../components/Modal';
@@ -15,12 +15,31 @@ const Users = ({ users, setUsers, addToast }) => {
   const [notifTitle, setNotifTitle] = useState('');
   const [notifBody, setNotifBody] = useState('');
 
-  // Mock OTP verification codes database for real-time audit option
-  const [otpLogs, setOtpLogs] = useState([
-    { phone: '9894913330', code: '4392', type: 'Login request', timestamp: 'Just now', status: 'Pending' },
-    { phone: '9876543210', code: '8810', type: 'Doctor setup', timestamp: '12 mins ago', status: 'Verified' },
-    { phone: '9865321470', code: '2105', type: 'Profile edit', timestamp: '1 hour ago', status: 'Expired' }
-  ]);
+  const [otpLogs, setOtpLogs] = useState([]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'otp_logs'), where('type', '==', 'Patient Login'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const logs = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const date = data.timestamp && data.timestamp.toDate ? data.timestamp.toDate() : new Date();
+        const timestampStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (' + date.toLocaleDateString() + ')';
+        return {
+          phone: data.phone || doc.id,
+          code: data.code || '0000',
+          type: data.type || 'Patient Login',
+          timestamp: timestampStr,
+          dateObj: date,
+          status: data.status || 'Pending'
+        };
+      });
+      logs.sort((a, b) => b.dateObj - a.dateObj);
+      setOtpLogs(logs);
+    }, (err) => {
+      console.warn("Failed to listen to patient otp logs:", err);
+    });
+    return unsubscribe;
+  }, []);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -293,19 +312,11 @@ const Users = ({ users, setUsers, addToast }) => {
             </table>
           </div>
           <button 
-            onClick={() => {
-              // Simulate refresh
-              setOtpLogs([
-                { phone: '9894913330', code: '4392', type: 'Login request', timestamp: '1 min ago', status: 'Verified' },
-                { phone: '9843217650', code: '9156', type: 'Login request', timestamp: 'Just now', status: 'Pending' },
-                ...otpLogs.slice(1)
-              ]);
-              addToast('OTP Logs refreshed.', 'info');
-            }}
+            onClick={() => addToast('Patient OTP Logs are updated in real-time.', 'info')}
             className="btn btn-secondary"
             style={{ alignSelf: 'flex-end' }}
           >
-            Refresh Log
+            Sync Active
           </button>
         </div>
       </Modal>

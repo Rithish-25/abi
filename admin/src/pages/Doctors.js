@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Stethoscope, HandMetal, CheckCircle, Plus, Send, AlertTriangle, KeyRound, CheckSquare, BellRing } from 'lucide-react';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, query, onSnapshot, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import Table from '../components/Table';
 import Modal from '../components/Modal';
@@ -22,11 +22,31 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
   const [notifTitle, setNotifTitle] = useState('');
   const [notifBody, setNotifBody] = useState('');
 
-  // Mock OTP verifications database for doctors
-  const [doctorOtpLogs, setDoctorOtpLogs] = useState([
-    { name: 'Dr. Senthil Kumar', phone: '9894913330', code: '1094', timestamp: '5 mins ago', status: 'Verified' },
-    { name: 'Dr. Ramesh Kumar', phone: '9876543210', code: '6033', timestamp: '2 hours ago', status: 'Expired' }
-  ]);
+  const [doctorOtpLogs, setDoctorOtpLogs] = useState([]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'otp_logs'), where('type', '==', 'Doctor Login'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const logs = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const date = data.timestamp && data.timestamp.toDate ? data.timestamp.toDate() : new Date();
+        const timestampStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (' + date.toLocaleDateString() + ')';
+        return {
+          name: data.name || 'Doctor',
+          phone: data.phone || doc.id,
+          code: data.code || '0000',
+          timestamp: timestampStr,
+          dateObj: date,
+          status: data.status || 'Pending'
+        };
+      });
+      logs.sort((a, b) => b.dateObj - a.dateObj);
+      setDoctorOtpLogs(logs);
+    }, (err) => {
+      console.warn("Failed to listen to doctor otp logs:", err);
+    });
+    return unsubscribe;
+  }, []);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -377,17 +397,11 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
             </table>
           </div>
           <button 
-            onClick={() => {
-              setDoctorOtpLogs([
-                { name: 'Dr. Senthil Kumar', phone: '9894913330', code: '7302', timestamp: 'Just now', status: 'Pending' },
-                ...doctorOtpLogs
-              ]);
-              addToast('Doctor OTP Logs updated in real-time.', 'info');
-            }}
+            onClick={() => addToast('Doctor OTP Logs are updated in real-time.', 'info')}
             className="btn btn-secondary"
             style={{ alignSelf: 'flex-end' }}
           >
-            Refresh Log
+            Sync Active
           </button>
         </div>
       </Modal>

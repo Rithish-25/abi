@@ -39,9 +39,9 @@ class ReportViewerScreen extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       color: AppColors.primary,
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
-                        Text('Abirami Laboratory', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
-                        Text('Thindal, Erode · NABL Accredited', style: TextStyle(color: Color(0xCCFFFFFF), fontSize: 11)),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(app.labBrandingName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                        const Text('Thindal, Erode · NABL Accredited', style: TextStyle(color: Color(0xCCFFFFFF), fontSize: 11)),
                       ]),
                     ),
                     Container(
@@ -93,7 +93,7 @@ class ReportViewerScreen extends StatelessWidget {
                 variant: ButtonVariant.outline,
                 color: const Color(0xFF15803D),
                 onPressed: () async {
-                  final pdfBytes = await generateReportPdf(r, rows);
+                  final pdfBytes = await generateReportPdf(r, rows, labName: app.labBrandingName, labPhone: app.supportPhone);
                   final fileName = 'Report_${r.id}.pdf';
                   await fh.shareFile(fileName, pdfBytes, 'Medical Report - ${r.name}');
                 },
@@ -103,7 +103,7 @@ class ReportViewerScreen extends StatelessWidget {
                 label: 'Download',
                 icon: Icons.download,
                 onPressed: () async {
-                  final pdfBytes = await generateReportPdf(r, rows);
+                  final pdfBytes = await generateReportPdf(r, rows, labName: app.labBrandingName, labPhone: app.supportPhone);
                   final fileName = 'Report_${r.id}.pdf';
                   final savedPath = await fh.downloadFile(fileName, pdfBytes);
                   final isDownloadDir = savedPath.contains('Download') || savedPath == 'Downloads folder';

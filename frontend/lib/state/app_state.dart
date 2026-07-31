@@ -16,6 +16,13 @@ class AppState extends ChangeNotifier {
 
   List<BloodTest> _dbTests = [];
   Map<String, List<ReportRow>> _dbReportRows = {};
+  StreamSubscription<QuerySnapshot>? _notifSub;
+  DateTime? doctorSessionStart;
+
+  String supportPhone = '9894913330';
+  String labBrandingName = 'Abirami Laboratory';
+  int homeCollectionFee = 150;
+  bool enableTechnicianLogistics = true;
 
   AppState() {
     phone = '';
@@ -55,6 +62,7 @@ class AppState extends ChangeNotifier {
       // Trigger basic Firestore listeners for everyone
       _setupCatalogListener();
       _setupGlobalNotificationsListener();
+      _setupSettingsListener();
 
       if (_isLoggedIn) {
         phone = _savedPhone;
@@ -63,6 +71,8 @@ class AppState extends ChangeNotifier {
           doctorPhone = _savedPhone;
           doctorName = _savedDoctorName;
           activeTab = 'doctor';
+          doctorPatients = [];
+          doctorSessionStart = DateTime.now();
         } else {
           activeTab = 'home';
         }
@@ -117,9 +127,35 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  void _setupSettingsListener() {
+    try {
+      FirebaseFirestore.instance.collection('settings').doc('global').snapshots().listen((snapshot) {
+        if (snapshot.exists) {
+          final data = snapshot.data();
+          if (data != null) {
+            if (data['labPhone'] != null) {
+              supportPhone = data['labPhone'].toString();
+            }
+            if (data['labName'] != null) {
+              labBrandingName = data['labName'].toString();
+            }
+            if (data['collectionFee'] != null) {
+              homeCollectionFee = (data['collectionFee'] as num).toInt();
+            }
+            if (data['enableTechnicianLogistics'] != null) {
+              enableTechnicianLogistics = data['enableTechnicianLogistics'] as bool;
+            }
+            notifyListeners();
+          }
+        }
+      }, onError: (err) => debugPrint("Settings listener error: $err"));
+    } catch (_) {}
+  }
+
   void _setupGlobalNotificationsListener() {
     try {
-      FirebaseFirestore.instance.collection('notifications').snapshots().listen(
+      _notifSub?.cancel();
+      _notifSub = FirebaseFirestore.instance.collection('notifications').snapshots().listen(
           (snapshot) {
         final List<AppNotification> loadedNotifs = [];
         final activePhone = doctorLoggedIn ? doctorPhone : phone;
@@ -131,12 +167,25 @@ class AppState extends ChangeNotifier {
           final roleMatchesSession = targetRole.isEmpty ||
               (doctorLoggedIn && targetRole == 'doctor') ||
               (!doctorLoggedIn && targetRole == 'user');
-          final appliesToCurrentSession =
+
+          final String notifTimeStr = data['timestamp'] ?? '';
+          bool isFresh = true;
+          if (doctorLoggedIn && doctorSessionStart != null && notifTimeStr.isNotEmpty) {
+            try {
+              final notifTime = DateTime.parse(notifTimeStr);
+              if (notifTime.isBefore(doctorSessionStart!)) {
+                isFresh = false;
+              }
+            } catch (_) {}
+          }
+
+          final appliesToCurrentSession = isFresh && (
               (targetType == 'all_users' && !doctorLoggedIn) ||
                   (targetType == 'all_doctors' && doctorLoggedIn) ||
                   (targetType == 'specific' &&
                       targetPhone == activePhone &&
-                      roleMatchesSession);
+                      roleMatchesSession)
+          );
 
           if (appliesToCurrentSession) {
             loadedNotifs.add(AppNotification(
@@ -405,10 +454,8 @@ class AppState extends ChangeNotifier {
               commission: data['commission'] ?? 0,
             ));
           }
-          if (loaded.isNotEmpty) {
-            doctorPatients = loaded;
-            notifyListeners();
-          }
+          doctorPatients = loaded;
+          notifyListeners();
         });
       } catch (_) {}
     }
@@ -624,6 +671,22 @@ class AppState extends ChangeNotifier {
     }
     otp = ['', '', '', ''];
     otpError = false;
+    doctorPhone = '';
+    doctorName = '';
+
+    // Generate random 4-digit OTP code and write to Firestore
+    final generatedOtp = (1000 + (DateTime.now().millisecond % 9000)).toString();
+    try {
+      FirebaseFirestore.instance.collection('otp_logs').doc(phone).set({
+        'phone': phone,
+        'code': generatedOtp,
+        'type': 'Patient Login',
+        'name': userName.isEmpty ? 'Karthik Raja' : userName,
+        'timestamp': FieldValue.serverTimestamp(),
+        'status': 'Pending',
+      });
+    } catch (_) {}
+
     go('otp');
   }
 
@@ -643,23 +706,64 @@ class AppState extends ChangeNotifier {
 
   Future<void> verifyOtp() async {
     if (otp.join().length == 4) {
-      await _saveLoginState(true, false, phone);
+      if (doctorPhone.isNotEmpty && doctorName.isNotEmpty) {
+        // Log in as Doctor!
+        doctorLoggedIn = true;
+        activeTab = 'doctor';
+        history.clear();
+        screen = 'doctorDashboard';
+        doctorPatients = [];
+        notifications = [];
+        doctorSessionStart = DateTime.now();
+        _setupGlobalNotificationsListener();
+        await _saveLoginState(true, true, doctorPhone, savedDoctorName: doctorName);
 
-      // Create profile document in Firestore
-      try {
-        FirebaseFirestore.instance.collection('users').doc(phone).set({
-          'id': phone,
-          'phone': phone,
-          'name': 'Karthik Raja',
-          'role': 'user',
-          'relation': 'Self',
-          'age': '34',
-          'gender': 'Male',
-        }, SetOptions(merge: true));
-      } catch (_) {}
+        try {
+          FirebaseFirestore.instance.collection('otp_logs').doc(doctorPhone).update({
+            'status': 'Verified',
+          });
+          FirebaseFirestore.instance.collection('users').doc(doctorPhone).set({
+            'id': doctorPhone,
+            'phone': doctorPhone,
+            'name': doctorDisplayName,
+            'role': 'doctor',
+            'relation': 'Self',
+            'age': '45',
+            'gender': 'Male',
+          }, SetOptions(merge: true));
 
-      _setupListenersForUser();
-      goTab('home', 'home');
+          FirebaseFirestore.instance.collection('doctors').doc(doctorPhone).set({
+            'id': doctorPhone,
+            'name': doctorDisplayName,
+            'phone': doctorPhone,
+            'specialty': 'General Physician',
+            'totalReferrals': 0,
+            'totalCommission': 0,
+          }, SetOptions(merge: true));
+        } catch (_) {}
+      } else {
+        // Log in as Patient!
+        await _saveLoginState(true, false, phone);
+
+        try {
+          FirebaseFirestore.instance.collection('otp_logs').doc(phone).update({
+            'status': 'Verified',
+          });
+          FirebaseFirestore.instance.collection('users').doc(phone).set({
+            'id': phone,
+            'phone': phone,
+            'name': 'Karthik Raja',
+            'role': 'user',
+            'relation': 'Self',
+            'age': '34',
+            'gender': 'Male',
+          }, SetOptions(merge: true));
+        } catch (_) {}
+
+        _setupListenersForUser();
+        _setupGlobalNotificationsListener();
+        goTab('home', 'home');
+      }
     } else {
       otpError = true;
       notifyListeners();
@@ -695,35 +799,24 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    doctorLoggedIn = true;
-    activeTab = 'doctor';
-    history.clear();
-    screen = 'doctorDashboard';
-    await _saveLoginState(true, true, doctorPhone,
-        savedDoctorName: doctorName.trim());
+    otp = ['', '', '', ''];
+    otpError = false;
+    phone = '';
 
-    // Save/merge doctor profile in Firestore
+    // Generate random 4-digit OTP code and write to Firestore
+    final generatedOtp = (1000 + (DateTime.now().millisecond % 9000)).toString();
     try {
-      FirebaseFirestore.instance.collection('users').doc(doctorPhone).set({
-        'id': doctorPhone,
+      FirebaseFirestore.instance.collection('otp_logs').doc(doctorPhone).set({
         'phone': doctorPhone,
+        'code': generatedOtp,
+        'type': 'Doctor Login',
         'name': doctorDisplayName,
-        'role': 'doctor',
-        'relation': 'Self',
-        'age': '45',
-        'gender': 'Male',
-      }, SetOptions(merge: true));
-
-      FirebaseFirestore.instance.collection('doctors').doc(doctorPhone).set({
-        'id': doctorPhone,
-        'name': doctorDisplayName,
-        'phone': doctorPhone,
-        'specialty': 'Diabetologist',
-      }, SetOptions(merge: true));
+        'timestamp': FieldValue.serverTimestamp(),
+        'status': 'Pending',
+      });
     } catch (_) {}
 
-    _setupListenersForUser();
-    notifyListeners();
+    go('otp');
   }
 
   Future<void> logout() async {
@@ -739,6 +832,8 @@ class AppState extends ChangeNotifier {
     doctorPhoneError = false;
     phoneError = false;
     otp = ['', '', '', ''];
+    notifications = [];
+    _setupGlobalNotificationsListener();
     notifyListeners();
   }
 
@@ -965,7 +1060,7 @@ class AppState extends ChangeNotifier {
   void confirmBooking() {
     final items = cartItems;
     final total =
-        items.fold(0, (a, c) => a + c.price) * selectedMemberIds.length;
+        (items.fold(0, (a, c) => a + c.price) * selectedMemberIds.length) + homeCollectionFee;
     final id =
         'AB${2300 + bookings.length + (DateTime.now().millisecond % 90)}';
     final newBooking = Booking(

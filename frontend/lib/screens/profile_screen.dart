@@ -377,14 +377,14 @@ class ProfileScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.call, color: Colors.white, size: 12),
-                            SizedBox(width: 4),
+                            const Icon(Icons.call, color: Colors.white, size: 12),
+                            const SizedBox(width: 4),
                             Text(
-                              '9894913330',
-                              style: TextStyle(
+                              app.supportPhone,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,

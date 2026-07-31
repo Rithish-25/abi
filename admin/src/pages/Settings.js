@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, Save, ShieldAlert, Database, RefreshCw, FileSliders } from 'lucide-react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const Settings = ({ addToast }) => {
   const [labName, setLabName] = useState('Abirami Laboratory');
@@ -7,8 +9,37 @@ const Settings = ({ addToast }) => {
   const [collectionFee, setCollectionFee] = useState('150');
   const [enableTechnicianLogistics, setEnableTechnicianLogistics] = useState(true);
 
-  const handleSaveSettings = () => {
-    addToast('Global configurations updated successfully.', 'success');
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'settings', 'global'));
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.labName) setLabName(data.labName);
+          if (data.labPhone) setLabPhone(data.labPhone);
+          if (data.collectionFee !== undefined) setCollectionFee(data.collectionFee.toString());
+          if (data.enableTechnicianLogistics !== undefined) setEnableTechnicianLogistics(data.enableTechnicianLogistics);
+        }
+      } catch (err) {
+        console.warn('Error fetching settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSaveSettings = async () => {
+    try {
+      await setDoc(doc(db, 'settings', 'global'), {
+        labName,
+        labPhone,
+        collectionFee: parseInt(collectionFee) || 0,
+        enableTechnicianLogistics
+      });
+      addToast('Global configurations updated successfully in database.', 'success');
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      addToast('Failed to save settings to database.', 'danger');
+    }
   };
 
   return (

@@ -3,7 +3,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../models/models.dart';
 
-Future<Uint8List> generateReportPdf(LabReport report, List<ReportRow> rows) async {
+Future<Uint8List> generateReportPdf(LabReport report, List<ReportRow> rows, {String labName = 'Abirami Laboratory', String labPhone = '9894913330'}) async {
   final pdf = pw.Document();
 
   pdf.addPage(
@@ -40,7 +40,7 @@ Future<Uint8List> generateReportPdf(LabReport report, List<ReportRow> rows) asyn
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
                           pw.Text(
-                            'Abirami Laboratory',
+                            labName,
                             style: pw.TextStyle(
                               color: PdfColors.white,
                               fontWeight: pw.FontWeight.bold,
@@ -49,7 +49,7 @@ Future<Uint8List> generateReportPdf(LabReport report, List<ReportRow> rows) asyn
                           ),
                           pw.SizedBox(height: 2),
                           pw.Text(
-                            'Thindal, Erode · NABL Accredited · Phone: 9894913330',
+                            'Thindal, Erode · NABL Accredited · Phone: $labPhone',
                             style: const pw.TextStyle(
                               color: PdfColor.fromInt(0xE6FFFFFF),
                               fontSize: 10,
