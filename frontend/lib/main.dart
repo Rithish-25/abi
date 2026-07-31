@@ -40,9 +40,15 @@ import 'screens/doctor_reports_screen.dart';
 import 'screens/doctor_commission_screen.dart';
 import 'screens/doctor_profile_screen.dart';
 import 'screens/registration_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("Failed to load .env file: $e");
+  }
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
@@ -51,13 +57,13 @@ void main() async {
   
   try {
     await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: "AIzaSyDss-RuDNVHe91nIq-zd-DvGUWiUbPCDQQ",
-        authDomain: "abirami-laboratory.firebaseapp.com",
-        projectId: "abirami-laboratory",
-        storageBucket: "abirami-laboratory.firebasestorage.app",
-        messagingSenderId: "898467903181",
-        appId: "1:898467903181:web:2cf699f6e9864018c8db84",
+      options: FirebaseOptions(
+        apiKey: dotenv.env['FIREBASE_API_KEY'] ?? '',
+        authDomain: dotenv.env['FIREBASE_AUTH_DOMAIN'] ?? '',
+        projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
+        storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
+        messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '',
+        appId: dotenv.env['FIREBASE_APP_ID'] ?? '',
       ),
     );
   } catch (e) {
