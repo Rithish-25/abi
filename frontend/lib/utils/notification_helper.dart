@@ -2,11 +2,13 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // FCM automatically handles displaying notifications in background/terminated state.
-  // We can log it or perform background processing here.
+  try {
+    await Firebase.initializeApp();
+  } catch (_) {}
   debugPrint("Handling a background message: ${message.messageId}");
 }
 
