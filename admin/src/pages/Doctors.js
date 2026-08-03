@@ -4,6 +4,7 @@ import { addDoc, collection, query, onSnapshot, where } from 'firebase/firestore
 import { db } from '../firebase';
 import Table from '../components/Table';
 import Modal from '../components/Modal';
+import { sendPushNotification } from '../utils/fcm';
 
 const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addToast }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,7 +84,7 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
     setShowAddDoctorModal(false);
   };
 
-  const handleProcessPayout = () => {
+  const handleProcessPayout = async () => {
     if (!selectedDoctor) return;
     // Process all pending payouts for doctorPatients referred by this doctor
     const updatedPatients = doctorPatients.map(p => 
@@ -93,6 +94,27 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
     );
     setDoctorPatients(updatedPatients);
     
+    // Add real-time notification to the doctor
+    try {
+      const docTitle = "Commission Payout Processed";
+      const docBody = `Your outstanding referral commission of ₹${selectedDoctor.totalCommission || 0} has been successfully paid out.`;
+      await addDoc(collection(db, 'notifications'), {
+        title: docTitle,
+        body: docBody,
+        kind: 'offer',
+        targetType: 'specific',
+        targetPhone: selectedDoctor.phone,
+        targetRole: 'doctor',
+        timestamp: new Date().toISOString(),
+        dateString: new Date().toLocaleDateString('en-IN') + ', ' + new Date().toLocaleTimeString('en-IN'),
+      });
+
+      // Trigger FCM push notification to Doctor
+      sendPushNotification(selectedDoctor.phone, 'doctor', docTitle, docBody);
+    } catch (err) {
+      console.error("Failed to save payout notification:", err);
+    }
+
     // Update commissions paid
     addToast(`Successfully processed commission payouts for ${selectedDoctor.name}.`, 'success');
     setShowPayoutModal(false);
@@ -120,6 +142,9 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
         timestamp: new Date().toISOString(),
         dateString: new Date().toLocaleDateString('en-IN') + ', ' + new Date().toLocaleTimeString('en-IN'),
       });
+
+      // Trigger FCM push notification to Doctor
+      sendPushNotification(selectedDoctor.phone, 'doctor', notifTitle.trim(), notifBody.trim());
 
       addToast(`Push notification successfully pushed to ${selectedDoctor.name} (${selectedDoctor.phone}).`, 'success');
       setNotifTitle('');

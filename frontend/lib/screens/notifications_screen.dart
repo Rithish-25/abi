@@ -49,7 +49,27 @@ class NotificationsScreen extends StatelessWidget {
       color: AppColors.background,
       child: Column(
         children: [
-          BackHeader(title: 'Notifications', onBack: app.back),
+          BackHeader(
+            title: 'Notifications',
+            onBack: app.back,
+            action: app.notifications.isNotEmpty
+                ? TextButton(
+                    onPressed: app.clearNotifications,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'Clear All',
+                      style: AppTextStyles.bodyBold.copyWith(
+                        color: AppColors.primary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  )
+                : null,
+          ),
           Expanded(
             child: app.notifications.isEmpty
                 ? Center(

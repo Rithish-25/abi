@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import '../data/mock_data.dart';
 import '../models/models.dart';
+import '../utils/notification_helper.dart';
 
 class AppState extends ChangeNotifier {
   String screen = 'splash';
@@ -18,6 +19,9 @@ class AppState extends ChangeNotifier {
   Map<String, List<ReportRow>> _dbReportRows = {};
   StreamSubscription<QuerySnapshot>? _notifSub;
   DateTime? doctorSessionStart;
+  final Set<String> _shownNotifDocIds = {};
+  bool _isFirstSnapshot = true;
+  List<String> _clearedNotifIds = [];
 
   String supportPhone = '9894913330';
   String labBrandingName = 'Abirami Laboratory';
@@ -59,6 +63,8 @@ class AppState extends ChangeNotifier {
         notifications = [];
       }
 
+      _clearedNotifIds = prefs.getStringList('cleared_notifications_ids') ?? [];
+
       // Trigger basic Firestore listeners for everyone
       _setupCatalogListener();
       _setupGlobalNotificationsListener();
@@ -77,6 +83,7 @@ class AppState extends ChangeNotifier {
           activeTab = 'home';
         }
         _setupListenersForUser();
+        NotificationHelper.syncTopics(phone, doctorLoggedIn);
       } else {
         phone = '';
         doctorLoggedIn = false;
@@ -159,7 +166,12 @@ class AppState extends ChangeNotifier {
           (snapshot) {
         final List<AppNotification> loadedNotifs = [];
         final activePhone = doctorLoggedIn ? doctorPhone : phone;
+        final List<String> currentDocIds = [];
+
         for (var doc in snapshot.docs) {
+          if (_clearedNotifIds.contains(doc.id)) {
+            continue;
+          }
           final data = doc.data();
           final targetType = data['targetType'] ?? 'all_users';
           final targetPhone = data['targetPhone'] ?? '';
@@ -188,16 +200,56 @@ class AppState extends ChangeNotifier {
           );
 
           if (appliesToCurrentSession) {
+            currentDocIds.add(doc.id);
+            final title = data['title'] ?? '';
+            final body = data['body'] ?? '';
+            final kind = _notificationKindFromData(data);
+
             loadedNotifs.add(AppNotification(
               id: loadedNotifs.length + 1,
-              kind: _notificationKindFromData(data),
-              title: data['title'] ?? '',
-              body: data['body'] ?? '',
+              kind: kind,
+              title: title,
+              body: body,
               time: data['dateString'] ?? 'Just now',
               read: false,
             ));
+
+            // Trigger system tray notification if this is a new document in real-time
+            if (!_isFirstSnapshot && !_shownNotifDocIds.contains(doc.id)) {
+              NotificationHelper.showNotification(
+                id: doc.id.hashCode,
+                title: title,
+                body: body,
+              );
+            }
           }
         }
+
+        // Add all current document IDs to seen set
+        _shownNotifDocIds.addAll(currentDocIds);
+        _isFirstSnapshot = false;
+
+        // Dynamic Booking Reminders (for today and tomorrow)
+        final now = DateTime.now();
+        for (var booking in bookings) {
+          if (booking.status == 'Confirmed') {
+            final todayStr = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+            final tomorrow = now.add(const Duration(days: 1));
+            final tomorrowStr = '${tomorrow.day.toString().padLeft(2, '0')}/${tomorrow.month.toString().padLeft(2, '0')}/${tomorrow.year}';
+
+            if (booking.slot.contains(todayStr) || booking.slot.contains(tomorrowStr)) {
+              loadedNotifs.add(AppNotification(
+                id: loadedNotifs.length + 1,
+                kind: 'check',
+                title: 'Upcoming Appointment Reminder',
+                body: 'Reminder: You have a collection scheduled for: ${booking.slot}.',
+                time: 'Today',
+                read: false,
+              ));
+            }
+          }
+        }
+
         notifications = loadedNotifs;
         notifyListeners();
       }, onError: (err) => debugPrint("Notifications listener error: $err"));
@@ -729,6 +781,7 @@ class AppState extends ChangeNotifier {
         doctorSessionStart = DateTime.now();
         _setupGlobalNotificationsListener();
         await _saveLoginState(true, true, doctorPhone, savedDoctorName: doctorName);
+        NotificationHelper.syncTopics(doctorPhone, true);
 
         try {
           FirebaseFirestore.instance.collection('otp_logs').doc(doctorPhone).update({
@@ -770,6 +823,7 @@ class AppState extends ChangeNotifier {
             } catch (_) {}
             _setupListenersForUser();
             _setupGlobalNotificationsListener();
+            NotificationHelper.syncTopics(phone, false);
             goTab('home', 'home');
           } else {
             go('registration');
@@ -838,6 +892,7 @@ class AppState extends ChangeNotifier {
 
     _setupListenersForUser();
     _setupGlobalNotificationsListener();
+    NotificationHelper.syncTopics(phone, false);
     goTab('home', 'home');
   }
 
@@ -892,6 +947,9 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    final String target = doctorLoggedIn ? doctorPhone : phone;
+    final bool isDoc = doctorLoggedIn;
+    NotificationHelper.unsubscribeAll(target, isDoc);
     await _saveLoginState(false, false, '');
     screen = 'login';
     activeTab = 'home';
@@ -1184,6 +1242,32 @@ class AppState extends ChangeNotifier {
         'userId': targetPhone,
         'timestamp': FieldValue.serverTimestamp(),
       });
+
+      // Write real-time user notification
+      FirebaseFirestore.instance.collection('notifications').add({
+        'title': 'Booking Confirmed',
+        'body': 'Your booking ID $id has been successfully confirmed for $formattedSlot.',
+        'kind': 'check',
+        'targetType': 'specific',
+        'targetPhone': targetPhone,
+        'targetRole': 'user',
+        'timestamp': DateTime.now().toIso8601String(),
+        'dateString': '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}, ${now.hour}:${now.minute.toString().padLeft(2, '0')}',
+      });
+
+      // If a doctor placed this booking, notify them too
+      if (doctorLoggedIn) {
+        FirebaseFirestore.instance.collection('notifications').add({
+          'title': 'Patient Referral Placed',
+          'body': 'You referred patient ${newBooking.member} for booking $id. Payout pending.',
+          'kind': 'check',
+          'targetType': 'specific',
+          'targetPhone': doctorPhone,
+          'targetRole': 'doctor',
+          'timestamp': DateTime.now().toIso8601String(),
+          'dateString': '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}, ${now.hour}:${now.minute.toString().padLeft(2, '0')}',
+        });
+      }
     } catch (_) {}
 
     lastBookingId = id;
@@ -1293,6 +1377,19 @@ class AppState extends ChangeNotifier {
         'title': title.isEmpty ? 'Untitled record' : title,
         'date': formattedDate,
       });
+
+      // Write notification for medical record upload
+      final now = DateTime.now();
+      FirebaseFirestore.instance.collection('notifications').add({
+        'title': 'Medical Record Uploaded',
+        'body': 'Your medical report "${title.isEmpty ? 'Untitled record' : title}" has been successfully uploaded to your profile.',
+        'kind': 'report',
+        'targetType': 'specific',
+        'targetPhone': targetPhone,
+        'targetRole': doctorLoggedIn ? 'doctor' : 'user',
+        'timestamp': DateTime.now().toIso8601String(),
+        'dateString': '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}, ${now.hour}:${now.minute.toString().padLeft(2, '0')}',
+      });
     } catch (_) {}
 
     goTab('records', 'records');
@@ -1304,6 +1401,40 @@ class AppState extends ChangeNotifier {
     }
     _saveNotifications();
     notifyListeners();
+  }
+
+  void clearNotifications() async {
+    final activePhone = doctorLoggedIn ? doctorPhone : phone;
+    try {
+      final snap = await FirebaseFirestore.instance.collection('notifications').get();
+      for (var doc in snap.docs) {
+        final data = doc.data();
+        final targetType = data['targetType'] ?? 'all_users';
+        final targetPhone = data['targetPhone'] ?? '';
+        final targetRole = (data['targetRole'] ?? '').toString();
+        final roleMatchesSession = targetRole.isEmpty ||
+            (doctorLoggedIn && targetRole == 'doctor') ||
+            (!doctorLoggedIn && targetRole == 'user');
+
+        final applies = (targetType == 'all_users' && !doctorLoggedIn) ||
+            (targetType == 'all_doctors' && doctorLoggedIn) ||
+            (targetType == 'specific' &&
+                targetPhone == activePhone &&
+                roleMatchesSession);
+
+        if (applies) {
+          if (!_clearedNotifIds.contains(doc.id)) {
+            _clearedNotifIds.add(doc.id);
+          }
+        }
+      }
+      
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('cleared_notifications_ids', _clearedNotifIds);
+      
+      notifications.clear();
+      notifyListeners();
+    } catch (_) {}
   }
 
   // ----- doctor -----
@@ -1353,6 +1484,18 @@ class AppState extends ChangeNotifier {
           'date': '23/07/2026',
           'status': 'Confirmed',
           'commission': commission,
+        });
+
+        // Write referral notification for the doctor
+        FirebaseFirestore.instance.collection('notifications').add({
+          'title': 'Referral Placed',
+          'body': 'You referred patient $refPatientName. Status: Confirmed.',
+          'kind': 'check',
+          'targetType': 'specific',
+          'targetPhone': doctorPhone,
+          'targetRole': 'doctor',
+          'timestamp': DateTime.now().toIso8601String(),
+          'dateString': '${DateTime.now().day.toString().padLeft(2, '0')}/${DateTime.now().month.toString().padLeft(2, '0')}/${DateTime.now().year}, ${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}',
         });
 
         docRef.get().then((docSnap) {

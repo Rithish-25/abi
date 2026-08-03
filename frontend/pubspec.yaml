@@ -21,6 +21,8 @@ dependencies:
   cloud_firestore: ^6.3.0
   firebase_auth: ^6.4.0
   flutter_dotenv: ^5.1.0
+  flutter_local_notifications: ^19.5.0
+  firebase_messaging: ^16.4.3
 
 dev_dependencies:
   flutter_test:

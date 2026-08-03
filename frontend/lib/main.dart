@@ -42,6 +42,8 @@ import 'screens/doctor_profile_screen.dart';
 import 'screens/registration_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import 'utils/notification_helper.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
@@ -66,6 +68,7 @@ void main() async {
         appId: dotenv.env['FIREBASE_APP_ID'] ?? '',
       ),
     );
+    await NotificationHelper.init();
   } catch (e) {
     debugPrint("Firebase init failed: $e");
   }

@@ -32,6 +32,7 @@ import Reports from './pages/Reports';
 import Payments from './pages/Payments';
 import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
+import { sendPushNotification } from './utils/fcm';
 
 // Mock Seed Data
 const initialTests = [
@@ -431,6 +432,120 @@ function App() {
 
   // Firestore update helper callbacks
   const updateBookings = async (newBookings) => {
+    // Intercept state changes to trigger real-time notifications for status or slot rescheduling
+    try {
+      for (const b of newBookings) {
+        const oldB = bookings.find(x => x.id === b.id);
+        if (oldB) {
+          // 1. If status changed:
+          if (oldB.status !== b.status) {
+            const recipientPhone = b.userId || '';
+            if (recipientPhone) {
+              let title = "Booking Updated";
+              let body = `Your booking ${b.id} status has been updated to ${b.status}.`;
+              let kind = "check";
+              
+              if (b.status === 'Sample Collected') {
+                title = "Sample Collected";
+                body = `Your sample for booking ID ${b.id} has been successfully collected.`;
+                kind = "truck";
+              } else if (b.status === 'Under Process') {
+                title = "Sample Under Process";
+                body = `Your sample for booking ID ${b.id} is now under process in our lab.`;
+                kind = "check";
+              } else if (b.status === 'Report Ready') {
+                title = "Lab Report Ready";
+                body = `Your diagnostic lab report for booking ID ${b.id} is ready. You can now view and download it.`;
+                kind = "report";
+              } else if (b.status === 'Cancelled') {
+                title = "Booking Cancelled";
+                body = `Your booking ID ${b.id} has been cancelled.`;
+                kind = "check";
+              }
+
+              // Save notification for User
+              await addDoc(collection(db, 'notifications'), {
+                title,
+                body,
+                kind,
+                targetType: 'specific',
+                targetPhone: recipientPhone,
+                targetRole: 'user',
+                timestamp: new Date().toISOString(),
+                dateString: new Date().toLocaleDateString('en-IN') + ', ' + new Date().toLocaleTimeString('en-IN')
+              });
+
+              // Trigger FCM push notification to User
+              sendPushNotification(recipientPhone, 'user', title, body);
+            }
+
+            // Also check if there is a referred doctor to notify
+            const docPhone = b.doctorPhone || (b.userId && doctors.some(d => d.phone === b.userId) ? b.userId : null);
+            if (docPhone && docPhone !== b.userId) {
+              let docTitle = "Patient Booking Updated";
+              let docBody = `Referred patient ${b.member || 'patient'}'s booking ${b.id} status is now ${b.status}.`;
+              if (b.status === 'Report Ready') {
+                docTitle = "Patient Report Ready";
+                docBody = `Report is ready for referred patient ${b.member}. Commission of ₹${Math.round(b.amount * 0.1)} is credited to your ledger pending payout.`;
+              }
+              await addDoc(collection(db, 'notifications'), {
+                title: docTitle,
+                body: docBody,
+                kind: 'check',
+                targetType: 'specific',
+                targetPhone: docPhone,
+                targetRole: 'doctor',
+                timestamp: new Date().toISOString(),
+                dateString: new Date().toLocaleDateString('en-IN') + ', ' + new Date().toLocaleTimeString('en-IN')
+              });
+
+              // Trigger FCM push notification to Doctor
+              sendPushNotification(docPhone, 'doctor', docTitle, docBody);
+            }
+          }
+
+          // 2. If slot (rescheduled) changed:
+          if (oldB.slot !== b.slot) {
+            const recipientPhone = b.userId || '';
+            if (recipientPhone) {
+              await addDoc(collection(db, 'notifications'), {
+                title: "Booking Rescheduled",
+                body: `Your booking ID ${b.id} has been rescheduled to: ${b.slot}.`,
+                kind: 'check',
+                targetType: 'specific',
+                targetPhone: recipientPhone,
+                targetRole: 'user',
+                timestamp: new Date().toISOString(),
+                dateString: new Date().toLocaleDateString('en-IN') + ', ' + new Date().toLocaleTimeString('en-IN')
+              });
+
+              // Trigger FCM push notification to User
+              sendPushNotification(recipientPhone, 'user', "Booking Rescheduled", `Your booking ID ${b.id} has been rescheduled to: ${b.slot}.`);
+            }
+
+            const docPhone = b.doctorPhone || (b.userId && doctors.some(d => d.phone === b.userId) ? b.userId : null);
+            if (docPhone && docPhone !== b.userId) {
+              await addDoc(collection(db, 'notifications'), {
+                title: "Referred Booking Rescheduled",
+                body: `Referred patient ${b.member}'s booking ID ${b.id} has been rescheduled to: ${b.slot}.`,
+                kind: 'check',
+                targetType: 'specific',
+                targetPhone: docPhone,
+                targetRole: 'doctor',
+                timestamp: new Date().toISOString(),
+                dateString: new Date().toLocaleDateString('en-IN') + ', ' + new Date().toLocaleTimeString('en-IN')
+              });
+
+              // Trigger FCM push notification to Doctor
+              sendPushNotification(docPhone, 'doctor', "Referred Booking Rescheduled", `Referred patient ${b.member}'s booking ID ${b.id} has been rescheduled to: ${b.slot}.`);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Error triggering update notifications:", err.message);
+    }
+
     setBookings(newBookings);
     try {
       for (const b of newBookings) {

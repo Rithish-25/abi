@@ -3,6 +3,7 @@ import { Search, Send, Bell, User, Users, Megaphone, Trash2 } from 'lucide-react
 import { collection, addDoc, getDocs, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import Table from '../components/Table';
+import { sendPushNotification } from '../utils/fcm';
 
 const Notifications = ({ addToast }) => {
   const [targetType, setTargetType] = useState('all_users'); // all_users | all_doctors | specific
@@ -50,6 +51,15 @@ const Notifications = ({ addToast }) => {
 
     try {
       await addDoc(collection(db, 'notifications'), payload);
+      
+      // Trigger FCM push notification to topic or specific recipient
+      if (targetType === 'specific') {
+        sendPushNotification(specificPhone, 'user', notifTitle, notifBody);
+        sendPushNotification(specificPhone, 'doctor', notifTitle, notifBody);
+      } else {
+        sendPushNotification(targetType, null, notifTitle, notifBody);
+      }
+
       addToast(`Notification successfully broadcasted to: ${targetType === 'specific' ? specificPhone : targetType.replace('_', ' ')}`, 'success');
       
       // Reset form
