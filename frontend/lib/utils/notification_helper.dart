@@ -109,14 +109,6 @@ class NotificationHelper {
       // 1. Foreground messaging listener
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         debugPrint("FCM Foreground message received: ${message.notification?.title}");
-        if (message.notification != null) {
-          showNotification(
-            id: message.hashCode,
-            title: message.notification!.title ?? '',
-            body: message.notification!.body ?? '',
-            payload: jsonEncode(message.data.isNotEmpty ? message.data : {'screen': 'notifications'}),
-          );
-        }
       });
 
       // 2. Background messaging tap listener (App was in background)

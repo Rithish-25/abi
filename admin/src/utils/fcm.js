@@ -160,34 +160,8 @@ export const sendPushNotification = async (target, role, title, body) => {
     });
 
     if (target === 'all_users' || target === 'all_doctors') {
-      // 1. Send to topic broadcast first
+      // Send EXACTLY ONE single FCM message to the topic broadcast
       await sendSingleFcmMessage(projectId, accessToken, buildMessage({ topic: target }));
-
-      // 2. Fetch and send to all registered device tokens with collapse_key so system tray shows 1 single notification
-      const tokensToSend = new Set();
-      try {
-        const devTokensSnap = await getDocs(collection(db, 'device_tokens'));
-        devTokensSnap.forEach(d => {
-          const t = d.data()?.token || d.id;
-          if (t && typeof t === 'string' && t.length > 20) tokensToSend.add(t);
-        });
-        const usersSnap = await getDocs(collection(db, 'users'));
-        usersSnap.forEach(d => {
-          const t = d.data()?.fcmToken;
-          if (t && typeof t === 'string' && t.length > 20) tokensToSend.add(t);
-        });
-        const doctorsSnap = await getDocs(collection(db, 'doctors'));
-        doctorsSnap.forEach(d => {
-          const t = d.data()?.fcmToken;
-          if (t && typeof t === 'string' && t.length > 20) tokensToSend.add(t);
-        });
-      } catch (e) {
-        console.warn("Error fetching broadcast FCM tokens:", e);
-      }
-
-      for (const token of tokensToSend) {
-        await sendSingleFcmMessage(projectId, accessToken, buildMessage({ token: token }));
-      }
     } else {
       // Specific target: check for recipient token in Firestore
       let fcmToken = null;
