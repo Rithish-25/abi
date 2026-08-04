@@ -1,3 +1,6 @@
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+
 function pemToArrayBuffer(pem) {
   const b64 = pem
     .replace(/-----BEGIN PRIVATE KEY-----/, "")
@@ -86,11 +89,58 @@ export const sendPushNotification = async (target, role, title, body) => {
 
   const cleanedPrivateKey = privateKey.replace(/\\n/g, '\n');
 
-  let topic = '';
-  if (target === 'all_users' || target === 'all_doctors') {
-    topic = target;
+  // 1. Determine recipient token from Firestore if targeting a specific user/doctor
+  let fcmToken = null;
+  if (target !== 'all_users' && target !== 'all_doctors') {
+    try {
+      const userDocRef = doc(db, role === 'doctor' ? 'doctors' : 'users', target);
+      const userDocSnap = await getDoc(userDocRef);
+      if (userDocSnap.exists()) {
+        fcmToken = userDocSnap.data()?.fcmToken;
+      }
+    } catch (e) {
+      console.warn("Failed to fetch FCM token from Firestore:", e);
+    }
+  }
+
+  // 2. Setup destination (token-based or fallback topic-based)
+  const messageData = {
+    notification: {
+      title: title,
+      body: body
+    },
+    android: {
+      priority: 'HIGH',
+      notification: {
+        sound: 'default',
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        channel_id: 'abirami_channel'
+      }
+    },
+    apns: {
+      headers: {
+        'apns-priority': '10'
+      },
+      payload: {
+        aps: {
+          sound: 'default',
+          badge: 1
+        }
+      }
+    }
+  };
+
+  if (fcmToken) {
+    messageData.token = fcmToken;
   } else {
-    topic = `${role === 'doctor' ? 'doctor' : 'user'}_${target}`;
+    // Fallback/Broadcast to topic
+    let topic = '';
+    if (target === 'all_users' || target === 'all_doctors') {
+      topic = target;
+    } else {
+      topic = `${role === 'doctor' ? 'doctor' : 'user'}_${target}`;
+    }
+    messageData.topic = topic;
   }
 
   try {
@@ -102,26 +152,7 @@ export const sendPushNotification = async (target, role, title, body) => {
         'Authorization': `Bearer ${accessToken}`
       },
       body: JSON.stringify({
-        message: {
-          topic: topic,
-          notification: {
-            title: title,
-            body: body
-          },
-          android: {
-            notification: {
-              sound: 'default',
-              click_action: 'FLUTTER_NOTIFICATION_CLICK'
-            }
-          },
-          apns: {
-            payload: {
-              aps: {
-                sound: 'default'
-              }
-            }
-          }
-        }
+        message: messageData
       })
     });
     const result = await response.json();

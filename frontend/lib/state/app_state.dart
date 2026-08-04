@@ -6,6 +6,7 @@ import 'dart:async';
 import '../data/mock_data.dart';
 import '../models/models.dart';
 import '../utils/notification_helper.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class AppState extends ChangeNotifier {
   String screen = 'splash';
@@ -548,6 +549,21 @@ class AppState extends ChangeNotifier {
             debugPrint("Logged in user document does not exist in Firebase. Logging out...");
             logout();
           }
+        }
+      });
+    } catch (_) {}
+
+    // 7. Listen to FCM token refresh
+    try {
+      FirebaseMessaging.instance.onTokenRefresh.listen((token) {
+        final collectionName = doctorLoggedIn ? 'doctors' : 'users';
+        if (targetPhone.isNotEmpty) {
+          FirebaseFirestore.instance
+              .collection(collectionName)
+              .doc(targetPhone)
+              .set({
+            'fcmToken': token,
+          }, SetOptions(merge: true)).catchError((_) {});
         }
       });
     } catch (_) {}
