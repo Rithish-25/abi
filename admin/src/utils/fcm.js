@@ -132,6 +132,7 @@ export const sendPushNotification = async (target, role, title, body) => {
       android: {
         priority: 'HIGH',
         ttl: '86400s',
+        collapse_key: 'abirami_notif',
         notification: {
           title: title,
           body: body,
@@ -146,7 +147,8 @@ export const sendPushNotification = async (target, role, title, body) => {
       },
       apns: {
         headers: {
-          'apns-priority': '10'
+          'apns-priority': '10',
+          'apns-collapse-id': 'abirami_notif'
         },
         payload: {
           aps: {
@@ -158,6 +160,10 @@ export const sendPushNotification = async (target, role, title, body) => {
     });
 
     if (target === 'all_users' || target === 'all_doctors') {
+      // 1. Send to topic broadcast first
+      await sendSingleFcmMessage(projectId, accessToken, buildMessage({ topic: target }));
+
+      // 2. Fetch and send to all registered device tokens with collapse_key so system tray shows 1 single notification
       const tokensToSend = new Set();
       try {
         const devTokensSnap = await getDocs(collection(db, 'device_tokens'));
@@ -179,14 +185,8 @@ export const sendPushNotification = async (target, role, title, body) => {
         console.warn("Error fetching broadcast FCM tokens:", e);
       }
 
-      if (tokensToSend.size > 0) {
-        // Send directly to registered device tokens (1 message per device -> 1 single notification!)
-        for (const token of tokensToSend) {
-          await sendSingleFcmMessage(projectId, accessToken, buildMessage({ token: token }));
-        }
-      } else {
-        // Fallback to topic broadcast if no registered device tokens found in Firestore
-        await sendSingleFcmMessage(projectId, accessToken, buildMessage({ topic: target }));
+      for (const token of tokensToSend) {
+        await sendSingleFcmMessage(projectId, accessToken, buildMessage({ token: token }));
       }
     } else {
       // Specific target: check for recipient token in Firestore
