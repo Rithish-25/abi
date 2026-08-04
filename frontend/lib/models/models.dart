@@ -106,7 +106,17 @@ class MedicalRecord {
   final String type; // prescription | report
   final String title;
   final String date;
-  const MedicalRecord({required this.id, required this.type, required this.title, required this.date});
+  final String notes;
+  final String imageUrl;
+
+  const MedicalRecord({
+    required this.id,
+    required this.type,
+    required this.title,
+    required this.date,
+    this.notes = '',
+    this.imageUrl = '',
+  });
 }
 
 class AppNotification {

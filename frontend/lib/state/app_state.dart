@@ -485,6 +485,8 @@ class AppState extends ChangeNotifier {
             type: data['type'] ?? '',
             title: data['title'] ?? '',
             date: data['date'] ?? '',
+            notes: data['notes'] ?? '',
+            imageUrl: data['imageUrl'] ?? '',
           ));
         }
         loaded.sort((a, b) => b.id.compareTo(a.id));
@@ -1377,7 +1379,7 @@ class AppState extends ChangeNotifier {
     go('uploadRecord');
   }
 
-  Future<void> saveRecord(String title) async {
+  Future<void> saveRecord(String title, {String? notes, String? imageUrl}) async {
     final String targetPhone = doctorLoggedIn ? doctorPhone : phone;
     if (targetPhone.isEmpty) return;
 
@@ -1390,6 +1392,13 @@ class AppState extends ChangeNotifier {
     final month = today.month.toString().padLeft(2, '0');
     final formattedDate = '$day/$month/${today.year}';
 
+    final finalTitle = title.trim().isEmpty
+        ? (uploadMode == 'prescription' ? 'Prescription Record #$id' : 'Lab Report #$id')
+        : title.trim();
+
+    final defaultImage = uploadMode == 'prescription' ? 'assets/board1.jpg' : 'assets/cbc.jpg';
+    final finalImage = (imageUrl != null && imageUrl.trim().isNotEmpty) ? imageUrl.trim() : defaultImage;
+
     try {
       await FirebaseFirestore.instance
           .collection('users')
@@ -1399,15 +1408,17 @@ class AppState extends ChangeNotifier {
           .set({
         'id': id,
         'type': uploadMode ?? 'report',
-        'title': title.isEmpty ? 'Untitled record' : title,
+        'title': finalTitle,
         'date': formattedDate,
+        'notes': notes ?? '',
+        'imageUrl': finalImage,
       });
 
       // Write notification for medical record upload
       final now = DateTime.now();
       FirebaseFirestore.instance.collection('notifications').add({
         'title': 'Medical Record Uploaded',
-        'body': 'Your medical report "${title.isEmpty ? 'Untitled record' : title}" has been successfully uploaded to your profile.',
+        'body': 'Your medical report "$finalTitle" has been successfully uploaded to your profile.',
         'kind': 'report',
         'targetType': 'specific',
         'targetPhone': targetPhone,
