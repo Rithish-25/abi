@@ -158,8 +158,36 @@ export const sendPushNotification = async (target, role, title, body) => {
     });
 
     if (target === 'all_users' || target === 'all_doctors') {
-      // Broadcast to topic ONCE
-      await sendSingleFcmMessage(projectId, accessToken, buildMessage({ topic: target }));
+      const tokensToSend = new Set();
+      try {
+        const devTokensSnap = await getDocs(collection(db, 'device_tokens'));
+        devTokensSnap.forEach(d => {
+          const t = d.data()?.token || d.id;
+          if (t && typeof t === 'string' && t.length > 20) tokensToSend.add(t);
+        });
+        const usersSnap = await getDocs(collection(db, 'users'));
+        usersSnap.forEach(d => {
+          const t = d.data()?.fcmToken;
+          if (t && typeof t === 'string' && t.length > 20) tokensToSend.add(t);
+        });
+        const doctorsSnap = await getDocs(collection(db, 'doctors'));
+        doctorsSnap.forEach(d => {
+          const t = d.data()?.fcmToken;
+          if (t && typeof t === 'string' && t.length > 20) tokensToSend.add(t);
+        });
+      } catch (e) {
+        console.warn("Error fetching broadcast FCM tokens:", e);
+      }
+
+      if (tokensToSend.size > 0) {
+        // Send directly to registered device tokens (1 message per device -> 1 single notification!)
+        for (const token of tokensToSend) {
+          await sendSingleFcmMessage(projectId, accessToken, buildMessage({ token: token }));
+        }
+      } else {
+        // Fallback to topic broadcast if no registered device tokens found in Firestore
+        await sendSingleFcmMessage(projectId, accessToken, buildMessage({ topic: target }));
+      }
     } else {
       // Specific target: check for recipient token in Firestore
       let fcmToken = null;
