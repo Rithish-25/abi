@@ -1,12 +1,19 @@
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
 function pemToArrayBuffer(pem) {
+  if (!pem) return new ArrayBuffer(0);
   const b64 = pem
-    .replace(/-----BEGIN PRIVATE KEY-----/, "")
-    .replace(/-----END PRIVATE KEY-----/, "")
-    .replace(/\s/g, "");
-  
+    .replace(/-----BEGIN PRIVATE KEY-----/g, '')
+    .replace(/-----END PRIVATE KEY-----/g, '')
+    .replace(/\\n/g, '')
+    .replace(/\\r/g, '')
+    .replace(/\\/g, '')
+    .replace(/\n/g, '')
+    .replace(/\r/g, '')
+    .replace(/\s+/g, '')
+    .replace(/"/g, '');
+
   const binaryString = window.atob(b64);
   const len = binaryString.length;
   const bytes = new Uint8Array(len);
@@ -17,7 +24,7 @@ function pemToArrayBuffer(pem) {
 }
 
 function base64url(arr) {
-  return btoa(String.fromCharCode(...arr))
+  return btoa(String.fromCharCode(...new Uint8Array(arr)))
     .replace(/=/g, "")
     .replace(/\+/g, "-")
     .replace(/\//g, "_");
@@ -77,6 +84,24 @@ async function getAccessToken(clientEmail, privateKeyPem) {
   return data.access_token;
 }
 
+const sendSingleFcmMessage = async (projectId, accessToken, messageData) => {
+  try {
+    const response = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({ message: messageData })
+    });
+    const result = await response.json();
+    console.log("FCM v1 push result:", result);
+    return result;
+  } catch (err) {
+    console.error("FCM single push error:", err);
+  }
+};
+
 export const sendPushNotification = async (target, role, title, body) => {
   const projectId = process.env.REACT_APP_FIREBASE_PROJECT_ID || 'abirami-laboratory';
   const clientEmail = process.env.REACT_APP_FCM_CLIENT_EMAIL;
@@ -89,75 +114,73 @@ export const sendPushNotification = async (target, role, title, body) => {
 
   const cleanedPrivateKey = privateKey.replace(/\\n/g, '\n');
 
-  // 1. Determine recipient token from Firestore if targeting a specific user/doctor
-  let fcmToken = null;
-  if (target !== 'all_users' && target !== 'all_doctors') {
-    try {
-      const userDocRef = doc(db, role === 'doctor' ? 'doctors' : 'users', target);
-      const userDocSnap = await getDoc(userDocRef);
-      if (userDocSnap.exists()) {
-        fcmToken = userDocSnap.data()?.fcmToken;
-      }
-    } catch (e) {
-      console.warn("Failed to fetch FCM token from Firestore:", e);
-    }
-  }
-
-  // 2. Setup destination (token-based or fallback topic-based)
-  const messageData = {
-    notification: {
-      title: title,
-      body: body
-    },
-    android: {
-      priority: 'HIGH',
-      notification: {
-        sound: 'default',
-        click_action: 'FLUTTER_NOTIFICATION_CLICK',
-        channel_id: 'abirami_channel'
-      }
-    },
-    apns: {
-      headers: {
-        'apns-priority': '10'
-      },
-      payload: {
-        aps: {
-          sound: 'default',
-          badge: 1
-        }
-      }
-    }
-  };
-
-  if (fcmToken) {
-    messageData.token = fcmToken;
-  } else {
-    // Fallback/Broadcast to topic
-    let topic = '';
-    if (target === 'all_users' || target === 'all_doctors') {
-      topic = target;
-    } else {
-      topic = `${role === 'doctor' ? 'doctor' : 'user'}_${target}`;
-    }
-    messageData.topic = topic;
-  }
-
   try {
     const accessToken = await getAccessToken(clientEmail, cleanedPrivateKey);
-    const response = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
+
+    const buildMessage = (recipientSpec) => ({
+      ...recipientSpec,
+      notification: {
+        title: title,
+        body: body
       },
-      body: JSON.stringify({
-        message: messageData
-      })
+      data: {
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        screen: 'notifications',
+        title: title,
+        body: body
+      },
+      android: {
+        priority: 'HIGH',
+        ttl: '86400s',
+        notification: {
+          title: title,
+          body: body,
+          sound: 'default',
+          click_action: 'FLUTTER_NOTIFICATION_CLICK',
+          channel_id: 'abirami_channel',
+          notification_priority: 'PRIORITY_MAX',
+          default_sound: true,
+          default_vibrate_timings: true,
+          visibility: 'PUBLIC'
+        }
+      },
+      apns: {
+        headers: {
+          'apns-priority': '10'
+        },
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1
+          }
+        }
+      }
     });
-    const result = await response.json();
-    console.log("FCM v1 push result:", result);
+
+    if (target === 'all_users' || target === 'all_doctors') {
+      // Broadcast to topic ONCE
+      await sendSingleFcmMessage(projectId, accessToken, buildMessage({ topic: target }));
+    } else {
+      // Specific target: check for recipient token in Firestore
+      let fcmToken = null;
+      try {
+        const userDocRef = doc(db, role === 'doctor' ? 'doctors' : 'users', target);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          fcmToken = userDocSnap.data()?.fcmToken;
+        }
+      } catch (e) {
+        console.warn("Failed to fetch target token from Firestore:", e);
+      }
+
+      if (fcmToken) {
+        await sendSingleFcmMessage(projectId, accessToken, buildMessage({ token: fcmToken }));
+      } else {
+        const topicName = `${role === 'doctor' ? 'doctor' : 'user'}_${target}`;
+        await sendSingleFcmMessage(projectId, accessToken, buildMessage({ topic: topicName }));
+      }
+    }
   } catch (error) {
-    console.error("FCM v1 push failed:", error);
+    console.error("FCM push failed:", error);
   }
 };

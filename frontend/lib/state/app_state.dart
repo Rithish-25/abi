@@ -45,6 +45,24 @@ class AppState extends ChangeNotifier {
       _isDoctor = prefs.getBool('is_doctor') ?? false;
       _savedDoctorName = prefs.getString('doctor_name') ?? '';
 
+      // Set notification tap handler for routing notification clicks
+      NotificationHelper.setNotificationTapHandler((data) {
+        final targetScreen = (data['screen'] ?? 'notifications').toString();
+        if (targetScreen == 'bookingDetails' && data['bookingId'] != null) {
+          selectedBookingId = data['bookingId'].toString();
+          go('bookingDetails');
+        } else if (targetScreen == 'reportViewer' && data['reportId'] != null) {
+          selectedReportId = data['reportId'].toString();
+          go('reportViewer');
+        } else if (targetScreen == 'bookings') {
+          goTab(activeTab, 'bookings');
+        } else if (targetScreen == 'reports') {
+          goTab(activeTab, 'reports');
+        } else {
+          go('notifications');
+        }
+      });
+
       // Load cart items
       final savedCart = prefs.getStringList('cart_items');
       if (savedCart != null) {
@@ -214,15 +232,6 @@ class AppState extends ChangeNotifier {
               time: data['dateString'] ?? 'Just now',
               read: false,
             ));
-
-            // Trigger system tray notification if this is a new document in real-time
-            if (!_isFirstSnapshot && !_shownNotifDocIds.contains(doc.id)) {
-              NotificationHelper.showNotification(
-                id: doc.id.hashCode,
-                title: title,
-                body: body,
-              );
-            }
           }
         }
 

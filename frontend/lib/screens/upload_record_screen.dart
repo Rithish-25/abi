@@ -25,7 +25,7 @@ class _UploadRecordScreenState extends State<UploadRecordScreen> {
         children: [
           BackHeader(title: title, onBack: app.back),
           Expanded(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
