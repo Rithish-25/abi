@@ -46,29 +46,33 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
     data-mobile-open={isMobileSidebarOpen ? 'true' : 'false'}>
       {/* Sidebar Header */}
       <div className="sidebar-header" style={{
-        padding: '1.75rem 1.5rem',
+        padding: '1.25rem 1.5rem',
         borderBottom: '1px solid var(--sidebar-border)',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
-        gap: '0.75rem'
+        gap: '0.375rem'
       }}>
         <div style={{
-          width: '32px',
-          height: '32px',
+          width: '150px',
+          height: '90px',
+          backgroundColor: '#ffffff',
           borderRadius: 'var(--radius-sm)',
-          backgroundColor: 'var(--sidebar-text-primary)',
+          padding: '0.5rem',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          fontWeight: 800,
-          color: 'var(--sidebar-bg)',
-          fontSize: '1rem'
+          justifyContent: 'center'
         }}>
-          AL
-        </div>
-        <div>
-          <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.02em', margin: 0, color: 'var(--sidebar-text-primary)' }}>Abirami Lab</h2>
-          <span style={{ fontSize: '0.75rem', color: 'var(--sidebar-text-secondary)', fontWeight: 500, opacity: 0.7 }}>Admin Dashboard</span>
+          <img
+            src={`${process.env.PUBLIC_URL}/admin-logo.png`}
+            alt="Abirami Laboratory"
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain',
+              display: 'block'
+            }}
+          />
         </div>
       </div>
 
