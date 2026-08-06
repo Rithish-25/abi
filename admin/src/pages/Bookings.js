@@ -341,7 +341,7 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
 
           {/* Reschedule Booking Slot */}
           <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-            <span className="form-label">Reschedule Appointment Slot</span>
+            <span className="form-label">Reschedule Slot</span>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input
                 type="text"
