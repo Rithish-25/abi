@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Search, Plus, Trash2, FileUp, ListPlus, Bell } from 'lucide-react';
+import { FileText, Search, Plus, Trash2, FileUp, ListPlus, Bell, Bookmark } from 'lucide-react';
 import Table from '../components/Table';
 import Modal from '../components/Modal';
 
@@ -7,6 +7,7 @@ const Reports = ({ bookings, setBookings, reports, setReports, addToast }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showDraftDialog, setShowDraftDialog] = useState(false);
   const [pdfFile, setPdfFile] = useState(null);
   
   // Dynamic report parameters rows list
@@ -36,16 +37,14 @@ const Reports = ({ bookings, setBookings, reports, setReports, addToast }) => {
     if (existingReport && existingReport.rows) {
       setReportRows(existingReport.rows);
     } else {
-      // Pre-fill parameters based on test names to guide the admin
-      const rows = [];
-      if (booking.testNames.some(t => t.includes('CBC'))) {
-        rows.push({ name: 'Hemoglobin', value: '14.2 g/dL', range: '13.0 - 17.0', abnormal: false });
-        rows.push({ name: 'WBC Count', value: '7,200 /uL', range: '4,000 - 11,000', abnormal: false });
-        rows.push({ name: 'Platelet Count', value: '2.5 L/uL', range: '1.5 - 4.5 L', abnormal: false });
-      }
-      if (booking.testNames.some(t => t.includes('Sugar'))) {
-        rows.push({ name: 'Fasting Blood Sugar', value: '98 mg/dL', range: '70 - 100', abnormal: false });
-        rows.push({ name: 'HbA1c', value: '5.6 %', range: '< 5.7', abnormal: false });
+      // Default sample parameters based on tests
+      const rows = [
+        { name: 'Hemoglobin', value: '14.2 g/dL', range: '13.0 - 17.0', abnormal: false },
+        { name: 'WBC Count', value: '7,200 /uL', range: '4,000 - 11,000', abnormal: false },
+        { name: 'Platelet Count', value: '2.5 L/uL', range: '1.5 - 4.5 L', abnormal: false }
+      ];
+      if (booking.testNames.some(t => t.includes('Sugar') || t.includes('Glucose'))) {
+        rows.push({ name: 'Fasting Blood Sugar', value: '98 mg/dL', range: '70 - 99', abnormal: false });
       }
       if (booking.testNames.some(t => t.includes('Thyroid'))) {
         rows.push({ name: 'TSH', value: '2.1 uIU/mL', range: '0.4 - 4.0', abnormal: false });
@@ -75,6 +74,18 @@ const Reports = ({ bookings, setBookings, reports, setReports, addToast }) => {
 
   const handleRemoveParameter = (index) => {
     setReportRows(reportRows.filter((_, i) => i !== index));
+  };
+
+  const handleSaveDraft = () => {
+    if (selectedBooking) {
+      addToast(`Draft saved for booking ${selectedBooking.id}`, 'info');
+    }
+    setShowDraftDialog(true);
+  };
+
+  const handleConfirmDraftClose = () => {
+    setShowDraftDialog(false);
+    setShowReportModal(false);
   };
 
   const handleSaveReport = () => {
@@ -109,43 +120,60 @@ const Reports = ({ bookings, setBookings, reports, setReports, addToast }) => {
       setReports([updatedReport, ...reports]);
     }
 
-    // Update booking status to "Report Ready"
+    // Update booking status in main bookings list
     const updatedBookings = bookings.map(b => 
       b.id === selectedBooking.id ? { ...b, status: 'Report Ready' } : b
     );
     setBookings(updatedBookings);
 
-    addToast(`Successfully distributed lab report parameters for booking: ${selectedBooking.id}. Status changed to Report Ready.`, 'success');
+    addToast(`Report published and dispatched for booking ${selectedBooking.id}!`, 'success');
     setShowReportModal(false);
   };
 
   const columns = [
-    { header: 'Booking ID', field: 'id', sortable: true, render: (val) => (
-      <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{val}</span>
-    )},
-    { header: 'Patient Name', field: 'member', sortable: true },
-    { header: 'Diagnostics Ordered', field: 'testSummary' },
-    { header: 'Time Slot', field: 'slot' },
-    { header: 'Report Status', field: 'status', sortable: true, render: (val) => (
-      <span className={`badge ${
-        val === 'Report Ready' ? 'badge-success' : 'badge-warning'
-      }`}>
-        {val === 'Report Ready' ? 'Report Uploaded' : 'Pending Upload'}
-      </span>
-    )}
+    { 
+      header: 'Booking ID', 
+      field: 'id',
+      render: (val) => <span style={{ fontWeight: 600, color: 'var(--primary-color)' }}>{val}</span>
+    },
+    { header: 'Patient Name', field: 'member' },
+    { 
+      header: 'Tests Included', 
+      field: 'testNames',
+      render: (tests) => (
+        <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+          {tests.join(', ')}
+        </span>
+      )
+    },
+    { header: 'Scheduled Date', field: 'date' },
+    { 
+      header: 'Report Status', 
+      field: 'status',
+      render: (status) => {
+        const isReady = status === 'Report Ready';
+        return (
+          <span className={`badge ${isReady ? 'badge-success' : 'badge-warning'}`}>
+            {isReady ? 'Report Dispatched' : 'Pending Upload'}
+          </span>
+        );
+      }
+    }
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} className="animate-fade-in">
-      {/* Title */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Page Header */}
       <div>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>Report Dispatch Management</h2>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Upload PDF test sheets, configure dynamic analysis parameters, and authorize digital releases</p>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Report Management</h2>
+        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+          Upload PDF test reports, configure parameters, and dispatch directly to patient mobile apps.
+        </span>
       </div>
 
-      {/* Search Filter Box */}
-      <div className="card">
-        <div style={{ position: 'relative', width: '100%', maxWidth: '360px' }}>
+      {/* Control Bar */}
+      <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ position: 'relative', flexGrow: 1, maxWidth: '400px' }}>
           <input
             type="text"
             placeholder="Search report bookings..."
@@ -192,6 +220,14 @@ const Reports = ({ bookings, setBookings, reports, setReports, addToast }) => {
         footer={
           <>
             <button className="btn btn-secondary" onClick={() => setShowReportModal(false)}>Cancel</button>
+            <button 
+              className="btn btn-secondary" 
+              onClick={handleSaveDraft}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', borderColor: '#d97706', color: '#d97706' }}
+            >
+              <Bookmark size={14} />
+              Save as Draft
+            </button>
             <button className="btn btn-primary" onClick={handleSaveReport}>Publish Report</button>
           </>
         }
@@ -246,7 +282,7 @@ const Reports = ({ bookings, setBookings, reports, setReports, addToast }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', marginBottom: '1rem', border: '1px solid var(--border-color)', padding: '0.5rem', borderRadius: 'var(--radius-sm)' }}>
               {reportRows.length === 0 ? (
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textAlign: 'center', padding: '0.5rem' }}>
-                  No parameter rows created yet. Fill forms below to add.
+                  No parameter rows created yet.
                 </span>
               ) : (
                 reportRows.map((row, index) => (
@@ -275,35 +311,41 @@ const Reports = ({ bookings, setBookings, reports, setReports, addToast }) => {
               )}
             </div>
 
-            {/* Parameters addition form */}
-            <div className="card grid grid-cols-2 gap-4" style={{ backgroundColor: 'var(--bg-tertiary)', padding: '1rem' }}>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label" style={{ fontSize: '0.75rem' }}>Parameter Name</label>
-                <input type="text" value={paramName} onChange={(e) => setParamName(e.target.value)} placeholder="e.g. Total Cholesterol" className="form-control" style={{ padding: '0.5rem' }} />
-              </div>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label" style={{ fontSize: '0.75rem' }}>Observed Value</label>
-                <input type="text" value={paramValue} onChange={(e) => setParamValue(e.target.value)} placeholder="e.g. 180 mg/dL" className="form-control" style={{ padding: '0.5rem' }} />
-              </div>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label" style={{ fontSize: '0.75rem' }}>Reference Range</label>
-                <input type="text" value={paramRange} onChange={(e) => setParamRange(e.target.value)} placeholder="e.g. < 200" className="form-control" style={{ padding: '0.5rem' }} />
-              </div>
-              <div className="form-group" style={{ margin: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <label htmlFor="abnormalCheck" className="form-label" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', margin: 0 }}>
-                  <input type="checkbox" id="abnormalCheck" checked={paramAbnormal} onChange={(e) => setParamAbnormal(e.target.checked)} style={{ width: '16px', height: '16px' }} />
-                  Flag as Abnormal?
-                </label>
-              </div>
-              <button 
-                onClick={handleAddParameter} 
-                className="btn btn-secondary" 
-                style={{ gridColumn: 'span 2', padding: '0.5rem', fontSize: '0.8125rem' }}
-              >
-                Add Parameter Row
-              </button>
-            </div>
           </div>
+        </div>
+      </Modal>
+
+      {/* Draft Saved Confirmation Dialogue Box */}
+      <Modal
+        isOpen={showDraftDialog}
+        onClose={() => setShowDraftDialog(false)}
+        title="Draft Saved"
+        footer={
+          <button className="btn btn-primary" onClick={handleConfirmDraftClose}>
+            Done
+          </button>
+        }
+      >
+        <div style={{ textAlign: 'center', padding: '1rem 0.5rem' }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            backgroundColor: '#FEF3C7',
+            color: '#D97706',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 1rem'
+          }}>
+            <Bookmark size={24} />
+          </div>
+          <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
+            Report Saved as Draft
+          </h4>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+            The report parameters and file attachments for booking <strong>{selectedBooking?.id}</strong> have been saved as a draft.
+          </p>
         </div>
       </Modal>
     </div>

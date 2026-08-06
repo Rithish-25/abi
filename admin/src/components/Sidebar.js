@@ -21,7 +21,7 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
     { id: 'bookings', label: 'Bookings Log', icon: CalendarCheck },
     { id: 'collections', label: 'Sample Collections', icon: Truck },
     { id: 'reports', label: 'Dispatch Reports', icon: FileText },
-    { id: 'payments', label: 'Payments Ledger', icon: CreditCard },
+    { id: 'payments', label: 'Bill and receipts', icon: CreditCard },
     { id: 'users', label: 'Registered Patients', icon: Users },
     { id: 'doctors', label: 'Doctors & Referrals', icon: UserSquare2 },
     { id: 'tests', label: 'Tests & Packages', icon: FlaskConical },

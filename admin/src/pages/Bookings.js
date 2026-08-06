@@ -332,7 +332,7 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
                 />
                 <label htmlFor="uploadBillInput" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.5rem 1rem', fontSize: '0.8125rem', cursor: 'pointer', margin: 0 }}>
                   <Upload size={14} />
-                  Upload Lab Copy Receipt
+                  Upload
                 </label>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>PDF, PNG or JPG (Max 5MB)</span>
               </div>
@@ -357,34 +357,7 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
             </div>
           </div>
 
-          {/* Logistics & Assign technician */}
-          {selectedBooking?.status !== 'Cancelled' && selectedBooking?.status !== 'Rejected' && (
-            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-              <span className="form-label">Technician Assignment (Home Collection)</span>
-              
-              {selectedBooking?.assignedTech ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: 'var(--success)', fontWeight: 600 }}>
-                  <CheckCircle size={14} />
-                  Assigned Collector: {selectedBooking.assignedTech}
-                </div>
-              ) : (
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <select 
-                    value={assignedTechnician}
-                    onChange={(e) => setAssignedTechnician(e.target.value)}
-                    className="form-control"
-                    style={{ flexGrow: 1 }}
-                  >
-                    <option value="">Choose technician to dispatch...</option>
-                    {techniciansList.map(t => (
-                      <option key={t.id} value={t.name}>{t.name} ({t.phone})</option>
-                    ))}
-                  </select>
-                  <button onClick={handleAssignTechnician} className="btn btn-primary">Dispatch</button>
-                </div>
-              )}
-            </div>
-          )}
+
 
           {/* Status Controls */}
           <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>

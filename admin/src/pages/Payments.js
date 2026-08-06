@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, IndianRupee, CreditCard, Landmark, Coins, AlertCircle, ArrowUpRight } from 'lucide-react';
+import { Search, IndianRupee, CreditCard, Landmark, Coins, AlertCircle } from 'lucide-react';
 import Table from '../components/Table';
 import StatCard from '../components/StatCard';
 
@@ -56,7 +56,6 @@ const Payments = ({ bookings, addToast }) => {
         <StatCard title="Total Collected" value={`₹${totalReceived.toLocaleString('en-IN')}`} icon={IndianRupee} change="+12%" isPositive={true} />
         <StatCard title="Ledger Dues" value={`₹${totalPending.toLocaleString('en-IN')}`} icon={Coins} change="-3%" isPositive={false} />
         <StatCard title="Avg Basket Value" value={`₹${averageTicket}`} icon={Landmark} change="+8%" isPositive={true} />
-        <StatCard title="Active Affiliation" value="75% Settle" icon={ArrowUpRight} />
       </div>
 
       {/* Filter and Search Box */}
