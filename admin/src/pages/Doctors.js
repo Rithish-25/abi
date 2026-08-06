@@ -44,16 +44,19 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
       addToast('Doctor phone number must be exactly 10 digits.', 'danger');
       return;
     }
+    const loginOtp = Math.floor(1000 + Math.random() * 9000).toString();
     const newDoc = {
+      id: docPhone,
       name: docName,
       phone: docPhone,
       specialty: docSpecialty || 'General Physician',
       hospital: docHospital || 'City Hospital',
+      otp: loginOtp,
       totalReferrals: 0,
       totalCommission: 0
     };
     setDoctors([newDoc, ...doctors]);
-    addToast(`Successfully registered ${docName} as an affiliated doctor.`, 'success');
+    addToast(`Successfully registered ${docName}. Login OTP: ${loginOtp}`, 'success');
     setDocName('');
     setDocPhone('');
     setDocSpecialty('');
@@ -136,6 +139,9 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
       </div>
     )},
     { header: 'Phone Number', field: 'phone', sortable: true },
+    { header: 'Login OTP', field: 'otp', render: (val) => (
+      <span style={{ fontFamily: 'monospace', fontWeight: 700, letterSpacing: '0.1em' }}>{val || '—'}</span>
+    )},
     { header: 'Referrals Count', field: 'totalReferrals', sortable: true, render: (val) => (
       <span style={{ fontWeight: 600 }}>{val} patients</span>
     )},
@@ -238,6 +244,7 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
             type="text"
             value={docName}
             onChange={(e) => setDocName(e.target.value)}
+            placeholder="e.g. Dr. Senthil Kumar"
             className="form-control"
           />
         </div>
@@ -247,6 +254,7 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
             type="text"
             value={docPhone}
             onChange={(e) => setDocPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+            placeholder="10-digit mobile number"
             className="form-control"
           />
         </div>
@@ -256,6 +264,7 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
             type="text"
             value={docSpecialty}
             onChange={(e) => setDocSpecialty(e.target.value)}
+            placeholder="e.g. General Physician"
             className="form-control"
           />
         </div>
@@ -265,6 +274,7 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
             type="text"
             value={docHospital}
             onChange={(e) => setDocHospital(e.target.value)}
+            placeholder="e.g. City Hospital"
             className="form-control"
           />
         </div>

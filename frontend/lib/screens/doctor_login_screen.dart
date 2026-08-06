@@ -13,19 +13,12 @@ class DoctorLoginScreen extends StatefulWidget {
 }
 
 class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
-  final FocusNode _nameFocusNode = FocusNode();
   final FocusNode _phoneFocusNode = FocusNode();
-  bool _isNameFocused = false;
   bool _isPhoneFocused = false;
 
   @override
   void initState() {
     super.initState();
-    _nameFocusNode.addListener(() {
-      setState(() {
-        _isNameFocused = _nameFocusNode.hasFocus;
-      });
-    });
     _phoneFocusNode.addListener(() {
       setState(() {
         _isPhoneFocused = _phoneFocusNode.hasFocus;
@@ -35,7 +28,6 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
 
   @override
   void dispose() {
-    _nameFocusNode.dispose();
     _phoneFocusNode.dispose();
     super.dispose();
   }
@@ -78,55 +70,6 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
           Text('Refer patients, view their reports & track your commission.',
               style: AppTextStyles.body),
           const SizedBox(height: 28),
-          Text('Doctor name',
-              style: AppTextStyles.bodySmallBold.copyWith(fontSize: 12)),
-          const SizedBox(height: 8),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            height: 52,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              border: Border.all(
-                color: app.doctorNameError
-                    ? AppColors.danger
-                    : (_isNameFocused ? AppColors.secondary : AppColors.border),
-                width: 1.5,
-              ),
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: _isNameFocused && !app.doctorNameError
-                  ? [
-                      BoxShadow(
-                        color: AppColors.secondary.withOpacity(0.08),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      )
-                    ]
-                  : null,
-            ),
-            child: TextField(
-              focusNode: _nameFocusNode,
-              textCapitalization: TextCapitalization.words,
-              onChanged: app.setDoctorName,
-              textAlignVertical: TextAlignVertical.center,
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                isDense: true,
-                hintText: 'Enter doctor name',
-                contentPadding: EdgeInsets.symmetric(vertical: 10),
-              ),
-              style: AppTextStyles.bodyBold.copyWith(fontSize: 15),
-            ),
-          ),
-          if (app.doctorNameError) ...[
-            const SizedBox(height: 8),
-            const Text('Enter the doctor name',
-                style: TextStyle(
-                    color: AppColors.danger,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500)),
-          ],
-          const SizedBox(height: 20),
           Text('Registered mobile number',
               style: AppTextStyles.bodySmallBold.copyWith(fontSize: 12)),
           const SizedBox(height: 8),
@@ -191,14 +134,41 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
                     fontSize: 12,
                     fontWeight: FontWeight.w500)),
           ],
+          if (app.doctorNotRegisteredError) ...[
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.dangerTint,
+                border: Border.all(color: AppColors.danger, width: 1.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.error_outline_rounded,
+                      color: AppColors.danger, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Not allowed to login. This number isn\'t affiliated yet — contact the lab admin to be added.',
+                      style: const TextStyle(
+                          color: AppColors.danger,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const Spacer(),
           AppButton(
             label: 'Continue',
             color: AppColors.secondary,
-            onPressed:
-                app.doctorPhone.length == 10 && app.doctorName.trim().isNotEmpty
-                    ? app.doctorLogin
-                    : null,
+            onPressed: app.doctorPhone.length == 10 ? app.doctorLogin : null,
           ),
           const SizedBox(height: 24),
           Center(

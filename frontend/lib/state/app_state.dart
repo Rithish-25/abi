@@ -640,8 +640,11 @@ class AppState extends ChangeNotifier {
   String doctorPhone = '';
   bool doctorLoggedIn = false;
   String doctorName = '';
-  bool doctorNameError = false;
   bool doctorPhoneError = false;
+  bool doctorNotRegisteredError = false;
+  String doctorSpecialty = 'General Physician';
+  String doctorHospital = 'City Hospital';
+  String _expectedDoctorOtp = '';
   String get doctorDisplayName {
     final trimmed = doctorName.trim();
     if (trimmed.isEmpty) return 'Dr. Senthil Kumar';
@@ -820,6 +823,11 @@ class AppState extends ChangeNotifier {
   Future<void> verifyOtp() async {
     if (otp.join().length == 4) {
       if (loginType == 'doctor') {
+        if (otp.join() != _expectedDoctorOtp) {
+          otpError = true;
+          notifyListeners();
+          return;
+        }
         // Log in as Doctor!
         doctorLoggedIn = true;
         activeTab = 'doctor';
@@ -846,13 +854,13 @@ class AppState extends ChangeNotifier {
             'gender': 'Male',
           }, SetOptions(merge: true));
 
+          // Admin owns specialty/hospital/totalReferrals/totalCommission for
+          // this doctor (set when affiliating them) — only sync identity
+          // fields here so a login never resets those values back to defaults.
           FirebaseFirestore.instance.collection('doctors').doc(doctorPhone).set({
             'id': doctorPhone,
             'name': doctorDisplayName,
             'phone': doctorPhone,
-            'specialty': 'General Physician',
-            'totalReferrals': 0,
-            'totalCommission': 0,
           }, SetOptions(merge: true));
         } catch (_) {}
       } else {
@@ -946,11 +954,6 @@ class AppState extends ChangeNotifier {
   }
 
   void goDoctorLogin() => go('doctorLogin');
-  void setDoctorName(String v) {
-    doctorName = v.replaceAll(RegExp(r'\s+'), ' ').trimLeft();
-    doctorNameError = false;
-    notifyListeners();
-  }
 
   void setDoctorPhone(String v) {
     var cleaned = v.replaceAll(RegExp(r'[^0-9]'), '');
@@ -960,31 +963,51 @@ class AppState extends ChangeNotifier {
     if (cleaned.length > 10) cleaned = cleaned.substring(0, 10);
     doctorPhone = cleaned;
     doctorPhoneError = false;
+    doctorNotRegisteredError = false;
     notifyListeners();
   }
 
   Future<void> doctorLogin() async {
-    if (doctorName.trim().isEmpty) {
-      doctorNameError = true;
-      notifyListeners();
-      return;
-    }
     if (doctorPhone.length != 10 || doctorPhone.startsWith('0')) {
       doctorPhoneError = true;
       notifyListeners();
       return;
     }
+
+    doctorNotRegisteredError = false;
+
+    // Doctors are affiliated by the admin, who enters their name/specialty/
+    // hospital and assigns a 4-digit login OTP, all stored on the
+    // `doctors/{phone}` record. The doctor only ever enters their phone +
+    // that OTP — every other detail is sourced from what the admin set.
+    try {
+      final doctorSnap = await FirebaseFirestore.instance.collection('doctors').doc(doctorPhone).get();
+      final data = doctorSnap.data();
+      final storedOtp = data == null ? null : data['otp'] as String?;
+      if (!doctorSnap.exists || storedOtp == null || storedOtp.isEmpty) {
+        doctorNotRegisteredError = true;
+        notifyListeners();
+        return;
+      }
+      _expectedDoctorOtp = storedOtp;
+      doctorName = (data!['name'] as String?) ?? '';
+      doctorSpecialty = (data['specialty'] as String?) ?? 'General Physician';
+      doctorHospital = (data['hospital'] as String?) ?? 'City Hospital';
+    } catch (_) {
+      doctorNotRegisteredError = true;
+      notifyListeners();
+      return;
+    }
+
     otp = ['', '', '', ''];
     otpError = false;
     loginType = 'doctor';
     phone = '';
 
-    // Generate random 4-digit OTP code and write to Firestore
-    final generatedOtp = (1000 + (DateTime.now().millisecond % 9000)).toString();
     try {
       FirebaseFirestore.instance.collection('otp_logs').doc(doctorPhone).set({
         'phone': doctorPhone,
-        'code': generatedOtp,
+        'code': _expectedDoctorOtp,
         'type': 'Doctor Login',
         'name': doctorDisplayName,
         'timestamp': FieldValue.serverTimestamp(),
@@ -1008,8 +1031,10 @@ class AppState extends ChangeNotifier {
     doctorPhone = '';
     doctorLoggedIn = false;
     doctorName = '';
-    doctorNameError = false;
     doctorPhoneError = false;
+    doctorNotRegisteredError = false;
+    doctorSpecialty = 'General Physician';
+    doctorHospital = 'City Hospital';
     phoneError = false;
     otp = ['', '', '', ''];
     notifications = [];

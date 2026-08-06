@@ -81,9 +81,9 @@ class DoctorProfileScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
-                              'Consultant Pathologist',
-                              style: TextStyle(
+                            Text(
+                              app.doctorSpecialty,
+                              style: const TextStyle(
                                 color: AppColors.secondary,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -162,12 +162,7 @@ class DoctorProfileScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      _buildInfoRow('Qualifications', 'MBBS, MD (Pathology)'),
-                      const Divider(color: Color(0xFFF1F5F9), height: 24),
-                      _buildInfoRow(
-                          'Registration No.', 'MCI-98745 (Tamil Nadu)'),
-                      const Divider(color: Color(0xFFF1F5F9), height: 24),
-                      _buildInfoRow('Specialty', 'Laboratory Medicine'),
+                      _buildInfoRow('Specialty', app.doctorSpecialty),
                     ],
                   ),
                 ),
@@ -216,10 +211,7 @@ class DoctorProfileScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      _buildInfoRow(
-                          'Hospital/Clinic', 'Abirami Diagnostic Lab'),
-                      const Divider(color: Color(0xFFF1F5F9), height: 24),
-                      _buildInfoRow('Location', 'Thindal, Erode, Tamil Nadu'),
+                      _buildInfoRow('Hospital/Clinic', app.doctorHospital),
                     ],
                   ),
                 ),
@@ -273,8 +265,6 @@ class DoctorProfileScreen extends StatelessWidget {
                       const Divider(color: Color(0xFFF1F5F9), height: 24),
                       _buildInfoRow('Total Earnings (Month)',
                           '₹${app.doctorCommissionTotal}'),
-                      const Divider(color: Color(0xFFF1F5F9), height: 24),
-                      _buildInfoRow('Payout Account', 'xxxx xxxx 4321 (SBI)'),
                     ],
                   ),
                 ),
