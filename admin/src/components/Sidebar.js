@@ -18,11 +18,11 @@ import {
 const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobileSidebarOpen, closeMobileSidebar }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'bookings', label: 'Bookings Log', icon: CalendarCheck },
+    { id: 'bookings', label: 'Bookings', icon: CalendarCheck },
     { id: 'collections', label: 'Sample Collections', icon: Truck },
-    { id: 'reports', label: 'Dispatch Reports', icon: FileText },
-    { id: 'payments', label: 'Bill and receipts', icon: CreditCard },
-    { id: 'users', label: 'Registered Patients', icon: Users },
+    { id: 'reports', label: 'Reports', icon: FileText },
+    { id: 'payments', label: 'Payments', icon: CreditCard },
+    { id: 'users', label: 'Patients', icon: Users },
     { id: 'doctors', label: 'Doctors & Referrals', icon: UserSquare2 },
     { id: 'tests', label: 'Tests & Packages', icon: FlaskConical },
     { id: 'notifications', label: 'Notification Management', icon: Bell },

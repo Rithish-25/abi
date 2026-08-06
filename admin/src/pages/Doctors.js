@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Stethoscope, HandMetal, CheckCircle, Plus, Send, AlertTriangle, KeyRound, CheckSquare, BellRing } from 'lucide-react';
-import { addDoc, collection, query, onSnapshot, where } from 'firebase/firestore';
+import React, { useState } from 'react';
+import { Search, Plus, Send, CheckSquare, BellRing } from 'lucide-react';
+import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../firebase';
 import Table from '../components/Table';
 import Modal from '../components/Modal';
@@ -11,43 +11,17 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const [showNotifModal, setShowNotifModal] = useState(false);
-  const [showOtpModal, setShowOtpModal] = useState(false);
   const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
 
   // Add doctor fields
   const [docName, setDocName] = useState('');
   const [docPhone, setDocPhone] = useState('');
   const [docSpecialty, setDocSpecialty] = useState('');
+  const [docHospital, setDocHospital] = useState('');
 
   // Notification fields
   const [notifTitle, setNotifTitle] = useState('');
   const [notifBody, setNotifBody] = useState('');
-
-  const [doctorOtpLogs, setDoctorOtpLogs] = useState([]);
-
-  useEffect(() => {
-    const q = query(collection(db, 'otp_logs'), where('type', '==', 'Doctor Login'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const logs = snapshot.docs.map(doc => {
-        const data = doc.data();
-        const date = data.timestamp && data.timestamp.toDate ? data.timestamp.toDate() : new Date();
-        const timestampStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (' + date.toLocaleDateString() + ')';
-        return {
-          name: data.name || 'Doctor',
-          phone: data.phone || doc.id,
-          code: data.code || '0000',
-          timestamp: timestampStr,
-          dateObj: date,
-          status: data.status || 'Pending'
-        };
-      });
-      logs.sort((a, b) => b.dateObj - a.dateObj);
-      setDoctorOtpLogs(logs);
-    }, (err) => {
-      console.warn("Failed to listen to doctor otp logs:", err);
-    });
-    return unsubscribe;
-  }, []);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -57,7 +31,8 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
   const filteredDoctors = doctors.filter(d => 
     d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     d.phone.includes(searchTerm) ||
-    (d.specialty && d.specialty.toLowerCase().includes(searchTerm.toLowerCase()))
+    (d.specialty && d.specialty.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (d.hospital && d.hospital.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleAddDoctor = () => {
@@ -73,6 +48,7 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
       name: docName,
       phone: docPhone,
       specialty: docSpecialty || 'General Physician',
+      hospital: docHospital || 'City Hospital',
       totalReferrals: 0,
       totalCommission: 0
     };
@@ -81,20 +57,19 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
     setDocName('');
     setDocPhone('');
     setDocSpecialty('');
+    setDocHospital('');
     setShowAddDoctorModal(false);
   };
 
   const handleProcessPayout = async () => {
     if (!selectedDoctor) return;
-    // Process all pending payouts for doctorPatients referred by this doctor
     const updatedPatients = doctorPatients.map(p => 
-      p.doctorPhone === selectedDoctor.phone || (selectedDoctor.name.includes(p.name) /* fallback match */)
-        ? { ...p, status: 'Report Ready' } // complete their referral cycle
+      p.doctorPhone === selectedDoctor.phone || (selectedDoctor.name.includes(p.name))
+        ? { ...p, status: 'Report Ready' }
         : p
     );
     setDoctorPatients(updatedPatients);
     
-    // Add real-time notification to the doctor
     try {
       const docTitle = "Commission Payout Processed";
       const docBody = `Your outstanding referral commission of ₹${selectedDoctor.totalCommission || 0} has been successfully paid out.`;
@@ -109,13 +84,11 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
         dateString: new Date().toLocaleDateString('en-IN') + ', ' + new Date().toLocaleTimeString('en-IN'),
       });
 
-      // Trigger FCM push notification to Doctor
       sendPushNotification(selectedDoctor.phone, 'doctor', docTitle, docBody);
     } catch (err) {
       console.error("Failed to save payout notification:", err);
     }
 
-    // Update commissions paid
     addToast(`Successfully processed commission payouts for ${selectedDoctor.name}.`, 'success');
     setShowPayoutModal(false);
   };
@@ -143,7 +116,6 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
         dateString: new Date().toLocaleDateString('en-IN') + ', ' + new Date().toLocaleTimeString('en-IN'),
       });
 
-      // Trigger FCM push notification to Doctor
       sendPushNotification(selectedDoctor.phone, 'doctor', notifTitle.trim(), notifBody.trim());
 
       addToast(`Push notification successfully pushed to ${selectedDoctor.name} (${selectedDoctor.phone}).`, 'success');
@@ -156,7 +128,6 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
     }
   };
 
-  // Columns definition for Doctors List
   const doctorColumns = [
     { header: 'Doctor Name', field: 'name', sortable: true, render: (val, row) => (
       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -178,21 +149,12 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} className="animate-fade-in">
-      {/* Title block with action buttons */}
       <div className="page-header">
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>Doctor Affiliates & Referrals</h2>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Manage medical affiliations, track commissions, review doctor OTP codes, and trigger direct alert messages</p>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Manage medical affiliations, track commissions, and trigger direct alert messages</p>
         </div>
         <div className="page-header-actions">
-          <button 
-            onClick={() => setShowOtpModal(true)}
-            className="btn btn-secondary"
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: 'var(--accent)', color: 'var(--accent)' }}
-          >
-            <KeyRound size={16} />
-            Doctor OTP Codes
-          </button>
           <button 
             onClick={() => setShowAddDoctorModal(true)}
             className="btn btn-primary"
@@ -204,12 +166,11 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="card">
-        <div style={{ position: 'relative', width: '100%', maxWidth: '360px' }}>
+      <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ position: 'relative', flexGrow: 1, maxWidth: '400px' }}>
           <input
             type="text"
-            placeholder="Search doctors by name, phone, or specialty..."
+            placeholder="Search doctors by name, phone, specialty..."
             value={searchTerm}
             onChange={handleSearchChange}
             className="form-control"
@@ -225,46 +186,41 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
         </div>
       </div>
 
-      {/* Affiliated Doctors Table */}
       <div className="card">
         <Table
           columns={doctorColumns}
           data={filteredDoctors}
           keyField="phone"
-          pageSize={5}
+          pageSize={6}
           actions={(row) => (
-            <>
-              {/* Send Notification Button */}
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 onClick={() => {
                   setSelectedDoctor(row);
                   setShowNotifModal(true);
                 }}
                 className="btn btn-secondary"
-                style={{ padding: '0.375rem 0.5rem', color: 'var(--accent)' }}
-                title="Send notification alert"
+                style={{ padding: '0.375rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem' }}
+                title="Send direct alert message"
               >
                 <Send size={14} />
+                Alert
               </button>
-
-              {/* Payout Ledger Button */}
               <button
                 onClick={() => {
                   setSelectedDoctor(row);
                   setShowPayoutModal(true);
                 }}
                 className="btn btn-secondary"
-                style={{ padding: '0.375rem 0.5rem', color: 'var(--success)' }}
-                title="Manage commission payout"
+                style={{ padding: '0.375rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: 'var(--success)', borderColor: 'var(--success)' }}
               >
-                <CheckSquare size={14} />
+                Payout
               </button>
-            </>
+            </div>
           )}
         />
       </div>
 
-      {/* Modal 1: Register New Doctor affiliate */}
       <Modal
         isOpen={showAddDoctorModal}
         onClose={() => setShowAddDoctorModal(false)}
@@ -282,7 +238,6 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
             type="text"
             value={docName}
             onChange={(e) => setDocName(e.target.value)}
-            placeholder="e.g. Dr. Senthil Kumar"
             className="form-control"
           />
         </div>
@@ -292,7 +247,6 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
             type="text"
             value={docPhone}
             onChange={(e) => setDocPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-            placeholder="10-digit mobile number"
             className="form-control"
           />
         </div>
@@ -302,13 +256,20 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
             type="text"
             value={docSpecialty}
             onChange={(e) => setDocSpecialty(e.target.value)}
-            placeholder="e.g. Cardiologist, Diabetologist"
+            className="form-control"
+          />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Hospital Name / Clinic</label>
+          <input
+            type="text"
+            value={docHospital}
+            onChange={(e) => setDocHospital(e.target.value)}
             className="form-control"
           />
         </div>
       </Modal>
 
-      {/* Modal 2: Payout Commissions Management */}
       <Modal
         isOpen={showPayoutModal}
         onClose={() => setShowPayoutModal(false)}
@@ -339,12 +300,11 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
             </div>
           </div>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.4, margin: 0 }}>
-            Clicking "Mark All Paid" resets outstanding ledger commissions and logs the payment verification code to the doctor's payout account records.
+            Clicking "Mark All Paid" resets outstanding ledger commissions.
           </p>
         </div>
       </Modal>
 
-      {/* Modal 3: Send Push Notification to Doctor */}
       <Modal
         isOpen={showNotifModal}
         onClose={() => setShowNotifModal(false)}
@@ -365,7 +325,6 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
             type="text"
             value={notifTitle}
             onChange={(e) => setNotifTitle(e.target.value)}
-            placeholder="e.g. Monthly Commission Report"
             className="form-control"
           />
         </div>
@@ -374,60 +333,10 @@ const Doctors = ({ doctors, setDoctors, doctorPatients, setDoctorPatients, addTo
           <textarea
             value={notifBody}
             onChange={(e) => setNotifBody(e.target.value)}
-            placeholder="e.g. Your monthly commission statement for July is now generated and ready to download in your profile."
             className="form-control"
             rows="3"
             style={{ resize: 'none' }}
           />
-        </div>
-      </Modal>
-
-      {/* Modal 4: Real-time Doctor OTP Codes Log */}
-      <Modal
-        isOpen={showOtpModal}
-        onClose={() => setShowOtpModal(false)}
-        title="Doctor Portal Authentication Logs"
-        footer={<button className="btn btn-secondary" onClick={() => setShowOtpModal(false)}>Close Log</button>}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
-            Lists real-time login codes requested by affiliated doctors to log into the partner dashboard of the mobile app.
-          </p>
-          <div className="table-container" style={{ border: '1px solid var(--border-color)' }}>
-            <table className="admin-table" style={{ fontSize: '0.8125rem' }}>
-              <thead>
-                <tr>
-                  <th>Doctor Name</th>
-                  <th>OTP Code</th>
-                  <th>Request Time</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {doctorOtpLogs.map((log, index) => (
-                  <tr key={index}>
-                    <td style={{ fontWeight: 600 }}>{log.name}</td>
-                    <td style={{ color: 'var(--accent)', fontWeight: 800, fontSize: '0.9rem', letterSpacing: '1px' }}>{log.code}</td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{log.timestamp}</td>
-                    <td>
-                      <span className={`badge ${
-                        log.status === 'Verified' ? 'badge-success' : 'badge-secondary'
-                      }`} style={{ fontSize: '0.65rem' }}>
-                        {log.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <button 
-            onClick={() => addToast('Doctor OTP Logs are updated in real-time.', 'info')}
-            className="btn btn-secondary"
-            style={{ alignSelf: 'flex-end' }}
-          >
-            Sync Active
-          </button>
         </div>
       </Modal>
     </div>
