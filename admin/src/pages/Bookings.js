@@ -222,6 +222,14 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block' }}>Total Paid Amount</span>
               <span style={{ fontSize: '0.875rem', fontWeight: 700 }}>₹{selectedBooking?.amount}</span>
             </div>
+            <div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block' }}>Mode of Payment</span>
+              <span style={{ fontSize: '0.875rem', fontWeight: 700 }}>
+                {selectedBooking?.paymentMethod === 'upi' ? 'UPI' :
+                 selectedBooking?.paymentMethod === 'cod' ? 'Cash on Collection' :
+                 selectedBooking?.paymentMethod || 'Not specified'}
+              </span>
+            </div>
             <div style={{ gridColumn: 'span 2' }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginBottom: '0.25rem' }}>
                 <MapPin size={12} />
@@ -380,41 +388,17 @@ const Bookings = ({ bookings, setBookings, addToast }) => {
 
           {/* Status Controls */}
           <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-            <span className="form-label">Appointment Actions & Milestones</span>
+            <span className="form-label">Booking Approval</span>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <button 
+              <button
                 onClick={() => handleStatusUpdate('Confirmed')}
                 disabled={selectedBooking?.status === 'Confirmed'}
                 className="btn btn-primary"
                 style={{ flexGrow: 1, padding: '0.5rem', fontSize: '0.8125rem' }}
               >
-                Approve (Confirm)
+                Accept Booking
               </button>
-              <button 
-                onClick={() => handleStatusUpdate('Sample Collected')}
-                disabled={selectedBooking?.status === 'Sample Collected'}
-                className="btn btn-secondary"
-                style={{ flexGrow: 1, padding: '0.5rem', fontSize: '0.8125rem' }}
-              >
-                Collect Sample
-              </button>
-              <button 
-                onClick={() => handleStatusUpdate('Under Process')}
-                disabled={selectedBooking?.status === 'Under Process'}
-                className="btn btn-secondary"
-                style={{ flexGrow: 1, padding: '0.5rem', fontSize: '0.8125rem' }}
-              >
-                Under Process
-              </button>
-              <button 
-                onClick={() => handleStatusUpdate('Report Ready')}
-                disabled={selectedBooking?.status === 'Report Ready'}
-                className="btn btn-secondary"
-                style={{ flexGrow: 1, padding: '0.5rem', fontSize: '0.8125rem' }}
-              >
-                Report Ready
-              </button>
-              <button 
+              <button
                 onClick={() => handleStatusUpdate('Rejected')}
                 disabled={selectedBooking?.status === 'Rejected' || selectedBooking?.status === 'Cancelled'}
                 className="btn btn-danger"

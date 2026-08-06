@@ -1,45 +1,103 @@
 import React, { useState } from 'react';
-import { Search, Edit2, Trash2, Check, Layers, FlaskConical, Box } from 'lucide-react';
+import { Search, Edit2, Ban, CheckCircle2, Check, Plus, FlaskConical, Box, UploadCloud, X } from 'lucide-react';
 import Table from '../components/Table';
 import Modal from '../components/Modal';
 
-const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
-  const [activeTab, setActiveTab] = useState('tests'); // tests | packages | categories
+const resizeImageToDataUrl = (file, maxDimension = 480, quality = 0.75) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
+const Tests = ({ tests, setTests, addToast }) => {
+  const [activeTab, setActiveTab] = useState('tests'); // tests | packages
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Modals status
   const [showTestModal, setShowTestModal] = useState(false);
-  
+
   const [selectedItem, setSelectedItem] = useState(null); // for edit mode
 
   // Test form fields
+  const [testType, setTestType] = useState('test'); // test | package
   const [testName, setTestName] = useState('');
   const [testShort, setTestShort] = useState('');
+  const [testImage, setTestImage] = useState('');
   const [testDesc, setTestDesc] = useState('');
   const [testPrice, setTestPrice] = useState('');
   const [testMrp, setTestMrp] = useState('');
-  const [testFasting, setTestFasting] = useState(false);
-  const [testSample, setTestSample] = useState('Blood');
+  const [testSample, setTestSample] = useState(['Blood']);
   const [testPrep, setTestPrep] = useState('');
-  const [testReport, setTestReport] = useState('Same day, by 6:00 PM');
+  const [testReport, setTestReport] = useState('');
+  const [testFastingPrep, setTestFastingPrep] = useState('');
   const [testIncludedIds, setTestIncludedIds] = useState([]);
-
-  // Category form fields
-  const [catId, setCatId] = useState('');
-  const [catLabel, setCatLabel] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
 
+  const handleImageFile = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      addToast('Please upload a valid image file.', 'danger');
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      setTestImage(dataUrl);
+      addToast('Image added.', 'success');
+    } catch (err) {
+      addToast('Could not read that image. Please try another file.', 'danger');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleImageDrop = (e) => {
+    e.preventDefault();
+    setIsDragActive(false);
+    handleImageFile(e.dataTransfer.files?.[0]);
+  };
+
+  const handleImageInputChange = (e) => {
+    handleImageFile(e.target.files?.[0]);
+    e.target.value = '';
+  };
+
   // Filtered lists
   const filteredTests = tests.filter(t => !t.isPackage && t.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const filteredPackages = tests.filter(t => t.isPackage && t.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  const filteredCategories = categories.filter(c => c.label.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleSaveTest = () => {
     if (!testName.trim() || !testPrice || !testMrp) {
-      addToast('Please enter name, price, and MRP fields.', 'danger');
+      addToast('Please enter name, price, and Actual Price fields.', 'danger');
       return;
     }
 
@@ -47,9 +105,11 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
     const mrpNum = parseInt(testMrp);
 
     if (priceNum > mrpNum) {
-      addToast('Selling Price cannot exceed Market MRP.', 'danger');
+      addToast('Selling Price cannot exceed Actual Price.', 'danger');
       return;
     }
+
+    const reportVal = testReport.toString().trim() ? `${testReport.toString().trim()} hrs` : '';
 
     if (selectedItem) {
       // Edit mode
@@ -57,13 +117,14 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
         ...t,
         name: testName,
         short: testShort || testName,
+        image: testImage || t.image,
         desc: testDesc,
         price: priceNum,
         mrp: mrpNum,
-        fasting: testFasting,
         sample: testSample,
         prep: testPrep,
-        report: testReport,
+        report: reportVal,
+        fastingPrepInstructions: testFastingPrep,
         includedTestIds: testIncludedIds
       } : t);
       setTests(updated);
@@ -75,19 +136,19 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
         id: newId,
         name: testName,
         short: testShort || testName,
+        image: testImage || (testType === 'package' ? 'assets/packages.jpg' : 'assets/cbc.jpg'),
         desc: testDesc,
         price: priceNum,
         mrp: mrpNum,
-        fasting: testFasting,
         sample: testSample,
         prep: testPrep,
-        report: testReport,
-        isPackage: activeTab === 'packages',
-        includedTestIds: testIncludedIds,
-        image: activeTab === 'packages' ? 'assets/packages.jpg' : 'assets/cbc.jpg'
+        report: reportVal,
+        fastingPrepInstructions: testFastingPrep,
+        isPackage: testType === 'package',
+        includedTestIds: testIncludedIds
       };
       setTests([newTest, ...tests]);
-      addToast(`New ${activeTab === 'packages' ? 'health package' : 'blood test'} created: ${testName}`, 'success');
+      addToast(`New ${testType === 'package' ? 'health package' : 'blood test'} created: ${testName}`, 'success');
     }
 
     // Reset fields
@@ -97,38 +158,44 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
 
   const handleEditClick = (item) => {
     setSelectedItem(item);
+    setTestType(item.isPackage ? 'package' : 'test');
     setTestName(item.name);
     setTestShort(item.short);
+    setTestImage(item.image || '');
     setTestDesc(item.desc);
     setTestPrice(item.price.toString());
     setTestMrp(item.mrp.toString());
-    setTestFasting(item.fasting);
-    setTestSample(item.sample);
+    setTestSample(Array.isArray(item.sample) ? item.sample : (item.sample ? [item.sample] : []));
     setTestPrep(item.prep);
-    setTestReport(item.report);
+    const reportMatch = (item.report || '').toString().match(/\d+/);
+    setTestReport(reportMatch ? reportMatch[0] : '');
+    setTestFastingPrep(item.fastingPrepInstructions || '');
     setTestIncludedIds(item.includedTestIds || []);
     setShowTestModal(true);
   };
 
-  const handleDeleteTest = (id) => {
-    if (window.confirm('Are you sure you want to delete this diagnostics item?')) {
-      const updated = tests.filter(t => t.id !== id);
-      setTests(updated);
-      addToast('Item removed successfully.', 'info');
-    }
+  const handleToggleDisable = (id) => {
+    const target = tests.find(t => t.id === id);
+    if (!target) return;
+    const nextDisabled = !target.disabled;
+    const updated = tests.map(t => t.id === id ? { ...t, disabled: nextDisabled } : t);
+    setTests(updated);
+    addToast(`${target.name} has been ${nextDisabled ? 'disabled' : 'enabled'}.`, 'info');
   };
 
   const resetForm = () => {
     setSelectedItem(null);
+    setTestType(activeTab === 'packages' ? 'package' : 'test');
     setTestName('');
     setTestShort('');
+    setTestImage('');
     setTestDesc('');
     setTestPrice('');
     setTestMrp('');
-    setTestFasting(false);
-    setTestSample('Blood');
+    setTestSample(['Blood']);
     setTestPrep('');
-    setTestReport('Same day, by 6:00 PM');
+    setTestReport('');
+    setTestFastingPrep('');
     setTestIncludedIds([]);
   };
 
@@ -145,16 +212,14 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
   const testColumns = [
     { header: 'Test Name', field: 'name', sortable: true, render: (val, row) => (
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <span style={{ fontWeight: 700 }}>{val}</span>
+        <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {val}
+          {row.disabled && <span className="badge badge-secondary" style={{ fontSize: '0.65rem' }}>Disabled</span>}
+        </span>
         <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Code: {row.id}</span>
       </div>
     )},
-    { header: 'Sample Type', field: 'sample' },
-    { header: 'Fasting?', field: 'fasting', render: (val) => (
-      <span className={`badge ${val ? 'badge-warning' : 'badge-secondary'}`}>
-        {val ? 'Yes (8-10 hrs)' : 'No'}
-      </span>
-    )},
+    { header: 'Sample Type', field: 'sample', render: (val) => Array.isArray(val) ? val.join(', ') : (val || '-') },
     { header: 'Pricing', field: 'price', sortable: true, render: (val, row) => (
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
         <span style={{ fontWeight: 700 }}>₹{val}</span>
@@ -164,7 +229,12 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
   ];
 
   const packageColumns = [
-    { header: 'Package Name', field: 'name', sortable: true },
+    { header: 'Package Name', field: 'name', sortable: true, render: (val, row) => (
+      <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {val}
+        {row.disabled && <span className="badge badge-secondary" style={{ fontSize: '0.65rem' }}>Disabled</span>}
+      </span>
+    )},
     { header: 'Included Tests Count', field: 'includedTestIds', render: (val) => (
       <span style={{ fontWeight: 600 }}>{val?.length || 0} tests included</span>
     )},
@@ -182,7 +252,7 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
       <div style={{ display: 'flex', justify: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>Laboratory Catalog</h2>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Manage categories, specific blood tests, and bundled health checkup packages</p>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Manage specific blood tests and bundled health checkup packages</p>
         </div>
       </div>
 
@@ -200,10 +270,10 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
             Health Packages
           </div>
         </button>
-        <button className={`tab-btn ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')}>
+        <button className="tab-btn" onClick={() => { resetForm(); setShowTestModal(true); }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Layers size={14} />
-            Test Categories
+            <Plus size={14} />
+            Add Test
           </div>
         </button>
       </div>
@@ -240,7 +310,9 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
             actions={(row) => (
               <>
                 <button onClick={() => handleEditClick(row)} className="btn btn-secondary" style={{ padding: '0.375rem 0.5rem' }}><Edit2 size={14} /></button>
-                <button onClick={() => handleDeleteTest(row.id)} className="btn btn-secondary" style={{ padding: '0.375rem 0.5rem', color: 'var(--danger)' }}><Trash2 size={14} /></button>
+                <button onClick={() => handleToggleDisable(row.id)} className="btn btn-secondary" style={{ padding: '0.375rem 0.5rem', color: row.disabled ? 'var(--success)' : 'var(--danger)' }} title={row.disabled ? 'Enable' : 'Disable'}>
+                  {row.disabled ? <CheckCircle2 size={14} /> : <Ban size={14} />}
+                </button>
               </>
             )}
           />
@@ -255,98 +327,101 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
             actions={(row) => (
               <>
                 <button onClick={() => handleEditClick(row)} className="btn btn-secondary" style={{ padding: '0.375rem 0.5rem' }}><Edit2 size={14} /></button>
-                <button onClick={() => handleDeleteTest(row.id)} className="btn btn-secondary" style={{ padding: '0.375rem 0.5rem', color: 'var(--danger)' }}><Trash2 size={14} /></button>
+                <button onClick={() => handleToggleDisable(row.id)} className="btn btn-secondary" style={{ padding: '0.375rem 0.5rem', color: row.disabled ? 'var(--success)' : 'var(--danger)' }} title={row.disabled ? 'Enable' : 'Disable'}>
+                  {row.disabled ? <CheckCircle2 size={14} /> : <Ban size={14} />}
+                </button>
               </>
             )}
           />
         )}
 
-        {activeTab === 'categories' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div className="table-container">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Category ID</th>
-                    <th>Category Label</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCategories.map((c) => (
-                    <tr key={c.id}>
-                      <td style={{ fontWeight: 700, color: 'var(--accent)' }}>{c.id}</td>
-                      <td>{c.label}</td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button 
-                          onClick={() => {
-                            if (window.confirm('Delete category?')) {
-                              setCategories(categories.filter(cat => cat.id !== c.id));
-                              addToast('Category deleted.', 'info');
-                            }
-                          }} 
-                          className="btn btn-secondary" 
-                          style={{ padding: '0.375rem 0.5rem', color: 'var(--danger)' }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Quick add category */}
-            <div className="card flex gap-4" style={{ alignItems: 'flex-end', backgroundColor: 'var(--bg-tertiary)' }}>
-              <div style={{ flexGrow: 1 }}>
-                <label className="form-label">Category Code (lowercase)</label>
-                <input type="text" value={catId} onChange={(e) => setCatId(e.target.value.toLowerCase().replace(/\s/g, ''))} placeholder="e.g. liver" className="form-control" />
-              </div>
-              <div style={{ flexGrow: 1 }}>
-                <label className="form-label">Category Name</label>
-                <input type="text" value={catLabel} onChange={(e) => setCatLabel(e.target.value)} placeholder="e.g. Liver Diagnostics" className="form-control" />
-              </div>
-              <button 
-                onClick={() => {
-                  if (!catId || !catLabel) {
-                    addToast('Both code and label fields are required.', 'danger');
-                    return;
-                  }
-                  setCategories([...categories, { id: catId, label: catLabel }]);
-                  addToast(`Category ${catLabel} registered successfully.`, 'success');
-                  setCatId('');
-                  setCatLabel('');
-                }} 
-                className="btn btn-primary"
-              >
-                Add Category
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Modal: Create/Edit Test or Package */}
       <Modal
         isOpen={showTestModal}
         onClose={() => setShowTestModal(false)}
-        title={selectedItem ? `Edit ${activeTab === 'packages' ? 'Package' : 'Test'}` : `Create ${activeTab === 'packages' ? 'Package' : 'Test'}`}
+        title={selectedItem ? `Edit ${testType === 'package' ? 'Package' : 'Test'}` : `Create ${testType === 'package' ? 'Package' : 'Test'}`}
         footer={
           <>
             <button className="btn btn-secondary" onClick={() => setShowTestModal(false)}>Cancel</button>
-            <button className="btn btn-primary" onClick={handleSaveTest}>Save</button>
+            <button className="btn btn-primary" onClick={handleSaveTest} disabled={uploadingImage}>{uploadingImage ? 'Processing...' : 'Save'}</button>
           </>
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '60vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
           <div className="form-group">
+            <label className="form-label">Category</label>
+            <select value={testType} onChange={(e) => setTestType(e.target.value)} className="form-control">
+              <option value="test">Blood Test</option>
+              <option value="package">Health Package</option>
+            </select>
+          </div>
+
+          <div className="form-group">
             <label className="form-label">Product Name</label>
             <input type="text" value={testName} onChange={(e) => setTestName(e.target.value)} placeholder="e.g. Thyroid Profile" className="form-control" />
           </div>
-          
+
           <div className="form-group">
-            <label className="form-label">Description / Summary</label>
+            <label className="form-label">Image</label>
+            <div
+              onDrop={handleImageDrop}
+              onDragOver={(e) => { e.preventDefault(); setIsDragActive(true); }}
+              onDragLeave={(e) => { e.preventDefault(); setIsDragActive(false); }}
+              onClick={() => document.getElementById('testImageFileInput').click()}
+              style={{
+                border: `2px dashed ${isDragActive ? 'var(--accent)' : 'var(--border-color)'}`,
+                borderRadius: 'var(--radius-sm)',
+                padding: '1rem',
+                textAlign: 'center',
+                cursor: 'pointer',
+                backgroundColor: isDragActive ? 'var(--accent-tint)' : 'var(--bg-tertiary)',
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <input
+                id="testImageFileInput"
+                type="file"
+                accept="image/*"
+                onChange={handleImageInputChange}
+                style={{ display: 'none' }}
+              />
+              {testImage ? (
+                <div style={{ position: 'relative' }}>
+                  <img src={testImage} alt="Preview" style={{ maxHeight: '100px', borderRadius: 'var(--radius-sm)', objectFit: 'contain' }} />
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setTestImage(''); }}
+                    className="btn btn-secondary"
+                    style={{ position: 'absolute', top: '-0.5rem', right: '-0.5rem', padding: '0.25rem', borderRadius: 'var(--radius-full)' }}
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ) : (
+                <UploadCloud size={24} style={{ color: 'var(--text-tertiary)' }} />
+              )}
+              <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                {uploadingImage ? 'Processing...' : 'Drag & drop an image here, or click to browse'}
+              </span>
+            </div>
+            <input
+              type="text"
+              value={testImage}
+              onChange={(e) => setTestImage(e.target.value)}
+              placeholder="or paste an image URL"
+              className="form-control"
+              style={{ marginTop: '0.5rem' }}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">About</label>
             <textarea value={testDesc} onChange={(e) => setTestDesc(e.target.value)} placeholder="What does this test detect..." className="form-control" rows="2" style={{ resize: 'none' }} />
           </div>
 
@@ -356,37 +431,54 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
               <input type="number" value={testPrice} onChange={(e) => setTestPrice(e.target.value)} className="form-control" placeholder="Selling cost" />
             </div>
             <div className="form-group">
-              <label className="form-label">Market MRP (INR)</label>
+              <label className="form-label">Actual Price (INR)</label>
               <input type="number" value={testMrp} onChange={(e) => setTestMrp(e.target.value)} className="form-control" placeholder="mrp" />
             </div>
           </div>
 
-          {activeTab === 'tests' ? (
+          {testType === 'test' ? (
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div className="form-group">
                   <label className="form-label">Sample Material</label>
-                  <select value={testSample} onChange={(e) => setTestSample(e.target.value)} className="form-control">
-                    <option value="Blood">Blood (Standard Serum)</option>
-                    <option value="Urine">Urine</option>
-                    <option value="Swab">Swab (Nasal/Throat)</option>
-                    <option value="Sputum">Sputum</option>
-                  </select>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', padding: '0.625rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}>
+                    {[
+                      { value: 'Blood', label: 'Blood (Standard Serum)' },
+                      { value: 'Urine', label: 'Urine' },
+                      { value: 'Swab', label: 'Swab (Nasal/Throat)' },
+                      { value: 'Sputum', label: 'Sputum' }
+                    ].map((opt) => {
+                      const isChecked = testSample.includes(opt.value);
+                      return (
+                        <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              setTestSample(isChecked ? testSample.filter(s => s !== opt.value) : [...testSample, opt.value]);
+                            }}
+                            style={{ width: '14px', height: '14px' }}
+                          />
+                          {opt.label}
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Report TAT</label>
-                  <input type="text" value={testReport} onChange={(e) => setTestReport(e.target.value)} className="form-control" placeholder="e.g. Next day by 10 AM" />
+                  <input type="number" min="0" value={testReport} onChange={(e) => setTestReport(e.target.value)} className="form-control" placeholder="e.g. 5" />
                 </div>
-              </div>
-
-              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input type="checkbox" id="fastingCheck" checked={testFasting} onChange={(e) => setTestFasting(e.target.checked)} style={{ width: '16px', height: '16px' }} />
-                <label htmlFor="fastingCheck" className="form-label" style={{ margin: 0, cursor: 'pointer' }}>Fasting required (8-12 hours)?</label>
               </div>
 
               <div className="form-group">
                 <label className="form-label">Preparations instructions</label>
                 <input type="text" value={testPrep} onChange={(e) => setTestPrep(e.target.value)} className="form-control" placeholder="e.g. Rest prior to test, drink water" />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Fasting / Preparation Instructions</label>
+                <textarea value={testFastingPrep} onChange={(e) => setTestFastingPrep(e.target.value)} placeholder="e.g. Fasting for 8-12 hours, avoid medication, drink water..." className="form-control" rows="2" style={{ resize: 'none' }} />
               </div>
             </>
           ) : (

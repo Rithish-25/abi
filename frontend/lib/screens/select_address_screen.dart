@@ -140,7 +140,7 @@ class _SelectAddressScreenState extends State<SelectAddressScreen> {
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: AppColors.border))),
-            child: AppButton(label: 'Continue', onPressed: () => app.go('bookingSummary')),
+            child: AppButton(label: 'Continue', onPressed: () => app.go('selectSlot')),
           ),
         ],
       ),

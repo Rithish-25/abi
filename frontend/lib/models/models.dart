@@ -69,6 +69,7 @@ class Booking {
   final int amount;
   final String address;
   final String slot;
+  final String paymentMethod; // upi, cod
 
   Booking({
     required this.id,
@@ -79,6 +80,7 @@ class Booking {
     required this.amount,
     required this.address,
     required this.slot,
+    required this.paymentMethod,
   });
 
   String get testSummary => testNames.join(' + ');

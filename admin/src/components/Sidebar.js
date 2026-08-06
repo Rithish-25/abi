@@ -7,24 +7,26 @@ import {
   FlaskConical, 
   Truck, 
   FileText, 
-  CreditCard, 
-  Percent, 
-  Settings, 
+  CreditCard,
+  Percent,
+  Settings,
   LogOut,
-  Bell
+  Bell,
+  UserCog
 } from 'lucide-react';
 
 const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobileSidebarOpen, closeMobileSidebar }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'users', label: 'Registered Patients', icon: Users },
-    { id: 'doctors', label: 'Doctors & Referrals', icon: UserSquare2 },
     { id: 'bookings', label: 'Bookings Log', icon: CalendarCheck },
-    { id: 'tests', label: 'Tests & Packages', icon: FlaskConical },
     { id: 'collections', label: 'Sample Collections', icon: Truck },
     { id: 'reports', label: 'Dispatch Reports', icon: FileText },
     { id: 'payments', label: 'Payments Ledger', icon: CreditCard },
+    { id: 'users', label: 'Registered Patients', icon: Users },
+    { id: 'doctors', label: 'Doctors & Referrals', icon: UserSquare2 },
+    { id: 'tests', label: 'Tests & Packages', icon: FlaskConical },
     { id: 'notifications', label: 'Notification Management', icon: Bell },
+    { id: 'usersRoles', label: 'Users & Roles', icon: UserCog },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 

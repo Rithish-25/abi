@@ -91,9 +91,18 @@ class BookingSummaryScreen extends StatelessWidget {
                 ])),
                 const SizedBox(height: 14),
                 _Card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('SLOT', style: AppTextStyles.caption.copyWith(letterSpacing: 0.5)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('SLOT', style: AppTextStyles.caption.copyWith(letterSpacing: 0.5)),
+                      GestureDetector(
+                        onTap: () => app.go('selectSlot'),
+                        child: const Text('Change', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 10),
-                  const Text('Tomorrow, 24 Jul · 7:00 - 8:00 AM', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                  Text(app.formattedSelectedSlot, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                   Text(app.homeCollectionFee > 0 ? 'Home sample collection fee: ₹${app.homeCollectionFee}' : 'Free home sample collection', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 ])),
                 const SizedBox(height: 14),

@@ -19,6 +19,7 @@ import 'screens/test_details_screen.dart';
 import 'screens/cart_screen.dart';
 import 'screens/select_member_screen.dart';
 import 'screens/select_address_screen.dart';
+import 'screens/select_slot_screen.dart';
 import 'screens/booking_summary_screen.dart';
 import 'screens/payment_screen.dart';
 import 'screens/booking_success_screen.dart';
@@ -130,6 +131,8 @@ class AppRoot extends StatelessWidget {
         return const SelectMemberScreen();
       case 'selectAddress':
         return const SelectAddressScreen();
+      case 'selectSlot':
+        return const SelectSlotScreen();
       case 'bookingSummary':
         return const BookingSummaryScreen();
       case 'payment':
@@ -298,7 +301,7 @@ class AppRoot extends StatelessWidget {
                               )
                             ],
                           ),
-                          child: const Icon(FontAwesomeIcons.whatsapp, color: Colors.white, size: 20),
+                          child: const FaIcon(FontAwesomeIcons.whatsapp, color: Colors.white, size: 20),
                         ),
                       ],
                     ],

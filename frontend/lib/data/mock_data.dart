@@ -94,10 +94,10 @@ class MockData {
       ];
 
   static List<Booking> seedBookings() => [
-        Booking(id: 'AB2314', date: '20/07/2026', testNames: ['CBC (Complete Blood Count)', 'Blood Sugar (Fasting / PP / HbA1c)'], member: 'Karthik Raja', status: 'Report Ready', amount: 798, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '20/07/2026, 7:30 AM'),
-        Booking(id: 'AB2298', date: '21/07/2026', testNames: ['Thyroid Test', 'Lipid Profile'], member: 'Meena Karthik', status: 'Sample Collected', amount: 1248, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '23/07/2026, 8:00 AM'),
-        Booking(id: 'AB2276', date: '18/07/2026', testNames: ['Thyroid Test'], member: 'Karthik Raja', status: 'Confirmed', amount: 599, address: '45, Perundurai Road, Erode - 638011', slot: '24/07/2026, 7:00 AM'),
-        Booking(id: 'AB2250', date: '02/07/2026', testNames: ['Urine Test'], member: 'Aadhira', status: 'Cancelled', amount: 199, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '-'),
+        Booking(id: 'AB2314', date: '20/07/2026', testNames: ['CBC (Complete Blood Count)', 'Blood Sugar (Fasting / PP / HbA1c)'], member: 'Karthik Raja', status: 'Report Ready', amount: 798, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '20/07/2026, 7:30 AM', paymentMethod: 'upi'),
+        Booking(id: 'AB2298', date: '21/07/2026', testNames: ['Thyroid Test', 'Lipid Profile'], member: 'Meena Karthik', status: 'Sample Collected', amount: 1248, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '23/07/2026, 8:00 AM', paymentMethod: 'upi'),
+        Booking(id: 'AB2276', date: '18/07/2026', testNames: ['Thyroid Test'], member: 'Karthik Raja', status: 'Confirmed', amount: 599, address: '45, Perundurai Road, Erode - 638011', slot: '24/07/2026, 7:00 AM', paymentMethod: 'cod'),
+        Booking(id: 'AB2250', date: '02/07/2026', testNames: ['Urine Test'], member: 'Aadhira', status: 'Cancelled', amount: 199, address: '12, Bharathi Street, Thindal, Erode - 638012', slot: '-', paymentMethod: 'cod'),
       ];
 
   static List<LabReport> seedReports() => const [

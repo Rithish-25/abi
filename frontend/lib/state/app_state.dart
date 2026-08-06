@@ -320,6 +320,7 @@ class AppState extends ChangeNotifier {
             amount: data['amount'] ?? 0,
             address: data['address'] ?? '',
             slot: data['slot'] ?? '',
+            paymentMethod: data['paymentMethod'] ?? '',
           ));
         }
         bookings = loadedBookings;
@@ -697,6 +698,27 @@ class AppState extends ChangeNotifier {
 
   // demo edge states
   String demoState = 'empty';
+
+  // ----- slot selection -----
+  DateTime selectedSlotDate = DateTime.now().add(const Duration(days: 1));
+  String selectedSlotTime = '7:00 AM - 8:00 AM';
+
+  void selectSlotDate(DateTime date) {
+    selectedSlotDate = date;
+    notifyListeners();
+  }
+
+  void selectSlotTime(String time) {
+    selectedSlotTime = time;
+    notifyListeners();
+  }
+
+  String get formattedSelectedSlot {
+    final d = selectedSlotDate.day.toString().padLeft(2, '0');
+    final m = selectedSlotDate.month.toString().padLeft(2, '0');
+    final y = selectedSlotDate.year.toString();
+    return '$d/$m/$y, $selectedSlotTime';
+  }
 
   // ----- navigation -----
   void go(String s) {
@@ -1234,11 +1256,7 @@ class AppState extends ChangeNotifier {
     final year = now.year.toString();
     final formattedDate = '$day/$month/$year';
 
-    final tomorrow = now.add(const Duration(days: 1));
-    final tDay = tomorrow.day.toString().padLeft(2, '0');
-    final tMonth = tomorrow.month.toString().padLeft(2, '0');
-    final tYear = tomorrow.year.toString();
-    final formattedSlot = '$tDay/$tMonth/$tYear, 7:00 AM - 8:00 AM';
+    final formattedSlot = formattedSelectedSlot;
 
     final newBooking = Booking(
       id: id,
@@ -1249,6 +1267,7 @@ class AppState extends ChangeNotifier {
       amount: total,
       address: selectedAddress.line,
       slot: formattedSlot,
+      paymentMethod: paymentMethod,
     );
     bookings.insert(0, newBooking);
 
@@ -1265,6 +1284,7 @@ class AppState extends ChangeNotifier {
         'amount': newBooking.amount,
         'address': newBooking.address,
         'slot': newBooking.slot,
+        'paymentMethod': newBooking.paymentMethod,
         'assignedTech': '',
         'userId': targetPhone,
         'timestamp': FieldValue.serverTimestamp(),
