@@ -83,6 +83,19 @@ const Notifications = ({ addToast }) => {
     }
   };
 
+  const handleClearAllLogs = async () => {
+    if (notificationLogs.length === 0) return;
+    if (window.confirm(`Are you sure you want to delete all ${notificationLogs.length} notification records? This cannot be undone.`)) {
+      try {
+        await Promise.all(notificationLogs.map(log => deleteDoc(doc(db, 'notifications', log.id))));
+        addToast('All notification records cleared.', 'info');
+      } catch (err) {
+        console.error('Error clearing notification logs:', err);
+        addToast('Error clearing notification logs.', 'danger');
+      }
+    }
+  };
+
   const columns = [
     { header: 'Date & Time', field: 'dateString', sortable: true },
     { header: 'Recipient', field: 'targetType', render: (val, row) => (
@@ -174,10 +187,21 @@ const Notifications = ({ addToast }) => {
 
         {/* History of broadcasts */}
         <div className="card flex flex-col" style={{ gap: '1.25rem' }}>
-          <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Bell size={16} style={{ color: 'var(--success)' }} />
-            Broadcast Log History
-          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Bell size={16} style={{ color: 'var(--success)' }} />
+              Broadcast Log History
+            </h3>
+            <button
+              onClick={handleClearAllLogs}
+              disabled={notificationLogs.length === 0}
+              className="btn btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem 0.75rem', fontSize: '0.8125rem', color: 'var(--danger)' }}
+            >
+              <Trash2 size={14} />
+              Clear All
+            </button>
+          </div>
 
           <Table
             columns={columns}

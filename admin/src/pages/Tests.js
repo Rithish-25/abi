@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Edit2, Ban, CheckCircle2, Check, Plus, FlaskConical, Box, UploadCloud, X } from 'lucide-react';
+import { Search, Edit2, Ban, CheckCircle2, Check, Plus, FlaskConical, Box, UploadCloud, X, Layers } from 'lucide-react';
 import Table from '../components/Table';
 import Modal from '../components/Modal';
 
@@ -33,17 +33,19 @@ const resizeImageToDataUrl = (file, maxDimension = 480, quality = 0.75) => {
   });
 };
 
-const Tests = ({ tests, setTests, addToast }) => {
+const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
   const [activeTab, setActiveTab] = useState('tests'); // tests | packages
   const [searchTerm, setSearchTerm] = useState('');
 
   // Modals status
   const [showTestModal, setShowTestModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   const [selectedItem, setSelectedItem] = useState(null); // for edit mode
 
   // Test form fields
   const [testType, setTestType] = useState('test'); // test | package
+  const [testCategory, setTestCategory] = useState('');
   const [testName, setTestName] = useState('');
   const [testShort, setTestShort] = useState('');
   const [testImage, setTestImage] = useState('');
@@ -57,6 +59,26 @@ const Tests = ({ tests, setTests, addToast }) => {
   const [testIncludedIds, setTestIncludedIds] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
+
+  // Category form fields
+  const [catId, setCatId] = useState('');
+  const [catLabel, setCatLabel] = useState('');
+
+  const handleAddCategory = () => {
+    if (!catId.trim() || !catLabel.trim()) {
+      addToast('Both code and label fields are required.', 'danger');
+      return;
+    }
+    if (categories.some(c => c.id === catId)) {
+      addToast('A category with this code already exists.', 'danger');
+      return;
+    }
+    setCategories([...categories, { id: catId, label: catLabel }]);
+    addToast(`Category ${catLabel} registered successfully.`, 'success');
+    setCatId('');
+    setCatLabel('');
+    setShowCategoryModal(false);
+  };
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -117,6 +139,7 @@ const Tests = ({ tests, setTests, addToast }) => {
         ...t,
         name: testName,
         short: testShort || testName,
+        category: testCategory,
         image: testImage || t.image,
         desc: testDesc,
         price: priceNum,
@@ -136,6 +159,7 @@ const Tests = ({ tests, setTests, addToast }) => {
         id: newId,
         name: testName,
         short: testShort || testName,
+        category: testCategory,
         image: testImage || (testType === 'package' ? 'assets/packages.jpg' : 'assets/cbc.jpg'),
         desc: testDesc,
         price: priceNum,
@@ -159,6 +183,7 @@ const Tests = ({ tests, setTests, addToast }) => {
   const handleEditClick = (item) => {
     setSelectedItem(item);
     setTestType(item.isPackage ? 'package' : 'test');
+    setTestCategory(item.category || '');
     setTestName(item.name);
     setTestShort(item.short);
     setTestImage(item.image || '');
@@ -186,6 +211,7 @@ const Tests = ({ tests, setTests, addToast }) => {
   const resetForm = () => {
     setSelectedItem(null);
     setTestType(activeTab === 'packages' ? 'package' : 'test');
+    setTestCategory('');
     setTestName('');
     setTestShort('');
     setTestImage('');
@@ -208,6 +234,11 @@ const Tests = ({ tests, setTests, addToast }) => {
     }
   };
 
+  const getCategoryLabel = (categoryId) => {
+    const cat = categories.find(c => c.id === categoryId);
+    return cat ? cat.label : null;
+  };
+
   // Render lists columns
   const testColumns = [
     { header: 'Test Name', field: 'name', sortable: true, render: (val, row) => (
@@ -218,6 +249,9 @@ const Tests = ({ tests, setTests, addToast }) => {
         </span>
         <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Code: {row.id}</span>
       </div>
+    )},
+    { header: 'Category', field: 'category', render: (val) => (
+      getCategoryLabel(val) ? <span className="badge badge-secondary">{getCategoryLabel(val)}</span> : <span style={{ color: 'var(--text-tertiary)' }}>Uncategorized</span>
     )},
     { header: 'Sample Type', field: 'sample', render: (val) => Array.isArray(val) ? val.join(', ') : (val || '-') },
     { header: 'Pricing', field: 'price', sortable: true, render: (val, row) => (
@@ -235,6 +269,9 @@ const Tests = ({ tests, setTests, addToast }) => {
         {row.disabled && <span className="badge badge-secondary" style={{ fontSize: '0.65rem' }}>Disabled</span>}
       </span>
     )},
+    { header: 'Category', field: 'category', render: (val) => (
+      getCategoryLabel(val) ? <span className="badge badge-secondary">{getCategoryLabel(val)}</span> : <span style={{ color: 'var(--text-tertiary)' }}>Uncategorized</span>
+    )},
     { header: 'Included Tests Count', field: 'includedTestIds', render: (val) => (
       <span style={{ fontWeight: 600 }}>{val?.length || 0} tests included</span>
     )},
@@ -249,10 +286,28 @@ const Tests = ({ tests, setTests, addToast }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} className="animate-fade-in">
       {/* Title */}
-      <div style={{ display: 'flex', justify: 'space-between', alignItems: 'center' }}>
+      <div className="page-header">
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>Laboratory Catalog</h2>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Manage specific blood tests and bundled health checkup packages</p>
+        </div>
+        <div className="page-header-actions">
+          <button
+            onClick={() => setShowCategoryModal(true)}
+            className="btn btn-secondary"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Layers size={16} />
+            Add Category
+          </button>
+          <button
+            onClick={() => { resetForm(); setShowTestModal(true); }}
+            className="btn btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Plus size={16} />
+            Add Test
+          </button>
         </div>
       </div>
 
@@ -268,12 +323,6 @@ const Tests = ({ tests, setTests, addToast }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Box size={14} />
             Health Packages
-          </div>
-        </button>
-        <button className="tab-btn" onClick={() => { resetForm(); setShowTestModal(true); }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Plus size={14} />
-            Add Test
           </div>
         </button>
       </div>
@@ -350,12 +399,23 @@ const Tests = ({ tests, setTests, addToast }) => {
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '60vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
-          <div className="form-group">
-            <label className="form-label">Category</label>
-            <select value={testType} onChange={(e) => setTestType(e.target.value)} className="form-control">
-              <option value="test">Blood Test</option>
-              <option value="package">Health Package</option>
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="form-group">
+              <label className="form-label">Item Type</label>
+              <select value={testType} onChange={(e) => setTestType(e.target.value)} className="form-control">
+                <option value="test">Blood Test</option>
+                <option value="package">Health Package</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Category</label>
+              <select value={testCategory} onChange={(e) => setTestCategory(e.target.value)} className="form-control">
+                <option value="">Uncategorized</option>
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="form-group">
@@ -515,6 +575,28 @@ const Tests = ({ tests, setTests, addToast }) => {
               </div>
             </div>
           )}
+        </div>
+      </Modal>
+
+      {/* Modal: Add Category */}
+      <Modal
+        isOpen={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+        title="Add Test Category"
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setShowCategoryModal(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleAddCategory}>Add Category</button>
+          </>
+        }
+      >
+        <div className="form-group">
+          <label className="form-label">Category Code (lowercase)</label>
+          <input type="text" value={catId} onChange={(e) => setCatId(e.target.value.toLowerCase().replace(/\s/g, ''))} placeholder="e.g. liver" className="form-control" />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Category Name</label>
+          <input type="text" value={catLabel} onChange={(e) => setCatLabel(e.target.value)} placeholder="e.g. Liver Diagnostics" className="form-control" />
         </div>
       </Modal>
     </div>

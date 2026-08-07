@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Search, ShieldAlert, Send, Eye, Shield, KeyRound, BellRing } from 'lucide-react';
-import { addDoc, collection, query, onSnapshot, where } from 'firebase/firestore';
+import React, { useState } from 'react';
+import { Search, ShieldAlert, Send, Eye, Shield, BellRing } from 'lucide-react';
+import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../firebase';
 import Table from '../components/Table';
 import Modal from '../components/Modal';
@@ -10,36 +10,9 @@ const Users = ({ users, setUsers, addToast }) => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [showNotifModal, setShowNotifModal] = useState(false);
-  const [showOtpModal, setShowOtpModal] = useState(false);
   const [newRole, setNewRole] = useState('user');
   const [notifTitle, setNotifTitle] = useState('');
   const [notifBody, setNotifBody] = useState('');
-
-  const [otpLogs, setOtpLogs] = useState([]);
-
-  useEffect(() => {
-    const q = query(collection(db, 'otp_logs'), where('type', '==', 'Patient Login'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const logs = snapshot.docs.map(doc => {
-        const data = doc.data();
-        const date = data.timestamp && data.timestamp.toDate ? data.timestamp.toDate() : new Date();
-        const timestampStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (' + date.toLocaleDateString() + ')';
-        return {
-          phone: data.phone || doc.id,
-          code: data.code || '0000',
-          type: data.type || 'Patient Login',
-          timestamp: timestampStr,
-          dateObj: date,
-          status: data.status || 'Pending'
-        };
-      });
-      logs.sort((a, b) => b.dateObj - a.dateObj);
-      setOtpLogs(logs);
-    }, (err) => {
-      console.warn("Failed to listen to patient otp logs:", err);
-    });
-    return unsubscribe;
-  }, []);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -121,21 +94,10 @@ const Users = ({ users, setUsers, addToast }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} className="animate-fade-in">
-      {/* Title block with OTP log trigger button */}
       <div className="page-header">
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>Registered Patients Ledger</h2>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Manage profiles, assign credentials, view real-time OTP logs, and trigger push alerts</p>
-        </div>
-        <div className="page-header-actions">
-          <button 
-            onClick={() => setShowOtpModal(true)}
-            className="btn btn-secondary"
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: 'var(--accent)', color: 'var(--accent)' }}
-          >
-            <KeyRound size={16} />
-            Real-time OTP Audit
-          </button>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Manage profiles, assign credentials, and trigger push alerts</p>
         </div>
       </div>
 
@@ -265,59 +227,6 @@ const Users = ({ users, setUsers, addToast }) => {
             rows="3"
             style={{ resize: 'none' }}
           />
-        </div>
-      </Modal>
-
-      {/* Modal 3: Real-time OTP Logging Modal */}
-      <Modal
-        isOpen={showOtpModal}
-        onClose={() => setShowOtpModal(false)}
-        title="Real-time Authentication OTP Logs"
-        footer={<button className="btn btn-secondary" onClick={() => setShowOtpModal(false)}>Close Log</button>}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
-            This log displays the last generated verification codes for SMS logins in real-time. Helpful for user assistance and debugging.
-          </p>
-          <div className="table-container" style={{ border: '1px solid var(--border-color)' }}>
-            <table className="admin-table" style={{ fontSize: '0.8125rem' }}>
-              <thead>
-                <tr>
-                  <th>Phone</th>
-                  <th>OTP Code</th>
-                  <th>Context</th>
-                  <th>Time</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {otpLogs.map((log, index) => (
-                  <tr key={index}>
-                    <td style={{ fontWeight: 600 }}>{log.phone}</td>
-                    <td style={{ color: 'var(--accent)', fontWeight: 800, fontSize: '0.9rem', letterSpacing: '1px' }}>{log.code}</td>
-                    <td>{log.type}</td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{log.timestamp}</td>
-                    <td>
-                      <span className={`badge ${
-                        log.status === 'Verified' ? 'badge-success' : 
-                        log.status === 'Expired' ? 'badge-secondary' : 
-                        'badge-warning'
-                      }`} style={{ fontSize: '0.65rem' }}>
-                        {log.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <button 
-            onClick={() => addToast('Patient OTP Logs are updated in real-time.', 'info')}
-            className="btn btn-secondary"
-            style={{ alignSelf: 'flex-end' }}
-          >
-            Sync Active
-          </button>
         </div>
       </Modal>
     </div>
