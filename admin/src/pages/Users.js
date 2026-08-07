@@ -129,36 +129,6 @@ const Users = ({ users, setUsers, addToast }) => {
           data={filteredUsers}
           keyField="phone"
           pageSize={6}
-          actions={(row) => (
-            <>
-              {/* Send Notification Button */}
-              <button
-                onClick={() => {
-                  setSelectedUser(row);
-                  setShowNotifModal(true);
-                }}
-                className="btn btn-secondary"
-                style={{ padding: '0.375rem 0.5rem', color: 'var(--accent)' }}
-                title="Send notification"
-              >
-                <Send size={14} />
-              </button>
-
-              {/* Edit Role Button */}
-              <button
-                onClick={() => {
-                  setSelectedUser(row);
-                  setNewRole(row.role);
-                  setShowRoleModal(true);
-                }}
-                className="btn btn-secondary"
-                style={{ padding: '0.375rem 0.5rem' }}
-                title="Change role"
-              >
-                <Shield size={14} />
-              </button>
-            </>
-          )}
         />
       </div>
 
