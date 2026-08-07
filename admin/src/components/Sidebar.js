@@ -46,30 +46,31 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
     data-mobile-open={isMobileSidebarOpen ? 'true' : 'false'}>
       {/* Sidebar Header */}
       <div className="sidebar-header" style={{
-        padding: '1.25rem 1.5rem',
+        padding: '0.875rem 0.5rem',
         borderBottom: '1px solid var(--sidebar-border)',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        gap: '0.375rem'
+        alignItems: 'center'
       }}>
         <div style={{
-          width: '150px',
-          height: '90px',
+          width: '180px',
+          height: '72px',
           backgroundColor: '#ffffff',
           borderRadius: 'var(--radius-sm)',
-          padding: '0.5rem',
+          padding: '0.25rem 0.5rem',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          overflow: 'hidden'
         }}>
           <img
             src={`${process.env.PUBLIC_URL}/admin-logo.png`}
             alt="Abirami Laboratory"
             style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
+              width: '100%',
+              height: '100%',
               objectFit: 'contain',
+              transform: 'scale(1.15)',
               display: 'block'
             }}
           />
@@ -78,10 +79,10 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
 
       {/* Navigation Menu */}
       <nav className="sidebar-menu" style={{
-        padding: '1.25rem 0.75rem',
+        padding: '0.875rem 0.75rem',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.25rem',
+        justifyContent: 'space-between',
         flexGrow: 1,
         overflowY: 'auto'
       }}>
@@ -99,7 +100,7 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.75rem',
-                padding: '0.75rem 1rem',
+                padding: '0.625rem 0.875rem',
                 border: 'none',
                 background: isActive ? 'var(--sidebar-active)' : 'none',
                 color: isActive ? 'var(--sidebar-text-primary)' : 'var(--sidebar-text-secondary)',
@@ -108,7 +109,7 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
                 cursor: 'pointer',
                 textAlign: 'left',
                 width: '100%',
-                fontSize: '0.875rem',
+                fontSize: '0.85rem',
                 fontWeight: 600,
                 transition: 'all 0.15s ease'
               }}
@@ -136,7 +137,7 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
 
       {/* Sidebar Footer */}
       <div className="sidebar-footer" style={{
-        padding: '1.25rem 1.5rem',
+        padding: '0.75rem 1rem',
         borderTop: '1px solid var(--sidebar-border)',
         display: 'flex',
         flexDirection: 'column',
