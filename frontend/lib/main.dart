@@ -272,6 +272,7 @@ class AppRoot extends StatelessWidget {
                       Container(
                         width: 44,
                         height: 44,
+                        alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           shape: BoxShape.circle,
@@ -290,6 +291,7 @@ class AppRoot extends StatelessWidget {
                         Container(
                           width: 44,
                           height: 44,
+                          alignment: Alignment.center,
                           decoration: const BoxDecoration(
                             color: Color(0xFF25D366),
                             shape: BoxShape.circle,

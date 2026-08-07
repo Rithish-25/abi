@@ -192,8 +192,8 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
     setTestMrp(item.mrp.toString());
     setTestSample(Array.isArray(item.sample) ? item.sample : (item.sample ? [item.sample] : []));
     setTestPrep(item.prep);
-    const reportMatch = (item.report || '').toString().match(/\d+/);
-    setTestReport(reportMatch ? reportMatch[0] : '');
+    const reportMatch = (item.report || '').toString().trim().match(/^(\d+)\s*hrs?$/i);
+    setTestReport(reportMatch ? reportMatch[1] : '');
     setTestFastingPrep(item.fastingPrepInstructions || '');
     setTestIncludedIds(item.includedTestIds || []);
     setShowTestModal(true);
@@ -526,7 +526,7 @@ const Tests = ({ tests, setTests, categories, setCategories, addToast }) => {
                   </div>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Report TAT</label>
+                  <label className="form-label">Report Timing</label>
                   <input type="number" min="0" value={testReport} onChange={(e) => setTestReport(e.target.value)} className="form-control" placeholder="e.g. 5" />
                 </div>
               </div>
