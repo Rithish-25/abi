@@ -1,14 +1,11 @@
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  Users, 
-  UserSquare2, 
-  CalendarCheck, 
-  FlaskConical, 
-  Truck, 
-  FileText, 
+import {
+  LayoutDashboard,
+  Users,
+  UserSquare2,
+  CalendarCheck,
+  FlaskConical,
   CreditCard,
-  Percent,
   Settings,
   LogOut,
   Bell,
@@ -19,8 +16,6 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'bookings', label: 'Bookings', icon: CalendarCheck },
-    { id: 'collections', label: 'Sample Collections', icon: Truck },
-    { id: 'reports', label: 'Reports', icon: FileText },
     { id: 'payments', label: 'Payments', icon: CreditCard },
     { id: 'users', label: 'Patients', icon: Users },
     { id: 'doctors', label: 'Doctors & Referrals', icon: UserSquare2 },
@@ -82,7 +77,7 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
         padding: '0.875rem 0.75rem',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
+        gap: '1.30rem',
         flexGrow: 1,
         overflowY: 'auto'
       }}>

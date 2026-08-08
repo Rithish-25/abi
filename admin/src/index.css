@@ -55,10 +55,14 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  overflow-x: hidden;
 }
 
 /* Custom Scrollbar */

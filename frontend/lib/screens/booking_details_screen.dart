@@ -5,6 +5,18 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/back_header.dart';
 
+String _formatStatusTimestamp(DateTime dt) {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  final day = dt.day.toString().padLeft(2, '0');
+  final month = months[dt.month - 1];
+  final year = dt.year.toString();
+  int hour = dt.hour % 12;
+  if (hour == 0) hour = 12;
+  final minute = dt.minute.toString().padLeft(2, '0');
+  final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+  return '$day $month $year, $hour:$minute $ampm';
+}
+
 class BookingDetailsScreen extends StatelessWidget {
   const BookingDetailsScreen({super.key});
 
@@ -60,6 +72,8 @@ class BookingDetailsScreen extends StatelessWidget {
       }
     }
 
+    final rejectedAt = b.timestampFor('Rejected');
+
     return Container(
       color: AppColors.background,
       child: Column(
@@ -74,12 +88,22 @@ class BookingDetailsScreen extends StatelessWidget {
                       ? Row(children: [
                           const Icon(Icons.cancel, color: AppColors.danger),
                           const SizedBox(width: 10),
-                          Text(b.status == 'Rejected' ? 'This booking was rejected' : 'This booking was cancelled', style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                          Expanded(
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Text(b.status == 'Rejected' ? 'This booking was rejected' : 'This booking was cancelled', style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                              if (b.status == 'Rejected' && rejectedAt != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Text(_formatStatusTimestamp(rejectedAt), style: AppTextStyles.caption),
+                                ),
+                            ]),
+                          ),
                         ])
                       : Column(
                           children: List.generate(pipeline.length, (i) {
                             final done = i <= curIdx;
                             final sub = getSub(pipeline[i]);
+                            final changedAt = b.timestampFor(pipeline[i]);
                             return Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -94,6 +118,11 @@ class BookingDetailsScreen extends StatelessWidget {
                                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                       Text(pipeline[i], style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: done ? AppColors.textPrimary : AppColors.textMuted)),
                                       if (done) Text(sub, style: AppTextStyles.caption),
+                                      if (done && changedAt != null)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 1),
+                                          child: Text(_formatStatusTimestamp(changedAt), style: AppTextStyles.caption),
+                                        ),
                                     ]),
                                   ),
                                 ),

@@ -9,8 +9,8 @@ const Collections = ({ bookings, setBookings, addToast }) => {
   const [showLogisticsModal, setShowLogisticsModal] = useState(false);
   const [techStatus, setTechStatus] = useState('Scheduled');
 
-  // Filter out bookings that require home sample collection (i.e. those not cancelled)
-  const homeCollections = bookings.filter(b => b.status !== 'Cancelled');
+  // Filter out bookings that require home sample collection (i.e. those not cancelled or rejected)
+  const homeCollections = bookings.filter(b => b.status !== 'Cancelled' && b.status !== 'Rejected');
 
   const filteredCollections = homeCollections.filter(b => 
     b.member.toLowerCase().includes(searchTerm.toLowerCase()) ||

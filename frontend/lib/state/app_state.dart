@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import '../data/mock_data.dart';
@@ -321,6 +322,10 @@ class AppState extends ChangeNotifier {
             address: data['address'] ?? '',
             slot: data['slot'] ?? '',
             paymentMethod: data['paymentMethod'] ?? '',
+            statusHistory: data['statusHistory'] != null
+                ? List<Map<String, dynamic>>.from(
+                    (data['statusHistory'] as List).map((e) => Map<String, dynamic>.from(e)))
+                : [],
           ));
         }
         bookings = loadedBookings;
@@ -637,6 +642,11 @@ class AppState extends ChangeNotifier {
   List<String> otp = ['', '', '', ''];
   bool phoneError = false;
   bool otpError = false;
+  bool passwordError = false;
+  bool isCheckingPhone = false;
+  // True when OTP verification is only being used to (re)set a password for an
+  // account that already has a profile — skips the full registration form.
+  bool isPasswordSetupOnly = false;
   String doctorPhone = '';
   bool doctorLoggedIn = false;
   String doctorName = '';
@@ -778,19 +788,12 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void requestOtp() {
-    if (phone.length != 10 || phone.startsWith('0')) {
-      phoneError = true;
-      notifyListeners();
-      return;
-    }
-    otp = ['', '', '', ''];
-    otpError = false;
-    loginType = 'patient';
-    doctorPhone = '';
-    doctorName = '';
+  String _hashPassword(String raw) => sha256.convert(utf8.encode(raw)).toString();
 
-    // Generate random 4-digit OTP code and write to Firestore
+  // Generates a fresh 4-digit patient OTP and logs it to Firestore (mirrors
+  // the doctor OTP pattern, for admin visibility). Any 4 digits are accepted
+  // on verification — there's no real SMS delivery to check against.
+  void _sendPatientOtp() {
     final generatedOtp = (1000 + (DateTime.now().millisecond % 9000)).toString();
     try {
       FirebaseFirestore.instance.collection('otp_logs').doc(phone).set({
@@ -802,7 +805,52 @@ class AppState extends ChangeNotifier {
         'status': 'Pending',
       });
     } catch (_) {}
+  }
 
+  // Entry point from the login screen. New numbers and numbers with no
+  // password yet go through OTP; numbers with a password go straight there.
+  Future<void> startLogin() async {
+    if (phone.length != 10 || phone.startsWith('0')) {
+      phoneError = true;
+      notifyListeners();
+      return;
+    }
+    phoneError = false;
+    passwordError = false;
+    otp = ['', '', '', ''];
+    otpError = false;
+    loginType = 'patient';
+    doctorPhone = '';
+    doctorName = '';
+    isCheckingPhone = true;
+    notifyListeners();
+
+    bool userExists = false;
+    bool hasPassword = false;
+    try {
+      final userSnap = await FirebaseFirestore.instance.collection('users').doc(phone).get();
+      userExists = userSnap.exists;
+      final data = userSnap.data();
+      if (userExists && data != null) {
+        if (data['name'] != null) userName = data['name'] as String;
+        final storedHash = data['passwordHash'] as String?;
+        hasPassword = storedHash != null && storedHash.isNotEmpty;
+      }
+    } catch (_) {}
+
+    isCheckingPhone = false;
+
+    if (hasPassword) {
+      isPasswordSetupOnly = false;
+      notifyListeners();
+      go('password');
+      return;
+    }
+
+    // Either brand-new, or an account that predates passwords — both verify via OTP.
+    isPasswordSetupOnly = userExists;
+    _sendPatientOtp();
+    notifyListeners();
     go('otp');
   }
 
@@ -817,99 +865,147 @@ class AppState extends ChangeNotifier {
   void resendOtp() {
     otp = ['', '', '', ''];
     otpError = false;
+    if (loginType == 'patient') {
+      _sendPatientOtp();
+    }
     notifyListeners();
   }
 
   Future<void> verifyOtp() async {
-    if (otp.join().length == 4) {
-      if (loginType == 'doctor') {
-        if (otp.join() != _expectedDoctorOtp) {
-          otpError = true;
-          notifyListeners();
-          return;
-        }
-        // Log in as Doctor!
-        doctorLoggedIn = true;
-        activeTab = 'doctor';
-        history.clear();
-        screen = 'doctorDashboard';
-        doctorPatients = [];
-        notifications = [];
-        doctorSessionStart = DateTime.now();
-        _setupGlobalNotificationsListener();
-        await _saveLoginState(true, true, doctorPhone, savedDoctorName: doctorName);
-        NotificationHelper.syncTopics(doctorPhone, true);
-
-        try {
-          FirebaseFirestore.instance.collection('otp_logs').doc(doctorPhone).update({
-            'status': 'Verified',
-          });
-          FirebaseFirestore.instance.collection('users').doc(doctorPhone).set({
-            'id': doctorPhone,
-            'phone': doctorPhone,
-            'name': doctorDisplayName,
-            'role': 'doctor',
-            'relation': 'Self',
-            'age': '45',
-            'gender': 'Male',
-          }, SetOptions(merge: true));
-
-          // Admin owns specialty/hospital/totalReferrals/totalCommission for
-          // this doctor (set when affiliating them) — only sync identity
-          // fields here so a login never resets those values back to defaults.
-          FirebaseFirestore.instance.collection('doctors').doc(doctorPhone).set({
-            'id': doctorPhone,
-            'name': doctorDisplayName,
-            'phone': doctorPhone,
-          }, SetOptions(merge: true));
-        } catch (_) {}
-      } else {
-        // Log in as Patient!
-        try {
-          final userSnap = await FirebaseFirestore.instance.collection('users').doc(phone).get();
-          if (userSnap.exists) {
-            final data = userSnap.data();
-            if (data != null && data['name'] != null) {
-              userName = data['name'] as String;
-            }
-            await _saveLoginState(true, false, phone);
-            try {
-              FirebaseFirestore.instance.collection('otp_logs').doc(phone).update({
-                'status': 'Verified',
-              });
-            } catch (_) {}
-            _setupListenersForUser();
-            _setupGlobalNotificationsListener();
-            NotificationHelper.syncTopics(phone, false);
-            goTab('home', 'home');
-          } else {
-            go('registration');
-          }
-        } catch (_) {
-          await _saveLoginState(true, false, phone);
-          _setupListenersForUser();
-          _setupGlobalNotificationsListener();
-          goTab('home', 'home');
-        }
-      }
-    } else {
+    if (otp.join().length != 4) {
       otpError = true;
+      notifyListeners();
+      return;
+    }
+
+    if (loginType == 'doctor') {
+      if (otp.join() != _expectedDoctorOtp) {
+        otpError = true;
+        notifyListeners();
+        return;
+      }
+      // Log in as Doctor!
+      doctorLoggedIn = true;
+      activeTab = 'doctor';
+      history.clear();
+      screen = 'doctorDashboard';
+      doctorPatients = [];
+      notifications = [];
+      doctorSessionStart = DateTime.now();
+      _setupGlobalNotificationsListener();
+      await _saveLoginState(true, true, doctorPhone, savedDoctorName: doctorName);
+      NotificationHelper.syncTopics(doctorPhone, true);
+
+      try {
+        FirebaseFirestore.instance.collection('otp_logs').doc(doctorPhone).update({
+          'status': 'Verified',
+        });
+        FirebaseFirestore.instance.collection('users').doc(doctorPhone).set({
+          'id': doctorPhone,
+          'phone': doctorPhone,
+          'name': doctorDisplayName,
+          'role': 'doctor',
+          'relation': 'Self',
+          'age': '45',
+          'gender': 'Male',
+        }, SetOptions(merge: true));
+
+        // Admin owns specialty/hospital/totalReferrals/totalCommission for
+        // this doctor (set when affiliating them) — only sync identity
+        // fields here so a login never resets those values back to defaults.
+        FirebaseFirestore.instance.collection('doctors').doc(doctorPhone).set({
+          'id': doctorPhone,
+          'name': doctorDisplayName,
+          'phone': doctorPhone,
+        }, SetOptions(merge: true));
+      } catch (_) {}
+      return;
+    }
+
+    // Patient OTP — any 4-digit code is accepted (no real SMS delivery to check against).
+    try {
+      FirebaseFirestore.instance.collection('otp_logs').doc(phone).update({
+        'status': 'Verified',
+      });
+    } catch (_) {}
+
+    // Identity confirmed. Existing accounts without a password just need to
+    // set one; brand-new numbers still need the full registration form.
+    if (isPasswordSetupOnly) {
+      go('createPassword');
+    } else {
+      go('registration');
+    }
+  }
+
+  // Existing-user login: password already set, phone already verified via startLogin().
+  Future<void> loginWithPassword(String enteredPassword) async {
+    passwordError = false;
+    try {
+      final userSnap = await FirebaseFirestore.instance.collection('users').doc(phone).get();
+      final data = userSnap.data();
+      final storedHash = data == null ? null : data['passwordHash'] as String?;
+      if (!userSnap.exists || storedHash == null || storedHash.isEmpty || _hashPassword(enteredPassword) != storedHash) {
+        passwordError = true;
+        notifyListeners();
+        return;
+      }
+      if (data!['name'] != null) {
+        userName = data['name'] as String;
+      }
+      await _saveLoginState(true, false, phone);
+      _setupListenersForUser();
+      _setupGlobalNotificationsListener();
+      NotificationHelper.syncTopics(phone, false);
+      goTab('home', 'home');
+    } catch (_) {
+      passwordError = true;
       notifyListeners();
     }
   }
 
+  // Sets/resets a password for an account that already has a profile (legacy
+  // account with no password yet, or a "forgot password" reset) — OTP already
+  // verified this phone belongs to the account, so this logs straight in.
+  Future<void> setPasswordForExistingAccount(String password) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(phone).set({
+        'passwordHash': _hashPassword(password),
+      }, SetOptions(merge: true));
+    } catch (_) {}
+    await _saveLoginState(true, false, phone);
+    _setupListenersForUser();
+    _setupGlobalNotificationsListener();
+    NotificationHelper.syncTopics(phone, false);
+    goTab('home', 'home');
+  }
+
+  // "Forgot password?" from the password screen — re-verify identity via OTP,
+  // then let them set a new password (reuses the legacy-account flow).
+  void forgotPassword() {
+    passwordError = false;
+    isPasswordSetupOnly = true;
+    otp = ['', '', '', ''];
+    otpError = false;
+    _sendPatientOtp();
+    notifyListeners();
+    go('otp');
+  }
+
   Future<void> registerPatient({
     required String name,
+    required String dob,
     required String age,
     required String gender,
     required String address,
+    required String password,
   }) async {
     userName = name;
     await _saveLoginState(true, false, phone);
 
     try {
       final batch = FirebaseFirestore.instance.batch();
-      
+
       final userDoc = FirebaseFirestore.instance.collection('users').doc(phone);
       batch.set(userDoc, {
         'id': phone,
@@ -917,8 +1013,10 @@ class AppState extends ChangeNotifier {
         'name': name,
         'role': 'user',
         'relation': 'Self',
+        'dob': dob,
         'age': age,
         'gender': gender,
+        'passwordHash': _hashPassword(password),
       }, SetOptions(merge: true));
 
       final familyDoc = userDoc.collection('family').doc('1');

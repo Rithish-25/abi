@@ -12,6 +12,8 @@ import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/otp_screen.dart';
+import 'screens/password_screen.dart';
+import 'screens/create_password_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/catalogue_screen.dart';
@@ -115,6 +117,10 @@ class AppRoot extends StatelessWidget {
         return const LoginScreen();
       case 'otp':
         return const OtpScreen();
+      case 'password':
+        return const PasswordScreen();
+      case 'createPassword':
+        return const CreatePasswordScreen();
       case 'registration':
         return const RegistrationScreen();
       case 'home':
@@ -262,7 +268,7 @@ class AppRoot extends StatelessWidget {
               ),
               // Floating headset & WhatsApp support buttons (User module pages only)
               if (app.activeTab != 'doctor' &&
-                  !['splash', 'onboarding', 'login', 'doctorLogin', 'otp', 'registration'].contains(app.screen) &&
+                  !['splash', 'onboarding', 'login', 'doctorLogin', 'otp', 'password', 'createPassword', 'registration'].contains(app.screen) &&
                   !isKeyboardOpen)
                 Positioned(
                   right: 16,

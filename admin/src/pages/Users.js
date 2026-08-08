@@ -18,11 +18,12 @@ const Users = ({ users, setUsers, addToast }) => {
     setSearchTerm(e.target.value);
   };
 
-  // Filtered users list
-  const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  // Filtered users list — doctor accounts are managed exclusively on the Doctors & Referrals page
+  const filteredUsers = users.filter(u =>
+    u.role.toLowerCase() !== 'doctor' &&
+    (u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.phone.includes(searchTerm) ||
-    u.role.toLowerCase().includes(searchTerm.toLowerCase())
+    u.role.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleRoleChange = () => {
@@ -152,7 +153,6 @@ const Users = ({ users, setUsers, addToast }) => {
             className="form-control"
           >
             <option value="user">User (Standard Patient)</option>
-            <option value="doctor">Doctor (Affiliated Partner)</option>
             <option value="technician">Technician (Sample Collector)</option>
             <option value="admin">Administrator</option>
           </select>

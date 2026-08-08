@@ -123,7 +123,10 @@ class _LoginScreenState extends State<LoginScreen> {
             const Text('Enter a valid 10-digit mobile number not starting with 0', style: TextStyle(color: AppColors.danger, fontSize: 12, fontWeight: FontWeight.w500)),
           ],
           const Spacer(),
-          AppButton(label: 'Send OTP', onPressed: app.phone.length == 10 ? app.requestOtp : null),
+          AppButton(
+            label: app.isCheckingPhone ? 'Please wait...' : 'Continue',
+            onPressed: (app.phone.length == 10 && !app.isCheckingPhone) ? app.startLogin : null,
+          ),
           const SizedBox(height: 16),
           const Center(
             child: Text(

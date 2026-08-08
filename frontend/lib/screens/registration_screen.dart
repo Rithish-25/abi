@@ -4,6 +4,7 @@ import '../state/app_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/primary_button.dart';
+import '../widgets/password_field.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -15,35 +16,80 @@ class RegistrationScreen extends StatefulWidget {
 class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _ageController = TextEditingController();
   final _addressController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   String _selectedGender = 'Male';
+  DateTime? _selectedDob;
 
   final FocusNode _nameFocus = FocusNode();
-  final FocusNode _ageFocus = FocusNode();
   final FocusNode _addressFocus = FocusNode();
 
   bool _isNameFocused = false;
-  bool _isAgeFocused = false;
   bool _isAddressFocused = false;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
     _nameFocus.addListener(() => setState(() => _isNameFocused = _nameFocus.hasFocus));
-    _ageFocus.addListener(() => setState(() => _isAgeFocused = _ageFocus.hasFocus));
     _addressFocus.addListener(() => setState(() => _isAddressFocused = _addressFocus.hasFocus));
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _ageController.dispose();
     _addressController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _nameFocus.dispose();
-    _ageFocus.dispose();
     _addressFocus.dispose();
     super.dispose();
+  }
+
+  String _formatDob(DateTime d) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${d.day.toString().padLeft(2, '0')} ${months[d.month - 1]} ${d.year}';
+  }
+
+  String _dobForStorage(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+  String _computeAge(DateTime dob) {
+    final now = DateTime.now();
+    int age = now.year - dob.year;
+    if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
+    return age.toString();
+  }
+
+  Future<void> _pickDob(FormFieldState<DateTime> field) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDob ?? DateTime(now.year - 25, now.month, now.day),
+      firstDate: DateTime(now.year - 120),
+      lastDate: now,
+    );
+    if (picked != null) {
+      setState(() => _selectedDob = picked);
+      field.didChange(picked);
+    }
+  }
+
+  Future<void> _submit(AppState app) async {
+    if (!(_formKey.currentState?.validate() ?? false) || _isSubmitting) return;
+    setState(() => _isSubmitting = true);
+    await app.registerPatient(
+      name: _nameController.text.trim(),
+      dob: _dobForStorage(_selectedDob!),
+      age: _computeAge(_selectedDob!),
+      gender: _selectedGender,
+      address: _addressController.text.trim(),
+      password: _passwordController.text,
+    );
+    if (mounted) setState(() => _isSubmitting = false);
   }
 
   @override
@@ -110,62 +156,69 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Row for Age & Gender
+                // Row for Date of Birth & Gender
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Age
+                    // Date of Birth
                     Expanded(
-                      flex: 4,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Age', style: AppTextStyles.bodySmallBold.copyWith(fontSize: 12)),
-                          const SizedBox(height: 8),
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            height: 52,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              border: Border.all(
-                                color: _isAgeFocused ? AppColors.primary : AppColors.border,
-                                width: 1.5,
+                      flex: 5,
+                      child: FormField<DateTime>(
+                        validator: (_) => _selectedDob == null ? 'Select DOB' : null,
+                        builder: (field) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Date of Birth', style: AppTextStyles.bodySmallBold.copyWith(fontSize: 12)),
+                              const SizedBox(height: 8),
+                              InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: () => _pickDob(field),
+                                child: Container(
+                                  height: 52,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface,
+                                    border: Border.all(
+                                      color: field.hasError ? AppColors.danger : AppColors.border,
+                                      width: 1.5,
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  alignment: Alignment.centerLeft,
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.textSecondary),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          _selectedDob == null ? 'Select date' : _formatDob(_selectedDob!),
+                                          overflow: TextOverflow.ellipsis,
+                                          style: AppTextStyles.bodyBold.copyWith(
+                                            fontSize: 14,
+                                            color: _selectedDob == null ? AppColors.textMuted : AppColors.textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: _isAgeFocused
-                                  ? [
-                                      BoxShadow(
-                                        color: AppColors.primary.withOpacity(0.08),
-                                        blurRadius: 8,
-                                        spreadRadius: 1,
-                                      )
-                                    ]
-                                  : null,
-                            ),
-                            child: TextFormField(
-                              controller: _ageController,
-                              focusNode: _ageFocus,
-                              keyboardType: TextInputType.number,
-                              textAlignVertical: TextAlignVertical.center,
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                hintText: 'Age',
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(vertical: 10),
-                              ),
-                              style: AppTextStyles.bodyBold.copyWith(fontSize: 15),
-                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter age' : null,
-                            ),
-                          ),
-                        ],
+                              if (field.hasError)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: Text(field.errorText!, style: const TextStyle(color: AppColors.danger, fontSize: 12, fontWeight: FontWeight.w500)),
+                                ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(width: 16),
 
                     // Gender Dropdown
                     Expanded(
-                      flex: 6,
+                      flex: 5,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -249,22 +302,31 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter your address' : null,
                   ),
                 ),
+                const SizedBox(height: 20),
+
+                // Create Password
+                PasswordField(
+                  label: 'Create Password',
+                  hintText: 'At least 6 characters',
+                  controller: _passwordController,
+                  validator: (v) => (v == null || v.length < 6) ? 'Password must be at least 6 characters' : null,
+                ),
+                const SizedBox(height: 20),
+
+                // Confirm Password
+                PasswordField(
+                  label: 'Confirm Password',
+                  hintText: 'Re-enter your password',
+                  controller: _confirmPasswordController,
+                  validator: (v) => v != _passwordController.text ? 'Passwords do not match' : null,
+                ),
                 const SizedBox(height: 40),
 
                 // Submit Button
                 AppButton(
-                  label: 'Submit & Log In',
+                  label: _isSubmitting ? 'Please wait...' : 'Submit & Log In',
                   color: AppColors.primary,
-                  onPressed: () {
-                    if (_formKey.currentState?.validate() ?? false) {
-                      app.registerPatient(
-                        name: _nameController.text.trim(),
-                        age: _ageController.text.trim(),
-                        gender: _selectedGender,
-                        address: _addressController.text.trim(),
-                      );
-                    }
-                  },
+                  onPressed: _isSubmitting ? null : () => _submit(app),
                 ),
                 const SizedBox(height: 16),
 

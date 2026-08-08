@@ -70,6 +70,8 @@ class Booking {
   final String address;
   final String slot;
   final String paymentMethod; // upi, cod
+  // Each entry: { status: <String>, timestamp: <ISO 8601 String> } — one immutable record per status change
+  final List<Map<String, dynamic>> statusHistory;
 
   Booking({
     required this.id,
@@ -81,9 +83,20 @@ class Booking {
     required this.address,
     required this.slot,
     required this.paymentMethod,
+    this.statusHistory = const [],
   });
 
   String get testSummary => testNames.join(' + ');
+
+  // Finds this status's own timestamp in the history, if the admin has ever set it
+  DateTime? timestampFor(String status) {
+    for (final entry in statusHistory.reversed) {
+      if (entry['status'] == status && entry['timestamp'] != null) {
+        return DateTime.tryParse(entry['timestamp'].toString())?.toLocal();
+      }
+    }
+    return null;
+  }
 }
 
 class LabReport {

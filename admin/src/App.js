@@ -27,8 +27,6 @@ import Users from './pages/Users';
 import Doctors from './pages/Doctors';
 import Bookings from './pages/Bookings';
 import Tests from './pages/Tests';
-import Collections from './pages/Collections';
-import Reports from './pages/Reports';
 import Payments from './pages/Payments';
 import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
@@ -141,15 +139,6 @@ function App() {
         (t.desc || '').toLowerCase().includes(q)
       )
     : tests;
-
-  const filteredReports = q
-    ? reports.filter(r => 
-        (r.id || '').toLowerCase().includes(q) || 
-        (r.name || '').toLowerCase().includes(q) || 
-        (r.member || '').toLowerCase().includes(q) || 
-        (r.status || '').toLowerCase().includes(q)
-      )
-    : reports;
 
   const activeNotifications = displayBookings
     .filter(b => !dismissedBookings.includes(b.id))
@@ -777,6 +766,8 @@ function App() {
             <Bookings 
               bookings={filteredBookings} 
               setBookings={updateBookings} 
+              reports={reports}
+              setReports={updateReports}
               addToast={addToast}
             />
           )}
@@ -787,24 +778,6 @@ function App() {
               setTests={updateTests} 
               categories={categories} 
               setCategories={updateCategories} 
-              addToast={addToast}
-            />
-          )}
-
-          {activePage === 'collections' && (
-            <Collections 
-              bookings={filteredBookings} 
-              setBookings={updateBookings} 
-              addToast={addToast}
-            />
-          )}
-
-          {activePage === 'reports' && (
-            <Reports 
-              bookings={filteredBookings} 
-              setBookings={updateBookings} 
-              reports={filteredReports}
-              setReports={updateReports}
               addToast={addToast}
             />
           )}

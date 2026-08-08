@@ -25,8 +25,6 @@ const Header = ({
       case 'doctors': return 'Doctors & Referrals';
       case 'bookings': return 'Bookings Log';
       case 'tests': return 'Tests & Packages';
-      case 'collections': return 'Sample Collections';
-      case 'reports': return 'Report Management';
       case 'payments': return 'Payments Ledger';
       case 'marketing': return 'Marketing & Banners';
       case 'settings': return 'System Settings';
