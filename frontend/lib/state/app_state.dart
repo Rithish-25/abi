@@ -713,11 +713,50 @@ class AppState extends ChangeNotifier {
   String demoState = 'empty';
 
   // ----- slot selection -----
+  static const List<String> timeSlots = [
+    '7:00 AM - 8:00 AM',
+    '8:00 AM - 9:00 AM',
+    '9:00 AM - 10:00 AM',
+    '10:00 AM - 11:00 AM',
+    '5:00 PM - 6:00 PM',
+    '6:00 PM - 7:00 PM',
+  ];
+
   DateTime selectedSlotDate = DateTime.now().add(const Duration(days: 1));
   String selectedSlotTime = '7:00 AM - 8:00 AM';
 
+  // Minutes-since-midnight of a slot's start time, e.g. "7:00 AM - 8:00 AM" -> 420
+  static int _slotStartMinutes(String slot) {
+    final startPart = slot.split(' - ')[0].split(' ');
+    final timeParts = startPart[0].split(':');
+    int hour = int.parse(timeParts[0]);
+    final minute = int.parse(timeParts[1]);
+    final meridiem = startPart[1];
+    if (meridiem == 'PM' && hour != 12) hour += 12;
+    if (meridiem == 'AM' && hour == 12) hour = 0;
+    return hour * 60 + minute;
+  }
+
+  bool get isSelectedSlotDateToday {
+    final now = DateTime.now();
+    return selectedSlotDate.year == now.year && selectedSlotDate.month == now.month && selectedSlotDate.day == now.day;
+  }
+
+  // Only shows slots that haven't already started when the picked date is today.
+  List<String> get availableSlotTimes {
+    if (!isSelectedSlotDateToday) return timeSlots;
+    final now = DateTime.now();
+    final nowMinutes = now.hour * 60 + now.minute;
+    return timeSlots.where((t) => _slotStartMinutes(t) > nowMinutes).toList();
+  }
+
   void selectSlotDate(DateTime date) {
     selectedSlotDate = date;
+    // If this lands on today and the currently picked time has already
+    // passed, fall back to the next still-available slot (if any).
+    if (isSelectedSlotDateToday && !availableSlotTimes.contains(selectedSlotTime)) {
+      selectedSlotTime = availableSlotTimes.isNotEmpty ? availableSlotTimes.first : '';
+    }
     notifyListeners();
   }
 

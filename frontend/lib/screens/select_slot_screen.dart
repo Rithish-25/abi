@@ -9,15 +9,6 @@ import '../widgets/primary_button.dart';
 class SelectSlotScreen extends StatelessWidget {
   const SelectSlotScreen({super.key});
 
-  static const List<String> _timeSlots = [
-    '7:00 AM - 8:00 AM',
-    '8:00 AM - 9:00 AM',
-    '9:00 AM - 10:00 AM',
-    '10:00 AM - 11:00 AM',
-    '5:00 PM - 6:00 PM',
-    '6:00 PM - 7:00 PM',
-  ];
-
   static const List<String> _weekdayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   @override
@@ -95,7 +86,20 @@ class SelectSlotScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 Text('SELECT TIME SLOT', style: AppTextStyles.caption.copyWith(letterSpacing: 0.5)),
                 const SizedBox(height: 10),
-                ..._timeSlots.map((t) {
+                if (app.availableSlotTimes.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: AppColors.border, width: 1.5),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Text(
+                      'No more slots available today. Please choose another date.',
+                      style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+                    ),
+                  ),
+                ...app.availableSlotTimes.map((t) {
                   final selected = t == app.selectedSlotTime;
                   return Container(
                     margin: const EdgeInsets.only(bottom: 10),
@@ -153,7 +157,10 @@ class SelectSlotScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: AppColors.border))),
-            child: AppButton(label: 'Continue', onPressed: () => app.go('bookingSummary')),
+            child: AppButton(
+              label: 'Continue',
+              onPressed: app.selectedSlotTime.isEmpty ? null : () => app.go('bookingSummary'),
+            ),
           ),
         ],
       ),

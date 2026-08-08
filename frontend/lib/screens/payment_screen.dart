@@ -12,10 +12,6 @@ class PaymentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
-    final methods = [
-      ('upi', 'UPI (Google Pay, PhonePe, Paytm)', Icons.qr_code),
-      ('cod', 'Pay at Home (COD)', Icons.home),
-    ];
     return Container(
       color: AppColors.background,
       child: Column(
@@ -34,35 +30,35 @@ class PaymentScreen extends StatelessWidget {
                   ]),
                 ),
                 Text('CHOOSE PAYMENT METHOD', style: AppTextStyles.caption.copyWith(letterSpacing: 0.5)),
-                const SizedBox(height: 10),
-                ...methods.map((m) {
-                  final selected = app.paymentMethod == m.$1;
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    child: InkWell(
-                      onTap: () => app.setPaymentMethod(m.$1),
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        decoration: BoxDecoration(
-                          color: selected ? AppColors.primaryTint : Colors.white,
-                          border: Border.all(color: selected ? AppColors.primary : AppColors.border, width: 1.5),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(children: [
-                          Container(width: 36, height: 36, decoration: BoxDecoration(color: AppColors.primaryTint, borderRadius: BorderRadius.circular(10)), child: Icon(m.$3, color: AppColors.primary, size: 18)),
-                          const SizedBox(width: 12),
-                          Expanded(child: Text(m.$2, style: AppTextStyles.bodyBold.copyWith(fontSize: 13.5))),
-                          Container(
-                            width: 20, height: 20,
-                            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: selected ? AppColors.primary : const Color(0xFFCBD5E1), width: 2)),
-                            child: selected ? Center(child: Container(width: 11, height: 11, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle))) : null,
-                          ),
-                        ]),
-                      ),
+                const SizedBox(height: 40),
+                Center(
+                  child: Container(
+                    width: 200,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryTint,
+                      border: Border.all(color: AppColors.primary, width: 1.5),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                  );
-                }),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+                          child: const Icon(Icons.qr_code, color: AppColors.primary, size: 28),
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          'UPI (Google Pay, PhonePe, Paytm)',
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.bodyBold.copyWith(fontSize: 13.5),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
