@@ -171,6 +171,30 @@ class AppNotification {
   }
 }
 
+class Complaint {
+  final String id;
+  final String userId; // phone number of the submitting user
+  final String userName;
+  final String message;
+  final String status; // 'Pending Response' | 'Admin Responded' | 'Resolved'
+  final String adminReply;
+  final String timestamp; // ISO 8601, for sorting
+  final String dateString; // human-readable, for display
+  final String repliedDateString;
+
+  const Complaint({
+    required this.id,
+    required this.userId,
+    required this.userName,
+    required this.message,
+    required this.status,
+    this.adminReply = '',
+    this.timestamp = '',
+    this.dateString = '',
+    this.repliedDateString = '',
+  });
+}
+
 class DoctorPatient {
   final int id;
   final String name;

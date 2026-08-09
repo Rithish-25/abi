@@ -33,6 +33,12 @@ class AppColors {
       case 'Cancelled':
       case 'Rejected':
         return danger;
+      case 'Pending Response':
+        return warning;
+      case 'Admin Responded':
+        return primary;
+      case 'Resolved':
+        return success;
       default:
         return textSecondary;
     }
@@ -50,6 +56,12 @@ class AppColors {
       case 'Cancelled':
       case 'Rejected':
         return dangerTint;
+      case 'Pending Response':
+        return warningTint;
+      case 'Admin Responded':
+        return primaryTint;
+      case 'Resolved':
+        return successTint;
       default:
         return const Color(0xFFF1F5F9);
     }

@@ -596,6 +596,34 @@ class AppState extends ChangeNotifier {
         }
       });
     } catch (_) {}
+
+    // 8. Listen to the user's own complaints
+    try {
+      FirebaseFirestore.instance
+          .collection('complaints')
+          .where('userId', isEqualTo: targetPhone)
+          .snapshots()
+          .listen((snapshot) {
+        final List<Complaint> loaded = [];
+        for (var doc in snapshot.docs) {
+          final data = doc.data();
+          loaded.add(Complaint(
+            id: doc.id,
+            userId: data['userId'] ?? '',
+            userName: data['userName'] ?? '',
+            message: data['message'] ?? '',
+            status: data['status'] ?? 'Pending Response',
+            adminReply: data['adminReply'] ?? '',
+            timestamp: data['timestamp'] ?? '',
+            dateString: data['dateString'] ?? '',
+            repliedDateString: data['repliedDateString'] ?? '',
+          ));
+        }
+        loaded.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        complaints = loaded;
+        notifyListeners();
+      });
+    } catch (_) {}
   }
 
   Future<void> _saveCart() async {
@@ -714,6 +742,7 @@ class AppState extends ChangeNotifier {
   late List<MedicalRecord> records = [];
   String? uploadMode;
   List<AppNotification> notifications = [];
+  List<Complaint> complaints = [];
  
   // doctor
   late List<DoctorPatient> doctorPatients = [];
@@ -1330,6 +1359,32 @@ class AppState extends ChangeNotifier {
   void toggleAddAddress() {
     showAddAddress = !showAddAddress;
     notifyListeners();
+  }
+
+  void submitComplaint(String message) {
+    final trimmed = message.trim();
+    if (trimmed.isEmpty) return;
+    final targetPhone = doctorLoggedIn ? doctorPhone : phone;
+    if (targetPhone.isEmpty) return;
+
+    final now = DateTime.now();
+    final id = 'CMP${now.millisecondsSinceEpoch}';
+    final dateString =
+        '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}, ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+    try {
+      FirebaseFirestore.instance.collection('complaints').doc(id).set({
+        'id': id,
+        'userId': targetPhone,
+        'userName': userName.isNotEmpty ? userName : 'User',
+        'message': trimmed,
+        'status': 'Pending Response',
+        'adminReply': '',
+        'timestamp': now.toIso8601String(),
+        'dateString': dateString,
+        'repliedDateString': '',
+      });
+    } catch (_) {}
   }
 
   void addAddress(String label, String line, String phoneNo) {

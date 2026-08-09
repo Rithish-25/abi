@@ -29,6 +29,7 @@ import Bookings from './pages/Bookings';
 import Tests from './pages/Tests';
 import Payments from './pages/Payments';
 import Notifications from './pages/Notifications';
+import Complaints from './pages/Complaints';
 import Settings from './pages/Settings';
 import { sendPushNotification } from './utils/fcm';
 
@@ -794,7 +795,13 @@ function App() {
 
 
           {activePage === 'notifications' && (
-            <Notifications 
+            <Notifications
+              addToast={addToast}
+            />
+          )}
+
+          {activePage === 'complaints' && (
+            <Complaints
               addToast={addToast}
             />
           )}
