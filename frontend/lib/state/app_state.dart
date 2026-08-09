@@ -117,30 +117,42 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  // The admin "Sample Material" field can save `sample` as either a plain
+  // string (older/seed data) or a list of selected checkboxes (current admin
+  // UI) — normalize either shape into the String the BloodTest model expects.
+  String _sampleAsString(dynamic value) {
+    if (value is List) return value.map((v) => v.toString()).join(', ');
+    return value?.toString() ?? '';
+  }
+
   void _setupCatalogListener() {
     try {
       FirebaseFirestore.instance.collection('tests').snapshots().listen(
           (snapshot) {
         final List<BloodTest> loadedTests = [];
         for (var doc in snapshot.docs) {
-          final data = doc.data();
-          loadedTests.add(BloodTest(
-            id: doc.id,
-            name: data['name'] ?? '',
-            short: data['short'] ?? '',
-            desc: data['desc'] ?? '',
-            price: data['price'] ?? 0,
-            mrp: data['mrp'] ?? 0,
-            fasting: data['fasting'] ?? false,
-            sample: data['sample'] ?? '',
-            report: data['report'] ?? '',
-            prep: data['prep'] ?? '',
-            image: data['image'] ?? '',
-            isPackage: data['isPackage'] ?? false,
-            includedTestIds: data['includedTestIds'] != null
-                ? List<String>.from(data['includedTestIds'])
-                : [],
-          ));
+          try {
+            final data = doc.data();
+            loadedTests.add(BloodTest(
+              id: doc.id,
+              name: data['name'] ?? '',
+              short: data['short'] ?? '',
+              desc: data['desc'] ?? '',
+              price: data['price'] ?? 0,
+              mrp: data['mrp'] ?? 0,
+              fasting: data['fasting'] ?? false,
+              sample: _sampleAsString(data['sample']),
+              report: data['report'] ?? '',
+              prep: data['prep'] ?? '',
+              image: data['image'] ?? '',
+              isPackage: data['isPackage'] ?? false,
+              includedTestIds: data['includedTestIds'] != null
+                  ? List<String>.from(data['includedTestIds'])
+                  : [],
+            ));
+          } catch (e) {
+            debugPrint("Skipping malformed test doc ${doc.id}: $e");
+          }
         }
         if (loadedTests.isNotEmpty) {
           _dbTests = loadedTests;

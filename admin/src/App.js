@@ -545,11 +545,14 @@ function App() {
 
   const updateTests = async (newTests) => {
     setTests(newTests);
-    try {
-      for (const t of newTests) {
-        await setDoc(doc(db, 'tests', t.id), t, { merge: true });
-      }
-    } catch (_) {}
+    const results = await Promise.allSettled(
+      newTests.map((t) => setDoc(doc(db, 'tests', t.id), t, { merge: true }))
+    );
+    const failures = results.filter((r) => r.status === 'rejected');
+    if (failures.length > 0) {
+      console.error('Failed to sync test(s) to Firestore:', failures.map((f) => f.reason));
+      addToast('Some test changes could not be saved to the server. Please check your connection and try again.', 'danger');
+    }
   };
 
   const updateCategories = async (newCategories) => {

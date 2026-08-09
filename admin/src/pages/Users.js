@@ -76,16 +76,6 @@ const Users = ({ users, setUsers, addToast }) => {
       </div>
     )},
     { header: 'Phone Number', field: 'phone', sortable: true },
-    { header: 'Role', field: 'role', sortable: true, render: (val) => (
-      <span className={`badge ${
-        val === 'admin' ? 'badge-danger' : 
-        val === 'doctor' ? 'badge-success' : 
-        val === 'technician' ? 'badge-info' : 
-        'badge-secondary'
-      }`}>
-        {val.toUpperCase()}
-      </span>
-    )},
     { header: 'Details', field: 'age', render: (val, row) => (
       <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
         {row.gender} · {val} yrs
