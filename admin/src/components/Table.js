@@ -68,13 +68,13 @@ const Table = ({ columns, data, keyField = 'id', actions, pageSize = 5 }) => {
               paginatedData.map((row, rowIndex) => (
                 <tr key={row[keyField] || rowIndex}>
                   {columns.map((col) => (
-                    <td key={col.field}>
+                    <td key={col.field} data-label={col.header}>
                       {col.render ? col.render(row[col.field], row) : row[col.field]}
                     </td>
                   ))}
                   {actions && (
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                    <td data-label="Actions" style={{ textAlign: 'right' }}>
+                      <div className="row-actions">
                         {actions(row)}
                       </div>
                     </td>

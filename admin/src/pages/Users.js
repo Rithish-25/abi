@@ -70,7 +70,7 @@ const Users = ({ users, setUsers, addToast }) => {
   // Columns definition for Table component
   const columns = [
     { header: 'Name', field: 'name', sortable: true, render: (val, row) => (
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <div className="user-name-cell" style={{ display: 'flex', flexDirection: 'column' }}>
         <span style={{ fontWeight: 700 }}>{val}</span>
         <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{row.relation || 'Self'}</span>
       </div>

@@ -19,6 +19,7 @@ const Bookings = ({ bookings, setBookings, reports = [], setReports = () => {}, 
 
   // Modals state
   const [showRejectConfirmModal, setShowRejectConfirmModal] = useState(false);
+  const [bookingToReject, setBookingToReject] = useState(null);
   const [showDraftDialog, setShowDraftDialog] = useState(false);
 
   // Form states for modals
@@ -73,13 +74,16 @@ const Bookings = ({ bookings, setBookings, reports = [], setReports = () => {}, 
 
   // Handler: Confirm Rejection
   const handleConfirmReject = () => {
-    if (!selectedBooking) return;
-    const statusHistory = appendStatusHistory(selectedBooking, 'Rejected');
-    const updated = bookings.map(b => b.id === selectedBooking.id ? { ...b, status: 'Rejected', statusHistory } : b);
+    if (!bookingToReject) return;
+    const statusHistory = appendStatusHistory(bookingToReject, 'Rejected');
+    const updated = bookings.map(b => b.id === bookingToReject.id ? { ...b, status: 'Rejected', statusHistory } : b);
     setBookings(updated);
-    setSelectedBooking({ ...selectedBooking, status: 'Rejected', statusHistory });
-    addToast(`Booking ${selectedBooking.id} marked as Rejected. Workflow stopped.`, 'success');
+    if (selectedBooking && selectedBooking.id === bookingToReject.id) {
+      setSelectedBooking({ ...selectedBooking, status: 'Rejected', statusHistory });
+    }
+    addToast(`Booking ${bookingToReject.id} marked as Rejected. Workflow stopped.`, 'success');
     setShowRejectConfirmModal(false);
+    setBookingToReject(null);
   };
 
   // Handler: Reschedule Slot
@@ -231,7 +235,7 @@ const Bookings = ({ bookings, setBookings, reports = [], setReports = () => {}, 
     )},
     { header: 'Patient Name', field: 'member', sortable: true },
     { header: 'Tests Summary', field: 'testSummary', render: (val, row) => (
-      <div style={{ maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.testNames ? row.testNames.join(', ') : ''}>
+      <div className="test-summary-cell" style={{ maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.testNames ? row.testNames.join(', ') : ''}>
         {val}
       </div>
     )},
@@ -349,7 +353,7 @@ const Bookings = ({ bookings, setBookings, reports = [], setReports = () => {}, 
 
             {(selectedBooking.status === 'Confirmed' || selectedBooking.status === 'Sample Collected') && (
               <button
-                onClick={() => setShowRejectConfirmModal(true)}
+                onClick={() => { setBookingToReject(selectedBooking); setShowRejectConfirmModal(true); }}
                 className="btn btn-danger"
                 style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.5rem 1rem', fontSize: '0.8125rem', marginLeft: 'auto' }}
               >
@@ -561,7 +565,7 @@ const Bookings = ({ bookings, setBookings, reports = [], setReports = () => {}, 
 
                   {(techStatus === 'Confirmed' || techStatus === 'Sample Collected') && (
                     <button
-                      onClick={() => setShowRejectConfirmModal(true)}
+                      onClick={() => { setBookingToReject(selectedBooking); setShowRejectConfirmModal(true); }}
                       className="btn btn-danger"
                       style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.5rem 0.875rem', fontSize: '0.8125rem', flexShrink: 0 }}
                     >
@@ -702,18 +706,18 @@ const Bookings = ({ bookings, setBookings, reports = [], setReports = () => {}, 
         {/* Modal 1: Confirmation Popup for Rejecting Appointment */}
         <Modal
           isOpen={showRejectConfirmModal}
-          onClose={() => setShowRejectConfirmModal(false)}
+          onClose={() => { setShowRejectConfirmModal(false); setBookingToReject(null); }}
           title="Confirm Rejection"
           footer={
             <>
-              <button 
-                className="btn btn-secondary" 
-                onClick={() => setShowRejectConfirmModal(false)}
+              <button
+                className="btn btn-secondary"
+                onClick={() => { setShowRejectConfirmModal(false); setBookingToReject(null); }}
               >
                 Cancel
               </button>
-              <button 
-                className="btn btn-danger" 
+              <button
+                className="btn btn-danger"
                 onClick={handleConfirmReject}
               >
                 Reject
@@ -721,27 +725,29 @@ const Bookings = ({ bookings, setBookings, reports = [], setReports = () => {}, 
             </>
           }
         >
-          <div style={{ textAlign: 'center', padding: '1rem 0.5rem' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              backgroundColor: '#FEE2E2',
-              color: '#EF4444',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 1rem'
-            }}>
-              <AlertCircle size={24} />
+          {bookingToReject && (
+            <div style={{ textAlign: 'center', padding: '1rem 0.5rem' }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: '#FEE2E2',
+                color: '#EF4444',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1rem'
+              }}>
+                <AlertCircle size={24} />
+              </div>
+              <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
+                Are you sure you want to reject this appointment?
+              </h4>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                Booking <strong>{bookingToReject.id}</strong> for <strong>{bookingToReject.member}</strong> will be marked as <strong>Rejected</strong> and will not proceed to sample collection or any further step.
+              </p>
             </div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
-              Are you sure you want to reject this appointment?
-            </h4>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
-              Booking <strong>{selectedBooking.id}</strong> for <strong>{selectedBooking.member}</strong> will be marked as <strong>Rejected</strong> and will not proceed to sample collection or any further step.
-            </p>
-          </div>
+          )}
         </Modal>
 
         {/* Modal 4: Draft Saved Dialog Modal */}
@@ -840,20 +846,79 @@ const Bookings = ({ bookings, setBookings, reports = [], setReports = () => {}, 
           keyField="id"
           pageSize={6}
           actions={(row) => (
-            <button
-              onClick={() => {
-                setSelectedBooking(row);
-                setActiveSection('bookings');
-              }}
-              className="btn btn-secondary"
-              style={{ padding: '0.375rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
-            >
-              <Eye size={14} />
-              Manage
-            </button>
+            <>
+              <button
+                onClick={() => {
+                  setSelectedBooking(row);
+                  setActiveSection('bookings');
+                }}
+                className="btn btn-secondary"
+                style={{ padding: '0.375rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
+              >
+                <Eye size={14} />
+                Manage
+              </button>
+              {row.status !== 'Rejected' && row.status !== 'Cancelled' && (
+                <button
+                  onClick={() => { setBookingToReject(row); setShowRejectConfirmModal(true); }}
+                  className="btn btn-danger"
+                  style={{ padding: '0.375rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
+                >
+                  <AlertCircle size={14} />
+                  Reject
+                </button>
+              )}
+            </>
           )}
         />
       </div>
+
+      {/* Confirmation Popup for Rejecting Appointment (list view) */}
+      <Modal
+        isOpen={showRejectConfirmModal}
+        onClose={() => { setShowRejectConfirmModal(false); setBookingToReject(null); }}
+        title="Confirm Rejection"
+        footer={
+          <>
+            <button
+              className="btn btn-secondary"
+              onClick={() => { setShowRejectConfirmModal(false); setBookingToReject(null); }}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={handleConfirmReject}
+            >
+              Reject
+            </button>
+          </>
+        }
+      >
+        {bookingToReject && (
+          <div style={{ textAlign: 'center', padding: '1rem 0.5rem' }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: '#FEE2E2',
+              color: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1rem'
+            }}>
+              <AlertCircle size={24} />
+            </div>
+            <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
+              Are you sure you want to reject this appointment?
+            </h4>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+              Booking <strong>{bookingToReject.id}</strong> for <strong>{bookingToReject.member}</strong> will be marked as <strong>Rejected</strong> and will not proceed to sample collection or any further step.
+            </p>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

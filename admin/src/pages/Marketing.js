@@ -145,15 +145,15 @@ const Marketing = ({ addToast }) => {
               <tbody>
                 {banners.map((b) => (
                   <tr key={b.id}>
-                    <td style={{ fontWeight: 700 }}>{b.title}</td>
-                    <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{b.image}</td>
-                    <td>{b.link}</td>
-                    <td>
+                    <td data-label="Banner Details" style={{ fontWeight: 700 }}>{b.title}</td>
+                    <td data-label="Image Path" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{b.image}</td>
+                    <td data-label="Target Link">{b.link}</td>
+                    <td data-label="Status">
                       <span className={`badge ${b.active ? 'badge-success' : 'badge-secondary'}`}>
                         {b.active ? 'ACTIVE' : 'PAUSED'}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td data-label="Actions" style={{ textAlign: 'right' }}>
                       <button 
                         onClick={() => setBanners(banners.map(item => item.id === b.id ? { ...item, active: !item.active } : item))}
                         className="btn btn-secondary" 
@@ -191,15 +191,15 @@ const Marketing = ({ addToast }) => {
               <tbody>
                 {offers.map((o) => (
                   <tr key={o.code}>
-                    <td style={{ fontWeight: 800, color: 'var(--accent)', letterSpacing: '0.5px' }}>{o.code}</td>
-                    <td style={{ fontSize: '0.8125rem' }}>{o.description}</td>
-                    <td style={{ fontWeight: 700 }}>₹{o.discount}</td>
-                    <td>
+                    <td data-label="Coupon Code" style={{ fontWeight: 800, color: 'var(--accent)', letterSpacing: '0.5px' }}>{o.code}</td>
+                    <td data-label="Description" style={{ fontSize: '0.8125rem' }}>{o.description}</td>
+                    <td data-label="Discount Value" style={{ fontWeight: 700 }}>₹{o.discount}</td>
+                    <td data-label="Status">
                       <span className={`badge ${o.active ? 'badge-success' : 'badge-secondary'}`}>
                         {o.active ? 'ACTIVE' : 'EXPIRED'}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td data-label="Actions" style={{ textAlign: 'right' }}>
                       <button 
                         onClick={() => setOffers(offers.map(item => item.code === o.code ? { ...item, active: !item.active } : item))}
                         className="btn btn-secondary" 
