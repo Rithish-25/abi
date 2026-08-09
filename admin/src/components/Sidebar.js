@@ -33,10 +33,12 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
       display: 'flex',
       flexDirection: 'column',
       height: '100vh',
+      minHeight: '-webkit-fill-available',
       position: 'fixed',
       left: 0,
       top: 0,
-      zIndex: 100
+      zIndex: 100,
+      overflowY: 'hidden'
     }}
     data-mobile-open={isMobileSidebarOpen ? 'true' : 'false'}>
       {/* Sidebar Header */}
@@ -77,9 +79,10 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
         padding: '0.875rem 0.75rem',
         display: 'flex',
         flexDirection: 'column',
-        gap: '1.30rem',
-        flexGrow: 1,
-        overflowY: 'auto'
+        gap: '0.5rem',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        WebkitOverflowScrolling: 'touch'
       }}>
         {menuItems.map((item) => {
           const Icon = item.icon;
@@ -133,10 +136,14 @@ const Sidebar = ({ activePage, setActivePage, handleLogout, adminPhone, isMobile
       {/* Sidebar Footer */}
       <div className="sidebar-footer" style={{
         padding: '0.75rem 1rem',
+        paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
         borderTop: '1px solid var(--sidebar-border)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.75rem'
+        gap: '0.75rem',
+        flexShrink: 0,
+        marginTop: 'auto',
+        backgroundColor: 'var(--sidebar-bg)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{
