@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image/image.dart' as img;
 import 'dart:async';
 import '../data/mock_data.dart';
 import '../models/models.dart';
@@ -1630,11 +1630,47 @@ class AppState extends ChangeNotifier {
     go('uploadRecord');
   }
 
-  /// Uploads [imageFile] to Firebase Storage and saves the medical record
-  /// with the resulting real download URL. Returns null on success, or the
-  /// real error message on failure; the caller (upload_record_screen.dart)
-  /// is expected to require a picked image before calling this — no
-  /// placeholder/mock image is ever used.
+  /// Compresses the picked photo and returns a `data:image/jpeg;base64,...`
+  /// URI small enough to fit in a single Firestore document (1MiB limit),
+  /// retrying at a lower size/quality until it fits. Returns null only if
+  /// the file genuinely can't be decoded as an image.
+  Future<String?> _compressImageToDataUri(File file) async {
+    final bytes = await file.readAsBytes();
+    final decodedRaw = img.decodeImage(bytes);
+    if (decodedRaw == null) return null;
+    final decoded = img.bakeOrientation(decodedRaw);
+
+    const maxBase64Chars = 700 * 1024; // stay well under Firestore's 1MiB doc limit
+    int maxDimension = 1280;
+    int quality = 80;
+
+    for (var attempt = 0; attempt < 6; attempt++) {
+      final needsResize = decoded.width > maxDimension || decoded.height > maxDimension;
+      final resized = needsResize
+          ? img.copyResize(
+              decoded,
+              width: decoded.width >= decoded.height ? maxDimension : null,
+              height: decoded.height > decoded.width ? maxDimension : null,
+            )
+          : decoded;
+      final jpgBytes = img.encodeJpg(resized, quality: quality);
+      final base64Str = base64Encode(jpgBytes);
+
+      if (base64Str.length <= maxBase64Chars) {
+        return 'data:image/jpeg;base64,$base64Str';
+      }
+
+      maxDimension = (maxDimension * 0.75).round().clamp(320, 1280);
+      quality = (quality - 15).clamp(30, 95);
+    }
+    return null;
+  }
+
+  /// Saves a medical record with a real photo the user picked, stored as a
+  /// compressed base64 image directly in Firestore (Firebase Storage would
+  /// require upgrading this project's billing plan, which it isn't on) —
+  /// still a genuine uploaded photo, never a placeholder/mock image. Returns
+  /// null on success, or an error message on failure.
   Future<String?> saveRecord(String title, {String? notes, required File imageFile}) async {
     final String targetPhone = doctorLoggedIn ? doctorPhone : phone;
     if (targetPhone.isEmpty) return 'You are not logged in.';
@@ -1653,10 +1689,10 @@ class AppState extends ChangeNotifier {
         : title.trim();
 
     try {
-      final ref =
-          FirebaseStorage.instance.ref('users/$targetPhone/records/$id.jpg');
-      await ref.putFile(imageFile);
-      final downloadUrl = await ref.getDownloadURL();
+      final dataUri = await _compressImageToDataUri(imageFile);
+      if (dataUri == null) {
+        return 'Could not read that image. Please try a different photo.';
+      }
 
       await FirebaseFirestore.instance
           .collection('users')
@@ -1669,7 +1705,7 @@ class AppState extends ChangeNotifier {
         'title': finalTitle,
         'date': formattedDate,
         'notes': notes ?? '',
-        'imageUrl': downloadUrl,
+        'imageUrl': dataUri,
       });
 
       // Write notification for medical record upload
@@ -1688,7 +1724,7 @@ class AppState extends ChangeNotifier {
       goTab('records', 'records');
       return null;
     } catch (e) {
-      debugPrint('saveRecord upload failed: $e');
+      debugPrint('saveRecord failed: $e');
       if (e is FirebaseException) {
         return '${e.code}: ${e.message ?? e.toString()}';
       }

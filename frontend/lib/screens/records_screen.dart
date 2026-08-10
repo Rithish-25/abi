@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
@@ -166,11 +167,27 @@ class RecordsScreen extends StatelessWidget {
         ),
       );
 
-  // Uploaded records store a real Firebase Storage download URL; older
-  // seeded/demo records may still carry a bundled 'assets/...' path.
+  // Uploaded records store the real photo as a base64 data URI directly in
+  // Firestore; older seeded/demo records may still carry a bundled
+  // 'assets/...' path, and legacy records could carry an http(s) URL.
   Widget _buildRecordImage(String path) {
-    final isNetworkImage = path.startsWith('http://') || path.startsWith('https://');
-    if (isNetworkImage) {
+    if (path.startsWith('data:image')) {
+      final commaIndex = path.indexOf(',');
+      if (commaIndex == -1) return _buildImageFallback();
+      try {
+        final bytes = base64Decode(path.substring(commaIndex + 1));
+        return Image.memory(
+          bytes,
+          width: double.infinity,
+          height: 240,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildImageFallback(),
+        );
+      } catch (_) {
+        return _buildImageFallback();
+      }
+    }
+    if (path.startsWith('http://') || path.startsWith('https://')) {
       return Image.network(
         path,
         width: double.infinity,
