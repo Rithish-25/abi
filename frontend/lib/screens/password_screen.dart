@@ -31,9 +31,6 @@ class _PasswordScreenState extends State<PasswordScreen> {
     await app.loginWithPassword(_passwordController.text);
     if (!mounted) return;
     setState(() => _isSubmitting = false);
-    if (app.passwordError) {
-      _formKey.currentState?.validate();
-    }
   }
 
   @override
@@ -59,8 +56,14 @@ class _PasswordScreenState extends State<PasswordScreen> {
             PasswordField(
               label: 'Password',
               controller: _passwordController,
-              validator: (_) => app.passwordError ? 'Incorrect password. Please try again.' : null,
             ),
+            if (app.passwordError) ...[
+              const SizedBox(height: 8),
+              const Text(
+                'Incorrect password. Please try again.',
+                style: TextStyle(color: AppColors.danger, fontSize: 12.5, fontWeight: FontWeight.w600),
+              ),
+            ],
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,

@@ -49,5 +49,9 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Abirami Laboratory uses the camera so you can photograph a prescription or lab report to attach to your medical records.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Abirami Laboratory needs access to your photos so you can attach a prescription or lab report image to your medical records.</string>
 </dict>
 </plist>

@@ -21,9 +21,13 @@ service firebase.storage {
       allow write: if isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Prescriptions/records uploaded by users
+    // Prescriptions/records uploaded by users. Regular patients in this app
+    // are identified by phone number, not Firebase Auth (no sign-in call
+    // anywhere in the mobile app's login flow), so request.auth is always
+    // null for them — matching the same open trust model already used for
+    // their Firestore data (e.g. /bookings, /users/{phone}/addresses).
     match /users/{userId}/records/{recordId} {
-      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      allow read, write: if true;
     }
 
     // PDF reports uploaded by admin/lab

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Search, ShieldAlert, Send, Eye, Shield, BellRing } from 'lucide-react';
-import { addDoc, collection } from 'firebase/firestore';
+import React, { useState, useRef } from 'react';
+import { Search, ShieldAlert, Send, Eye, Shield, BellRing, FileText } from 'lucide-react';
+import { addDoc, collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import Table from '../components/Table';
 import Modal from '../components/Modal';
@@ -13,6 +13,12 @@ const Users = ({ users, setUsers, addToast }) => {
   const [newRole, setNewRole] = useState('user');
   const [notifTitle, setNotifTitle] = useState('');
   const [notifBody, setNotifBody] = useState('');
+
+  // Medical records viewer
+  const [showRecordsModal, setShowRecordsModal] = useState(false);
+  const [patientRecords, setPatientRecords] = useState([]);
+  const [recordsLoading, setRecordsLoading] = useState(false);
+  const recordsUnsubRef = useRef(null);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -65,6 +71,38 @@ const Users = ({ users, setUsers, addToast }) => {
       console.error('Error sending user notification:', err);
       addToast('Failed to save user notification.', 'danger');
     }
+  };
+
+  const handleViewRecords = (user) => {
+    setSelectedUser(user);
+    setShowRecordsModal(true);
+    setRecordsLoading(true);
+    setPatientRecords([]);
+
+    if (recordsUnsubRef.current) recordsUnsubRef.current();
+    try {
+      recordsUnsubRef.current = onSnapshot(
+        collection(db, 'users', user.phone, 'records'),
+        (snap) => {
+          const list = [];
+          snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+          list.sort((a, b) => (b.id || 0) - (a.id || 0));
+          setPatientRecords(list);
+          setRecordsLoading(false);
+        },
+        () => setRecordsLoading(false)
+      );
+    } catch (err) {
+      setRecordsLoading(false);
+    }
+  };
+
+  const handleCloseRecordsModal = () => {
+    if (recordsUnsubRef.current) {
+      recordsUnsubRef.current();
+      recordsUnsubRef.current = null;
+    }
+    setShowRecordsModal(false);
   };
 
   // Columns definition for Table component
@@ -120,6 +158,16 @@ const Users = ({ users, setUsers, addToast }) => {
           data={filteredUsers}
           keyField="phone"
           pageSize={6}
+          actions={(row) => (
+            <button
+              onClick={() => handleViewRecords(row)}
+              className="btn btn-secondary"
+              style={{ padding: '0.375rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
+            >
+              <FileText size={14} />
+              Records
+            </button>
+          )}
         />
       </div>
 
@@ -188,6 +236,61 @@ const Users = ({ users, setUsers, addToast }) => {
             style={{ resize: 'none' }}
           />
         </div>
+      </Modal>
+
+      {/* Modal 3: Medical Records Viewer */}
+      <Modal
+        isOpen={showRecordsModal}
+        onClose={handleCloseRecordsModal}
+        title={`Medical Records - ${selectedUser?.name || ''}`}
+      >
+        {recordsLoading ? (
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '1.5rem 0' }}>
+            Loading records...
+          </p>
+        ) : patientRecords.length === 0 ? (
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '1.5rem 0' }}>
+            No medical records uploaded by this patient yet.
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '60vh', overflowY: 'auto' }}>
+            {patientRecords.map((rec) => (
+              <div key={rec.id} style={{ display: 'flex', gap: '0.875rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', padding: '0.875rem' }}>
+                {rec.imageUrl && (
+                  <a href={rec.imageUrl} target="_blank" rel="noopener noreferrer" style={{ flexShrink: 0 }}>
+                    <img
+                      src={rec.imageUrl}
+                      alt={rec.title || 'Medical record'}
+                      style={{ width: '72px', height: '72px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}
+                    />
+                  </a>
+                )}
+                <div style={{ flexGrow: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
+                    <strong style={{ fontSize: '0.875rem' }}>{rec.title || 'Untitled record'}</strong>
+                    <span className={`badge ${rec.type === 'prescription' ? 'badge-warning' : 'badge-info'}`} style={{ fontSize: '0.7rem' }}>
+                      {rec.type === 'prescription' ? 'Prescription' : 'Lab Report'}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{rec.date}</span>
+                  {rec.notes && (
+                    <p style={{ fontSize: '0.8125rem', margin: '0.375rem 0 0', color: 'var(--text-primary)' }}>{rec.notes}</p>
+                  )}
+                  {rec.imageUrl && (
+                    <a
+                      href={rec.imageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 600, display: 'inline-block', marginTop: '0.375rem' }}
+                    >
+                      View Full Image →
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </Modal>
     </div>
   );

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:async';
 import '../data/mock_data.dart';
 import '../models/models.dart';
@@ -1628,9 +1630,14 @@ class AppState extends ChangeNotifier {
     go('uploadRecord');
   }
 
-  Future<void> saveRecord(String title, {String? notes, String? imageUrl}) async {
+  /// Uploads [imageFile] to Firebase Storage and saves the medical record
+  /// with the resulting real download URL. Returns null on success, or the
+  /// real error message on failure; the caller (upload_record_screen.dart)
+  /// is expected to require a picked image before calling this — no
+  /// placeholder/mock image is ever used.
+  Future<String?> saveRecord(String title, {String? notes, required File imageFile}) async {
     final String targetPhone = doctorLoggedIn ? doctorPhone : phone;
-    if (targetPhone.isEmpty) return;
+    if (targetPhone.isEmpty) return 'You are not logged in.';
 
     final id = records.isEmpty
         ? 1
@@ -1645,10 +1652,12 @@ class AppState extends ChangeNotifier {
         ? (uploadMode == 'prescription' ? 'Prescription Record #$id' : 'Lab Report #$id')
         : title.trim();
 
-    final defaultImage = uploadMode == 'prescription' ? 'assets/board1.jpg' : 'assets/cbc.jpg';
-    final finalImage = (imageUrl != null && imageUrl.trim().isNotEmpty) ? imageUrl.trim() : defaultImage;
-
     try {
+      final ref =
+          FirebaseStorage.instance.ref('users/$targetPhone/records/$id.jpg');
+      await ref.putFile(imageFile);
+      final downloadUrl = await ref.getDownloadURL();
+
       await FirebaseFirestore.instance
           .collection('users')
           .doc(targetPhone)
@@ -1660,7 +1669,7 @@ class AppState extends ChangeNotifier {
         'title': finalTitle,
         'date': formattedDate,
         'notes': notes ?? '',
-        'imageUrl': finalImage,
+        'imageUrl': downloadUrl,
       });
 
       // Write notification for medical record upload
@@ -1675,9 +1684,16 @@ class AppState extends ChangeNotifier {
         'timestamp': DateTime.now().toIso8601String(),
         'dateString': '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}, ${now.hour}:${now.minute.toString().padLeft(2, '0')}',
       });
-    } catch (_) {}
 
-    goTab('records', 'records');
+      goTab('records', 'records');
+      return null;
+    } catch (e) {
+      debugPrint('saveRecord upload failed: $e');
+      if (e is FirebaseException) {
+        return '${e.code}: ${e.message ?? e.toString()}';
+      }
+      return e.toString();
+    }
   }
 
   void markNotifRead() {

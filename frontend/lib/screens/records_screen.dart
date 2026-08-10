@@ -73,24 +73,7 @@ class RecordsScreen extends StatelessWidget {
                         border: Border.all(color: AppColors.border),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Image.asset(
-                        imagePath,
-                        width: double.infinity,
-                        height: 240,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          height: 180,
-                          color: AppColors.background,
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.description, size: 40, color: AppColors.primary),
-                              SizedBox(height: 8),
-                              Text('Document Attached', style: TextStyle(fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                        ),
-                      ),
+                      child: _buildRecordImage(imagePath),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -167,6 +150,41 @@ class RecordsScreen extends StatelessWidget {
           },
         );
       },
+    );
+  }
+
+  Widget _buildImageFallback() => Container(
+        height: 180,
+        color: AppColors.background,
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.description, size: 40, color: AppColors.primary),
+            SizedBox(height: 8),
+            Text('Document Attached', style: TextStyle(fontWeight: FontWeight.w600)),
+          ],
+        ),
+      );
+
+  // Uploaded records store a real Firebase Storage download URL; older
+  // seeded/demo records may still carry a bundled 'assets/...' path.
+  Widget _buildRecordImage(String path) {
+    final isNetworkImage = path.startsWith('http://') || path.startsWith('https://');
+    if (isNetworkImage) {
+      return Image.network(
+        path,
+        width: double.infinity,
+        height: 240,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _buildImageFallback(),
+      );
+    }
+    return Image.asset(
+      path,
+      width: double.infinity,
+      height: 240,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _buildImageFallback(),
     );
   }
 
